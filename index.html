@@ -1,0 +1,80 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>ChatAssistX for JSAssist</title>
+    <script>
+        // get parameter 가져옴
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+
+        // ChatAssist 설정 변수
+        window.config = {};
+        window.config.preset = url.searchParams.get("preset"); // 주소끝 ?preset=(프리셋아이디) 를 붙여 지정합니다
+        window.config.allowExternalSource = false; // 외부이미지([img 주소] 문법) 허용하려면 true로 변경
+        window.config.allowEmoticon = true; // 디시콘 사용가능유무 사용금지로 바꾸려면 false로 변경
+        window.config.ignoreMQEmoticon = true; // 마퀴태그+디시콘 사용여부 사용하려면 false로 변경
+        window.config.ignoreNickname = "nightbot,twipkr" // 필터링할 닉네임 목록(,로 구분)
+        window.config.enableTwitchEmoticon = true; // 트위치 이모티콘 사용여부
+        window.config.TwitchEmoticonsize = "1.0"; //트위치 이모티콘 크기 1.0/2.0/3.0 처럼 입력
+
+        // 이모티콘
+        window.emoticon = {};
+        window.emoticon.address = "http://chat.lastorder.xyz/dccon.php";
+        window.emoticon.isActive = false; // 이모티콘 목록 불러와졌는지 여부
+        window.emoticon.list = {}; // 이모티콘 목록
+        
+        // 스트리머 전용 명령어(~통계,~투표) 를 사용하기 위한 아이디 지정
+        // 플랫폼별 닉네임을 입력합니다
+        window.config.streamer = {
+            "twitch" : "<여기에 트위치 스트리머 닉네임 입력>",
+            "kakaopot" : "<여기에 카카오TV PD 닉네임 입력>",
+            "youtube" : "<여기에 유튜브 채널명 입력>"
+        }
+        
+        // 기본값 입력처리
+        if(window.config.preset == null || window.config.preset == "") window.config.preset = "default";
+    </script>
+    <script src="http://cdn.jsdelivr.net/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="http://cdn.jsdelivr.net/jquery.ui/1.11.4/jquery-ui.min.css">
+    <script src="http://cdn.jsdelivr.net/handlebarsjs/4.0.8/handlebars.min.js"></script>
+    <script src="./js/chatassistx.js?ver=20171001"></script>
+    <link rel="stylesheet" href="http://js-almighty.com/jsassist/web/css/styles.css" type="text/css"/>
+    <link rel="stylesheet" href="http://chat.lastorder.xyz/css/chatassist.css">
+    <!-- 아래로 커스텀 CSS 추가 -->
+    <style>
+    </style>
+</head>
+<body>
+<script id="chat-template" type="text/x-handlebars-template">
+    <div class="chat_div" id="chat_{{num}}">
+        <span class="chat_platform_{{platform}}"></span>
+        <span class="chat_text_nickname">
+            {{{nickname}}}
+        </span>
+        <div class="chat_text_message">
+            {{{message}}}
+        </div>
+    </div>
+</script>
+<script id="chat-template-sticky" type="text/x-handlebars-template">
+    <div class="fixed_chat">
+    {{#ifCond nickname notitle}}
+        <!-- NO TITLE -->
+    {{else}}
+        <span class="chat_platform_{{platform}}"></span>
+        <span class="chat_text_nickname">
+            {{{nickname}}}
+        </span>
+    {{/ifCond}}
+        <div class="chat_text_message_sticky">
+            {{{message}}}
+        </div>
+    </div>
+</script>
+<div class="chat_wrapper">
+    <div class="chat_container">
+    </div>
+</div>
+</body>
+</html>

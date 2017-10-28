@@ -51,6 +51,23 @@
         // 기본값 입력처리
         if(window.config.preset == null || window.config.preset == "") window.config.preset = "default";
         
+        // 변수 초기화
+        window.chat = {};
+
+        // 버전 번호
+        window.chat.version = "unknown";
+
+        // 채팅 관련 설정 변수
+        window.chat.template = null;
+        window.chat.stickytemplate = null;
+        window.chat.isInited = false;
+        window.chat.failcount = 0;
+        window.chat.count = 0;
+        window.chat.cur_count = 0;
+        window.chat.maxcount = 50;
+        window.chat.emoticonfailcount = 0
+        window.chat.sticky = false;
+        
         // tapic 사용시 사용할 스타일
         window.chat.config = {};
         window.chat.config.platformIcon = true;
@@ -65,7 +82,7 @@
         window.chat.config.backgroundColor = "255, 255, 255";
         window.chat.config.backgroundAlpha = 0;
         window.chat.config.chatBackgroundColor = "255, 255, 255";
-        window.chat.config.chatBackgroundAlpha = 0.25;
+        window.chat.config.chatBackgroundAlpha = 25;
     </script>
     <script src="https://cdn.jsdelivr.net/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>

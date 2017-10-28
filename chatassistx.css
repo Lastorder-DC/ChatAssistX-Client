@@ -1,0 +1,106 @@
+@import url(//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css);
+
+.chat_platform_error {
+    width: 16px;
+    margin-right: 5px;
+    content: url('../jsassist/icon_error_small.png');
+    vertical-align: middle;
+}
+
+.chat_platform_warning {
+    width: 16px;
+    margin-right: 5px;
+    content: url('../jsassist/icon_warning_small.png');
+    vertical-align: middle;
+}
+
+.chat_platform_info {
+    width: 16px;
+    margin-right: 5px;
+    content: url('../jsassist/icon_info_small.png');
+    vertical-align: middle;
+}
+
+.chat_div_fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    background-repeat: repeat;
+    box-shadow: 0 0px 20px 20px #333;
+}
+
+.fixed_chat {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    background-repeat: repeat;
+    box-shadow: 0 0px 20px 20px #333;
+    z-index:9999;
+    width: 100%;
+}
+
+.fixed_chat .chat_text_message {
+    max-height: 100px;
+}
+
+.chat_text_message_sticky {
+    color:white;
+    width: 90%;
+    height: auto;
+    max-height: 200px;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 5px;
+    vertical-align: middle;
+} 
+
+.chat_text_message_sticky_logo {
+    font-size: 12px !important;
+    font-family: Consolas !important;
+    text-align: center;
+    color: white;
+    
+    width: 90%;
+    height: auto;
+    max-height: 200px;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 5px;
+    vertical-align: middle;
+} 
+
+span.logo pre {
+    transform: scale(0.55,1);
+    font-size: 12px !important;
+    font-family: Consolas !important;
+    text-align: center;
+    color: white;
+    width: 100%;
+    margin-left: -50px;
+    vertical-align: middle;
+} 
+
+span.tapiclogo pre {
+    font-size: 12px !important;
+    font-family: Consolas !important;
+    color: white;
+    width: 100%;
+    margin-top: -10px;
+    margin-left: -10px;
+    vertical-align: middle;
+} 
+
+span.tapicversionstring pre {
+    margin-top: -30px;
+}
+
+span.backslash {
+    font-size:12px !important;
+    font-family:Consolas !important;
+}

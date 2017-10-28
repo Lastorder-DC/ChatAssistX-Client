@@ -9,7 +9,10 @@
 
         // ChatAssist 설정 변수
         window.config = {};
-        window.config.preset = url.searchParams.get("preset"); // 주소끝 ?preset=(프리셋아이디) 를 붙여 지정합니다
+        // 채널 아이디. 주소끝 ?preset=(프리셋아이디) 를 붙여 지정합니다.
+        // 강제지정은 url.searchParams.get("preset") 을 "프리셋명" 으로 바꾸면 됩니다.
+        window.config.preset = url.searchParams.get("preset");
+        
         window.config.allowExternalSource = false; // 외부이미지([img 주소] 문법) 허용하려면 true로 변경
         window.config.allowEmoticon = true; // 디시콘 사용가능유무 사용금지로 바꾸려면 false로 변경
         window.config.ignoreMQEmoticon = true; // 마퀴태그+디시콘 사용여부 사용하려면 false로 변경
@@ -19,31 +22,59 @@
 
         // 이모티콘
         window.emoticon = {};
-        window.emoticon.address = "http://chat.lastorder.xyz/dccon.php";
+        window.emoticon.address = "https://lastorder-dc.github.io/ChatAssistX-Client/dccon.json";
         window.emoticon.isActive = false; // 이모티콘 목록 불러와졌는지 여부
         window.emoticon.list = {}; // 이모티콘 목록
+        window.emoticon.twitch = "https://cdn.rawgit.com/Lastorder-DC/dccon/v171013/global.json";
+        window.emoticon.twitch_sub = "https://cdn.rawgit.com/Lastorder-DC/dccon/v171013/sub.json";
         
         // 스트리머 전용 명령어(~통계,~투표) 를 사용하기 위한 아이디 지정
-        // 플랫폼별 닉네임을 입력합니다
         window.config.streamer = {
-            "twitch" : "<여기에 트위치 스트리머 닉네임 입력>",
-            "kakaopot" : "<여기에 카카오TV PD 닉네임 입력>",
-            "youtube" : "<여기에 유튜브 채널명 입력>"
+            "twitch" : url.searchParams.get("twitch"),
+            "kakaopot" : url.searchParams.get("kakaopot"),
+            "youtube" : url.searchParams.get("youtube")
         }
+        
+        // tapic 세팅
+        // JSAssist 없이 트위치 연동을 가능하게 합니다.
+        // https://lastorder-dc.github.io/ChatAssistX-Client/getauth.html 에서 oauth을 발급후 사용 가능합니다.
+        // 절대! 절대!! 절대!!! html파일에 직접 oauth 값을 입력하지 마세요. oauth 값이 유출된 경우 타 사용자가 oauth 값을 악용할 수 있습니다!(타 채널에 들어가 어그로, 설정 임의변경 등등등...)
+        // 장점: 트위치 이모티콘 리스트 업데이트 없이 계속 최신 이모티콘 사용가능!!!
+        window.tapic = {};
+        window.tapic.oauth = url.searchParams.get("oauth");
+        window.tapic.channelname = url.searchParams.get("channel");
+        window.tapic.inited = false;
+        
+        // 주소 사용예
+        // https://lastorder-dc.github.io/ChatAssistX-Client/index.html?preset=(프리셋아이디)&oauth=(oauth값)&channel=(채널아이디)&twitch=(트위치닉네임)&kakaopot=(카카오닉네임)&youtube=(유튜브닉네임)
         
         // 기본값 입력처리
         if(window.config.preset == null || window.config.preset == "") window.config.preset = "default";
+        
+        // tapic 사용시 사용할 스타일
+        window.chat.config = {};
+        window.chat.config.platformIcon = true;
+        window.chat.config.platform = "all";
+        window.chat.config.animation = "fade";
+        window.chat.config.chatFade = 10;
+        window.chat.config.font = "Jeju Gothic";
+        window.chat.config.fontUsernameSize = 14;
+        window.chat.config.fontUsernameColor = "255, 255, 255";
+        window.chat.config.fontChatSize = 16;
+        window.chat.config.fontChatColor = "255, 255, 255";
+        window.chat.config.backgroundColor = "255, 255, 255";
+        window.chat.config.backgroundAlpha = 0;
+        window.chat.config.chatBackgroundColor = "255, 255, 255";
+        window.chat.config.chatBackgroundAlpha = 0.25;
     </script>
     <script src="http://cdn.jsdelivr.net/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="http://cdn.jsdelivr.net/jquery.ui/1.11.4/jquery-ui.min.css">
     <script src="http://cdn.jsdelivr.net/handlebarsjs/4.0.8/handlebars.min.js"></script>
-    <script src="./js/chatassistx.js?ver=20171001"></script>
+    <script src="https://cdn.rawgit.com/Skhmt/tapic/5.0.2/dist/tapic.min.js"></script>
+    <script src="./chatassistx.js"></script>
     <link rel="stylesheet" href="http://js-almighty.com/jsassist/web/css/styles.css" type="text/css"/>
-    <link rel="stylesheet" href="http://chat.lastorder.xyz/css/chatassist.css">
-    <!-- 아래로 커스텀 CSS 추가 -->
-    <style>
-    </style>
+    <link rel="stylesheet" href="./chatassist.css">
 </head>
 <body>
 <script id="chat-template" type="text/x-handlebars-template">
@@ -60,16 +91,18 @@
 <script id="chat-template-sticky" type="text/x-handlebars-template">
     <div class="fixed_chat">
     {{#ifCond nickname notitle}}
-        <!-- NO TITLE -->
+        <div class="chat_text_message_sticky_logo">
+            {{{message}}}
+        </div>
     {{else}}
         <span class="chat_platform_{{platform}}"></span>
         <span class="chat_text_nickname">
             {{{nickname}}}
         </span>
-    {{/ifCond}}
         <div class="chat_text_message_sticky">
             {{{message}}}
         </div>
+    {{/ifCond}}
     </div>
 </script>
 <div class="chat_wrapper">

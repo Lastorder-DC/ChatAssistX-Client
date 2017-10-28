@@ -605,11 +605,11 @@ function htmlEntities(str) {
  */
 function updateStyle() {
     $(".chat_text_nickname").css({
-        'font-family': window.chat.config.font,
+        'font-family': window.chat.config.font + ', 나눔바른고딕, 나눔고딕, NanumGothic, 맑은고딕, "Malgun Gothic", sans-serif',
         'font-size': window.chat.config.fontUsernameSize,
         "color": "rgb(" + window.chat.config.fontUsernameColor + ")"});
     $(".chat_text_message").css({
-        'font-family': window.chat.config.font,
+        'font-family': window.chat.config.font + ', 나눔바른고딕, 나눔고딕, NanumGothic, 맑은고딕, "Malgun Gothic", sans-serif',
         'font-size': window.chat.config.fontChatSize,
         "color": "rgb(" + window.chat.config.fontChatColor + ")",
         "background-color": "rgba(" + window.chat.config.chatBackgroundColor + "," + (window.chat.config.chatBackgroundAlpha * 0.01) + ")"});

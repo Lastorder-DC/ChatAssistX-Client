@@ -3,21 +3,21 @@
 .chat_platform_error {
     width: 16px;
     margin-right: 5px;
-    content: url('../jsassist/icon_error_small.png');
+    content: url('./img/icon_error_small.png');
     vertical-align: middle;
 }
 
 .chat_platform_warning {
     width: 16px;
     margin-right: 5px;
-    content: url('../jsassist/icon_warning_small.png');
+    content: url('./img/icon_warning_small.png');
     vertical-align: middle;
 }
 
 .chat_platform_info {
     width: 16px;
     margin-right: 5px;
-    content: url('../jsassist/icon_info_small.png');
+    content: url('./img/icon_info_small.png');
     vertical-align: middle;
 }
 
@@ -103,4 +103,8 @@ span.tapicversionstring pre {
 span.backslash {
     font-size:12px !important;
     font-family:Consolas !important;
+}
+
+.chat_text_message img {
+    height: 75px;
 }

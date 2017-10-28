@@ -3,10 +3,16 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- * V 1.5.0 Last update by Lastorder-DC on 2017-10-01.
+ *                 V E R S I O N    1.6.0-dev1
+ *       Last updated by Lastorder-DC on 2017-10-28.
  */
-// 채팅 관련 설정 변수
+// 변수 초기화
 window.chat = {};
+
+// 버전 번호
+window.chat.version = "1.6.0-dev1";
+
+// 채팅 관련 설정 변수
 window.chat.template = null;
 window.chat.stickytemplate = null;
 window.chat.isInited = false;
@@ -18,20 +24,22 @@ window.chat.emoticonfailcount = 0
 window.chat.sticky = false;
 
 // 기본 채팅 스타일
-window.chat.config = {};
-window.chat.config.platformIcon = true;
-window.chat.config.platform = "all";
-window.chat.config.animation = "fade";
-window.chat.config.chatFade = 10;
-window.chat.config.font = "Jeju Gothic";
-window.chat.config.fontUsernameSize = 14;
-window.chat.config.fontUsernameColor = "255, 255, 255";
-window.chat.config.fontChatSize = 16;
-window.chat.config.fontChatColor = "255, 255, 255";
-window.chat.config.backgroundColor = "255, 255, 255";
-window.chat.config.backgroundAlpha = 0;
-window.chat.config.chatBackgroundColor = "255, 255, 255";
-window.chat.config.chatBackgroundAlpha = 0.25;
+if(typeof window.chat.config === 'undefined') {
+    window.chat.config = {};
+    window.chat.config.platformIcon = true;
+    window.chat.config.platform = "all";
+    window.chat.config.animation = "fade";
+    window.chat.config.chatFade = 10;
+    window.chat.config.font = "Jeju Gothic";
+    window.chat.config.fontUsernameSize = 14;
+    window.chat.config.fontUsernameColor = "255, 255, 255";
+    window.chat.config.fontChatSize = 16;
+    window.chat.config.fontChatColor = "255, 255, 255";
+    window.chat.config.backgroundColor = "255, 255, 255";
+    window.chat.config.backgroundAlpha = 0;
+    window.chat.config.chatBackgroundColor = "255, 255, 255";
+    window.chat.config.chatBackgroundAlpha = 0.25;
+}
 
 // XMLHTTPRequest
 var httpRequest;
@@ -60,7 +68,7 @@ function CompileChat() {
  */
 function LoadEmoticon() {
     // 이모티콘 주소가 비어있으면 무시
-    if(window.emoticon.address == "") return true;
+    if(window.emoticon.address === "") return true;
 
     // httpRequest 초기화
     if (window.XMLHttpRequest) { // 파폭, 사파리, 크롬 등등 웹표준 준수 브라우저
@@ -82,8 +90,12 @@ function LoadEmoticon() {
         return false;
     }
     
-    addChatMessage("info","불러오는중","디시콘 목록을 불러오는중... (1 / 3)",true,false);
-
+    if(window.tapic.oauth === "") {
+        addChatMessage("info","불러오는중","디시콘 목록을 불러오는중... (1 / 3)",true,false);
+    } else {
+        addChatMessage("info","불러오는중","디시콘 목록을 불러오는중... (1 / 1)",true,false);
+    }
+    
     httpRequest.onreadystatechange = CompleteLoadEmoticon;
     httpRequest.open('GET', window.emoticon.address);
     httpRequest.send();
@@ -103,8 +115,18 @@ function CompleteLoadEmoticon() {
                 window.emoticon.list = JSON.parse(httpRequest.responseText);
                 window.emoticon.isActive = true;
                 
-                addChatMessage("info","불러오는중","디시콘 목록을 불러왔습니다. (1 / 3)",true,false);
-                LoadTwitchEmoticon();
+                if(window.tapic.oauth === "") {
+                    addChatMessage("info","불러오는중","디시콘 목록을 불러왔습니다. (1 / 3)",true,false);
+                    LoadTwitchEmoticon();
+                } else {
+                    window.emoticon.istwitchActive = true;
+                    addChatMessage("info","불러오는중","디시콘 목록을 불러왔습니다. (1 / 1)",true,false);
+                    
+                    window.chat.isInited = true;
+                    addChatMessage("info","TAPIC 사용","<span class='tapiclogo'><pre>  _________    ____  __________[br] /_  __/   |  / __ <span class='backslash'>\\</span>/  _/ ____/[br]  / / / /| | / /_/ // // /[br] / / / ___ |/ ____// // /___[br]/_/ /_/  |_/_/   /___/<span class='backslash'>\\</span>____/</pre></span><span class='tapicversionstring'><pre>[br]    TAPIC BY Skhmt</pre></span>",false,true);
+                    
+                    addChatMessage("info","NOTITLE","<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + window.chat.version + "[br]초 기 화    성 공</pre></span>",true,true);
+                }
             }
             catch (e) {
                 window.chat.emoticonfailcount++;
@@ -147,7 +169,7 @@ function LoadTwitchEmoticon() {
     addChatMessage("info","불러오는중","트위치 글로벌 이모티콘을 불러오는중... (2 / 3)",true,false);
 
     httpRequest.onreadystatechange = CompleteLoadTwitchEmoticon;
-    httpRequest.open('GET', "https://cdn.rawgit.com/Lastorder-DC/dccon/v171001/global.json");
+    httpRequest.open('GET', window.emoticon.twitch);
     httpRequest.send();
 
     return true;
@@ -209,7 +231,7 @@ function LoadTwitchSubEmoticon() {
     addChatMessage("info","불러오는중","트위치 구독 이모티콘을 불러오는중... (3 / 3)",true,false);
 
     httpRequest.onreadystatechange = CompleteLoadTwitchSubEmoticon;
-    httpRequest.open('GET', "https://cdn.rawgit.com/Lastorder-DC/dccon/v170726/sub.json");
+    httpRequest.open('GET', window.emoticon.twitch_sub);
     httpRequest.send();
 
     return true;
@@ -230,7 +252,7 @@ function CompleteLoadTwitchSubEmoticon() {
                 addChatMessage("info","불러오는중","트위치 구독 이모티콘을 불러왔습니다. (3 / 3)",true,false);
                 
                 window.chat.isInited = true;
-                addChatMessage("info","NOTITLE","<pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|[br]V E R S I O N      V. 1.5.0[br]초 기 화    성 공</pre>",true,true);
+                addChatMessage("info","NOTITLE","<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + window.chat.version + "[br]초 기 화    성 공</pre></span>",true,true);
             }
             catch (e) {
                 window.chat.emoticonfailcount++;
@@ -361,6 +383,45 @@ function replaceTwitchEmoticon(match, emoticon_key, offset) {
     }
 }
 
+function TAPIC_replaceTwitchEmoticon(message,emotes) {
+    var ranges;
+    var id;
+    var emote_id;
+    var regExp;
+    var replace_list = {};
+    
+    if(typeof emotes != 'undefined') {
+        var emote_list = emotes.split("/");
+        emote_list.forEach(function(emote_replace) {
+            ranges = emote_replace.split(":");
+            id = ranges[0];
+            if(typeof ranges[1] == 'undefined') return;
+            ranges = ranges[1].split(",");
+            if(typeof ranges[0] != 'undefined') {
+                ranges = ranges[0].split("-");
+                emote_id = message.substring(parseInt(ranges[0]),parseInt(ranges[1])+1);
+                replace_list[emote_id] = id;
+            }
+        });
+        
+        for (var replace_id in replace_list) {
+            regExp = new RegExp(escapeRegExp(replace_id),"g");
+            message = message.replace(regExp,"<img class=\"twitch_emoticon\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/" + replace_list[replace_id] + "/" + window.config.TwitchEmoticonsize + "\" >");
+        }
+    }
+    
+    return message;
+}
+
+/**
+ * 정규식 특수문자 이스케이프 함수
+ * @param {String} str
+ * @returns {String}
+ */
+function escapeRegExp(str) {
+    return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 /**
  * 명령어 변환 함수
  * @param {String} match
@@ -374,6 +435,9 @@ function replaceCommand(match, command, commandarg, offset) {
     console.log(command);
     
     switch(command) {
+        case "채팅초기화":
+            $(".chat_container").html("");
+            break;
         case "통계":
             message = "채팅 수 : " + getCount("chat") + "[br]마퀴태그 : " + getCount("mq");
             message = message + "[br]디시콘 : " + getCount("emoticon") + "[br]트위치 이모지 : " + getCount("twitchemoticon");
@@ -605,7 +669,8 @@ function increaseCount(key) {
  * @returns {Boolean}
  */
 function isStreamer(platform,nickname)  {
-    console.log(window.config.streamer[platform] == nickname);
+    // 기본값인 경우 무조건 false 반환
+    if(window.config.streamer[platform] === "REPLACE_THIS_WITH_NAME") return false;
     return window.config.streamer[platform] == nickname;
 }
 
@@ -615,13 +680,14 @@ function isStreamer(platform,nickname)  {
  * @param {String} nickname
  * @param {String} message
  * @param {Boolean} sticky
- * @param {Boolean} rawprint
+ * @param {Boolean} ext_args
  * @returns {String}
  */
-function addChatMessage(platform, nickname, message, sticky, rawprint) {
+function addChatMessage(platform, nickname, message, sticky, ext_args) {
     var $chatElement;
     var $remove_temp;
     var chat;
+    var rawprint = false;
     
     // 초기화 전엔 일반채팅은 무시하며 고정 채팅만 일반채팅으로 출력
     if(!window.chat.isInited) {
@@ -631,6 +697,22 @@ function addChatMessage(platform, nickname, message, sticky, rawprint) {
     
     //이미 고정된 메세지가 있었다면 추가로 고정하지 않음
     if(window.chat.sticky && sticky) return;
+    
+    if(typeof ext_args === "boolean") {
+        rawprint = ext_args;
+        ext_args = {};
+        ext_args.rawprint = rawprint;
+        ext_args.isStreamer = false;
+        ext_args.isMod = false;
+    } else if(typeof ext_args === "object" && typeof ext_args.rawprint === "boolean") {
+        rawprint = ext_args.rawprint;
+    } else {
+        console.error("ext_args format is wrong - expected object or boolean, got " + typeof ext_args);
+        ext_args = {};
+        ext_args.rawprint = rawprint;
+        ext_args.isStreamer = false;
+        ext_args.isMod = false;
+    }
     
     if(rawprint) {
         // 강제개행 문법만 변환
@@ -661,10 +743,18 @@ function addChatMessage(platform, nickname, message, sticky, rawprint) {
         if(window.config.enableTwitchEmoticon && typeof window.emoticon.twitch_list != "undefined") {
             message = message.replace(/\\n(\S*?)\\n/g,replaceTwitchEmoticon);
         }
+        
+        if(window.config.enableTwitchEmoticon && typeof ext_args.emotes != "undefined") {
+            message = TAPIC_replaceTwitchEmoticon(message,ext_args.emotes);
+        }
+        
+        if(ext_args.isMod) {
+            nickname = "<b>" + nickname + "</b>";
+        }
 
-        if(isStreamer(platform,nickname)) {
+        if(ext_args.isStreamer || isStreamer(platform,nickname)) {
             message = message.replace(/~([^ ]+)+(?: )*(.+)*/g,replaceCommand);
-            nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge">&nbsp;' + nickname;
+            nickname = '<img style="vertical-align: middle;" src="http://funzinnu.cafe24.com/stream/cdn/b_broadcaster.png" alt="Broadcaster" class="badge">&nbsp;' + nickname;
         }
 
         if(message.indexOf("~투표생성") === -1 && message.indexOf("~투표종료") === -1 && message.indexOf("~투표") !== -1) {
@@ -756,10 +846,13 @@ function connect_jsassist() {
         var data = JSON.parse(FixJSAssistBug(evt.data));
 
         if (data.type == "chat_message") {
-            if (window.chat.config.platform != "all") {
-                if (window.chat.config.platform != data.platform) {
-                    return;
-                }
+            if (window.chat.config.platform != "all" && window.chat.config.platform != data.platform) {
+                return;
+            }
+            
+            // tapic 세팅이 되어있지 않은 경우에만 jsassist 이용
+            if(window.tapic.inited && data.platform === "twitch") {
+                return;
             }
             
             addChatMessage(data.platform, data.username, data.message, false, false);
@@ -770,21 +863,54 @@ function connect_jsassist() {
     ws.onclose = function () {
         is_connected = false;
         window.chat.failcount++;
-        if(window.chat.failcount > 9 && window.chat.failcount % 10 === 0) {
+        //if(window.chat.failcount > 9 && window.chat.failcount % 10 === 0) {
             // 10번 이상 접속 실패시 접속 장애 안내문 출력
-            addChatMessage("warning", "ChatAssist Error", "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.",true,false);
-        }
-        if(window.chat.failcount > 99) {
-            addChatMessage("critical", "ChatAssist Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
+            //addChatMessage("warning", "ChatAssistX Error", "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.",true,false);
+        //}
+        if(window.chat.failcount > 29) {
+            //addChatMessage("critical", "ChatAssistX Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
         } else {
-            console.error("JSAssist connect failed " + window.chat.failcount + " times.");
+            //console.error("JSAssist connect failed " + window.chat.failcount + " times.");
             setTimeout(connect_jsassist, 1000);
         }
     };
 }
 
+function connect_tapic() {
+    if(window.tapic.oauth !== "") {
+        TAPIC.setup(window.tapic.oauth, function(username) {
+            TAPIC.setRefreshRate(10);
+
+            if (window.tapic.channelname !== "") {
+                TAPIC.joinChannel(window.tapic.channelname, function() {
+                    window.tapic.inited = true;
+                });
+            }
+        });
+        
+        TAPIC.listen('message', function(e) {
+            var ext_args = {};
+            ext_args.isStreamer = false;
+            ext_args.isMod = false;
+            ext_args.rawprint = false;
+            ext_args.emotes = e.emotes;
+            
+            if (e.streamer || e.badges.indexOf("broadcaster/1") != -1) {
+                ext_args.isStreamer = true;
+                ext_args.isMod = true;
+            } else if(e.mod) {
+                ext_args.isStreamer = false;
+                ext_args.isMod = true;
+            }
+            
+            addChatMessage("twitch", e.from, e.text, false, ext_args);
+        });
+    }
+}
+
 $(document).ready(function () {
     CompileChat();
     connect_jsassist();
+    connect_tapic();
     LoadEmoticon();
 });

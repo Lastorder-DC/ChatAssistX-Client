@@ -106,5 +106,5 @@ span.backslash {
 }
 
 .chat_text_message img {
-    height: 75px;
+    max-height: 75px;
 }

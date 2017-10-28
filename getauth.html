@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>트위치 auth</title>
+    <script src="https://cdn.rawgit.com/blueimp/JavaScript-MD5/v2.10.0/js/md5.min.js"></script>
+    <script>
+        // there's no oauth key
+        if (document.location.hash != "" && document.location.hash.indexOf("access_token") !== -1) {
+            //user already authed
+            var rawauth = document.location.href.replace("#", "?");
+            var authobj = new URL(rawauth);
+            var oauth = authobj.searchParams.get("access_token");
+            var state = authobj.searchParams.get("state");
+            var localstate = localStorage.getItem("state");
+            var last_url = localStorage.getItem("last_url");
+            var last_url_obj = new URL(last_url);
+
+            if (last_url_obj.origin !== authobj.origin) {
+                document.write("SECURITY ERROR");
+            } else {
+                if (localstate === null || localstate === "" || state !== localstate) {
+                    document.write("잘못된 state값이 전달되었습니다. 페이지를 새로고침 해보세요.<br />Invalid state. please refresh and retry.")
+                } else {
+                    document.write("oauth value is " + oauth);
+                }
+            }
+        } else {
+            //not authed yet
+            var state = md5(Date.now());
+            localStorage.setItem("state", state);
+            localStorage.setItem("last_url", location.href);
+            
+            document.write("트위치로 로그인해서 auth 발급. <a href=\"https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=pmxd8z2s9kfykxrw8t665kdv02uay4&redirect_uri=https://lastorder-dc.github.io/ChatAssistX-Client/getauth.html&scope=chat_login%20channel_editor%20channel_commercial%20channel_check_subscription&state=" + state + "\">로그인</a>");
+        }
+    </script>
+</head>
+<body>
+</body>
+</html>

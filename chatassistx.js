@@ -6,25 +6,23 @@
  *                 V E R S I O N    1.6.0-dev1
  *       Last updated by Lastorder-DC on 2017-10-28.
  */
-// 변수 초기화
-window.chat = {};
 
-// 버전 번호
-window.chat.version = "1.6.0-dev1";
+if(typeof window.chat === 'undefined') {
+    // 변수 초기화
+    window.chat = {};
 
-// 채팅 관련 설정 변수
-window.chat.template = null;
-window.chat.stickytemplate = null;
-window.chat.isInited = false;
-window.chat.failcount = 0;
-window.chat.count = 0;
-window.chat.cur_count = 0;
-window.chat.maxcount = 50;
-window.chat.emoticonfailcount = 0
-window.chat.sticky = false;
-
-// 기본 채팅 스타일
-if(typeof window.chat.config === 'undefined') {
+    // 채팅 관련 설정 변수
+    window.chat.template = null;
+    window.chat.stickytemplate = null;
+    window.chat.isInited = false;
+    window.chat.failcount = 0;
+    window.chat.count = 0;
+    window.chat.cur_count = 0;
+    window.chat.maxcount = 50;
+    window.chat.emoticonfailcount = 0
+    window.chat.sticky = false;
+    
+    // 기본 채팅 스타일
     window.chat.config = {};
     window.chat.config.platformIcon = true;
     window.chat.config.platform = "all";
@@ -38,8 +36,11 @@ if(typeof window.chat.config === 'undefined') {
     window.chat.config.backgroundColor = "255, 255, 255";
     window.chat.config.backgroundAlpha = 0;
     window.chat.config.chatBackgroundColor = "255, 255, 255";
-    window.chat.config.chatBackgroundAlpha = 0.25;
+    window.chat.config.chatBackgroundAlpha = 25;
 }
+
+// 버전 번호
+window.chat.version = "1.6.0-dev1";
 
 // XMLHTTPRequest
 var httpRequest;

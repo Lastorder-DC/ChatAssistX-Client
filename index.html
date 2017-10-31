@@ -41,8 +41,8 @@
         // 절대! 절대!! 절대!!! html파일에 직접 oauth 값을 입력하지 마세요. oauth 값이 유출된 경우 타 사용자가 oauth 값을 악용할 수 있습니다!(타 채널에 들어가 어그로, 설정 임의변경 등등등...)
         // 장점: 트위치 이모티콘 리스트 업데이트 없이 계속 최신 이모티콘 사용가능!!!
         window.tapic = {};
-        window.tapic.oauth = url.searchParams.get("oauth");
-        window.tapic.channelname = url.searchParams.get("channel");
+        window.tapic.oauth = url.searchParams.get("oauth") === null ? "" : url.searchParams.get("oauth");
+        window.tapic.channelname = url.searchParams.get("channel") === null ? "" : url.searchParams.get("channel");
         window.tapic.inited = false;
         
         // 주소 사용예

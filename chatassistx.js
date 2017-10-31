@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.6.0-dev1
+ *                 V E R S I O N    1.6.0-dev2
  *       Last updated by Lastorder-DC on 2017-10-28.
  */
 
@@ -40,10 +40,13 @@ if(typeof window.chat === 'undefined') {
 }
 
 // 버전 번호
-window.chat.version = "1.6.0-dev1";
+window.chat.version = "1.6.0-dev2";
 
 // XMLHTTPRequest
 var httpRequest;
+
+// BUGFIX TAPIC 미사용시에도 TAPIC을 사용하는 버그 수정
+if(window.tapic.oauth === null) window.tapic.oauth = "";
 
 /**
  * 채팅 템플릿 컴파일

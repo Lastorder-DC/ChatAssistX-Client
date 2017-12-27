@@ -1,130 +1,56 @@
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <title>ChatAssistX for JSAssist</title>
-    <script>
-        // get parameter 가져옴
-        var url_string = window.location.href;
-        var url = new URL(url_string);
+	<meta charset="utf-8" />
+	<title>ChatAssistX for JSAssist</title>
+	<script src="https://cdn.jsdelivr.net/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.ui/1.11.4/jquery-ui.min.css">
+	<script src="https://cdn.jsdelivr.net/handlebarsjs/4.0.8/handlebars.min.js"></script>
+	<script src="https://cdn.rawgit.com/Skhmt/tapic/5.0.2/dist/tapic.min.js"></script>
+	<script src="./js/chatassistx/chat-loader.js"></script>
+	<link rel="stylesheet" href="./jsassist.css" type="text/css" />
+	<link rel="stylesheet" href="./chatassist.css">
 
-        // ChatAssist 설정 변수
-        window.config = {};
-        // 채널 아이디. 주소끝 ?preset=(프리셋아이디) 를 붙여 지정합니다.
-        // 강제지정은 url.searchParams.get("preset") 을 "프리셋명" 으로 바꾸면 됩니다.
-        window.config.preset = url.searchParams.get("preset");
-        
-        window.config.allowExternalSource = false; // 외부이미지([img 주소] 문법) 허용하려면 true로 변경
-        window.config.allowEmoticon = true; // 디시콘 사용가능유무 사용금지로 바꾸려면 false로 변경
-        window.config.ignoreMQEmoticon = true; // 마퀴태그+디시콘 사용여부 사용하려면 false로 변경
-        window.config.ignoreNickname = "nightbot,twipkr" // 필터링할 닉네임 목록(,로 구분)
-        window.config.enableTwitchEmoticon = true; // 트위치 이모티콘 사용여부
-        window.config.TwitchEmoticonsize = "1.0"; //트위치 이모티콘 크기 1.0/2.0/3.0 처럼 입력
-
-        // 이모티콘
-        window.emoticon = {};
-        window.emoticon.address = "https://lastorder-dc.github.io/ChatAssistX-Client/dccon.json";
-        window.emoticon.isActive = false; // 이모티콘 목록 불러와졌는지 여부
-        window.emoticon.list = {}; // 이모티콘 목록
-        window.emoticon.twitch = "https://cdn.rawgit.com/Lastorder-DC/dccon/v171013/global.json";
-        window.emoticon.twitch_sub = "https://cdn.rawgit.com/Lastorder-DC/dccon/v171013/sub.json";
-        
-        // 스트리머 전용 명령어(~통계,~투표) 를 사용하기 위한 아이디 지정
-        window.config.streamer = {
-            "twitch" : url.searchParams.get("twitch"),
-            "kakaopot" : url.searchParams.get("kakaopot"),
-            "youtube" : url.searchParams.get("youtube")
-        }
-        
-        // tapic 세팅
-        // JSAssist 없이 트위치 연동을 가능하게 합니다.
-        // https://lastorder-dc.github.io/ChatAssistX-Client/getauth.html 에서 oauth을 발급후 사용 가능합니다.
-        // 절대! 절대!! 절대!!! html파일에 직접 oauth 값을 입력하지 마세요. oauth 값이 유출된 경우 타 사용자가 oauth 값을 악용할 수 있습니다!(타 채널에 들어가 어그로, 설정 임의변경 등등등...)
-        // 장점: 트위치 이모티콘 리스트 업데이트 없이 계속 최신 이모티콘 사용가능!!!
-        window.tapic = {};
-        window.tapic.oauth = url.searchParams.get("oauth") === null ? "" : url.searchParams.get("oauth");
-        window.tapic.channelname = url.searchParams.get("channel") === null ? "" : url.searchParams.get("channel");
-        window.tapic.inited = false;
-        
-        // 주소 사용예
-        // https://lastorder-dc.github.io/ChatAssistX-Client/index.html?preset=(프리셋아이디)&oauth=(oauth값)&channel=(채널아이디)&twitch=(트위치닉네임)&kakaopot=(카카오닉네임)&youtube=(유튜브닉네임)
-        
-        // 기본값 입력처리
-        if(window.config.preset == null || window.config.preset == "") window.config.preset = "default";
-        
-        // 변수 초기화
-        window.chat = {};
-
-        // 버전 번호
-        window.chat.version = "unknown";
-
-        // 채팅 관련 설정 변수
-        window.chat.template = null;
-        window.chat.stickytemplate = null;
-        window.chat.isInited = false;
-        window.chat.failcount = 0;
-        window.chat.count = 0;
-        window.chat.cur_count = 0;
-        window.chat.maxcount = 50;
-        window.chat.emoticonfailcount = 0
-        window.chat.sticky = false;
-        
-        // tapic 사용시 사용할 스타일
-        window.chat.config = {};
-        window.chat.config.platformIcon = true;
-        window.chat.config.platform = "all";
-        window.chat.config.animation = "fade";
-        window.chat.config.chatFade = 10;
-        window.chat.config.font = "Jeju Gothic";
-        window.chat.config.fontUsernameSize = 14;
-        window.chat.config.fontUsernameColor = "255, 255, 255";
-        window.chat.config.fontChatSize = 16;
-        window.chat.config.fontChatColor = "255, 255, 255";
-        window.chat.config.backgroundColor = "255, 255, 255";
-        window.chat.config.backgroundAlpha = 0;
-        window.chat.config.chatBackgroundColor = "255, 255, 255";
-        window.chat.config.chatBackgroundAlpha = 25;
-    </script>
-    <script src="https://cdn.jsdelivr.net/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.ui/1.11.4/jquery-ui.min.css">
-    <script src="https://cdn.jsdelivr.net/handlebarsjs/4.0.8/handlebars.min.js"></script>
-    <script src="https://cdn.rawgit.com/Skhmt/tapic/5.0.2/dist/tapic.min.js"></script>
-    <script src="./chatassistx.js"></script>
-    <link rel="stylesheet" href="./jsassist.css" type="text/css"/>
-    <link rel="stylesheet" href="./chatassistx.css">
+	<script>
+		window.ChatAssistX.init("https://gist.githubusercontent.com/Lastorder-DC/30dbbe68688788eeb5c6dae5c65cc1c8/raw/config.json");
+		var args_test = {};
+		args_test.nickname = "TestNick";
+		args_test.platform = "twitch";
+		args_test.message = "Test";
+	</script>
 </head>
 <body>
-<script id="chat-template" type="text/x-handlebars-template">
-    <div class="chat_div" id="chat_{{num}}">
-        <span class="chat_platform_{{platform}}"></span>
-        <span class="chat_text_nickname">
+	<script id="chat-template" type="text/x-handlebars-template">
+		<div class="chat_div" id="chat_{{num}}">
+			<span class="chat_platform_{{platform}}"></span>
+			<span class="chat_text_nickname">
             {{{nickname}}}
         </span>
-        <div class="chat_text_message">
-            {{{message}}}
-        </div>
-    </div>
-</script>
-<script id="chat-template-sticky" type="text/x-handlebars-template">
-    <div class="fixed_chat">
-    {{#ifCond nickname notitle}}
-        <div class="chat_text_message_sticky_logo">
-            {{{message}}}
-        </div>
-    {{else}}
-        <span class="chat_platform_{{platform}}"></span>
-        <span class="chat_text_nickname">
+			<div class="chat_text_message">
+				{{{message}}}
+			</div>
+		</div>
+	</script>
+	<script id="chat-template-sticky" type="text/x-handlebars-template">
+		<div class="fixed_chat">
+			{{#ifCond nickname notitle}}
+			<div class="chat_text_message_sticky_logo">
+				{{{message}}}
+			</div>
+			{{else}}
+			<span class="chat_platform_{{platform}}"></span>
+			<span class="chat_text_nickname">
             {{{nickname}}}
         </span>
-        <div class="chat_text_message_sticky">
-            {{{message}}}
-        </div>
-    {{/ifCond}}
-    </div>
-</script>
-<div class="chat_wrapper">
-    <div class="chat_container">
-    </div>
-</div>
+			<div class="chat_text_message_sticky">
+				{{{message}}}
+			</div>
+			{{/ifCond}}
+		</div>
+	</script>
+	<div class="chat_wrapper">
+		<div class="chat_container">
+		</div>
+	</div>
 </body>
 </html>

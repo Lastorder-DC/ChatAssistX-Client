@@ -1,0 +1,1 @@
+window.ChatAssistX.plugins.push("style");

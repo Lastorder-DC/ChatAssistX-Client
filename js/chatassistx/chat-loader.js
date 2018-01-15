@@ -13,7 +13,11 @@
 	window.chat = {};
 	window.ChatAssistX = {};
 	window.ChatAssistX.plugins = [];
+	window.ChatAssistX.plugin_count = 0;
+	window.ChatAssistX.loaded_plugin_count = 0;
 	window.ChatAssistX.provider = [];
+	window.ChatAssistX.provider_count = 0;
+	window.ChatAssistX.loaded_provider_count = 0;
 
 	/**
 	 * 정규식 특수문자 이스케이프 함수
@@ -47,6 +51,12 @@
 
 	window.ChatAssistX.connect = function() {
 		//provider들의 연결함수 실행
+		var list = window.ChatAssistX.provider;
+		for (var id in list) {
+			if(!list[id].connect()) {
+				console.log("Cannot connect provider " + id);
+			}
+		}
 	}
 
 	window.ChatAssistX.addChatMessage = function(args) {
@@ -148,11 +158,24 @@
 
 	function loadPlugins(list) {
 		//플러그인 불러오는 함수
-		//console.log(list);
+		window.ChatAssistX.plugin_count = 0;
+		window.ChatAssistX.loaded_plugin_count = 0;
+		for (var id in list) {
+			if (list[id].use) {
+				window.ChatAssistX.plugin_count++;
+			}
+		}
 		for (var id in list) {
 			if (list[id].use) {
 				console.log("Loading plugin : " + id);
-				$.loadScript('./js/chatassistx/plugins/' + id + '.js', function() {});
+				$.loadScript('./js/chatassistx/plugins/' + id + '.js', function() {
+					/*
+					window.ChatAssistX.loaded_plugin_count++;
+					if(window.ChatAssistX.plugin_count == window.ChatAssistX.loaded_plugin_count) {
+						window.ChatAssistX.connect();
+					}
+					*/
+				});
 			}
 		}
 		return true;
@@ -160,9 +183,22 @@
 
 	function loadProvider(list) {
 		//provider 불러오는 함수
+		window.ChatAssistX.provider_count = 0;
+		window.ChatAssistX.loaded_provider_count = 0;
+		for (var id in list) {
+			if (list[id].use) {
+				window.ChatAssistX.provider_count++;
+			}
+		}
 		for (var id in list) {
 			if (list[id].use) {
 				console.log("Loading provider : " + id);
+				$.loadScript('./js/chatassistx/provider/' + id + '.js', function() {
+					window.ChatAssistX.loaded_provider_count++;
+					if(window.ChatAssistX.provider_count == window.ChatAssistX.loaded_provider_count) {
+						window.ChatAssistX.connect();
+					}
+				});
 			}
 		}
 		return true;

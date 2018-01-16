@@ -9,6 +9,9 @@
 
 (function(window) {
 	var httpRequest;
+	var cur_count = 0;
+	var count = 0;
+	var maxcount = 30;
 
 	window.chat = {};
 	window.ChatAssistX = {};
@@ -69,6 +72,25 @@
 		var $remove_temp;
 		var chat;
 		var rawprint = false;
+		//window.ChatAssistX.config.themes
+		
+		if(isStreamer(args.platform, args.nickname) && args.message.match(/^!!theme ([^ ]+)/) != null) {
+			var theme = args.message.match(/^!!theme ([^ ]+)/)[1];
+			
+			if(typeof window.ChatAssistX.config.themes[theme] === 'undefined') {
+				args.nickname = "error";
+				args.message = "테마 " + theme + " 은 존재하지 않습니다!";
+				args.platform = "info";
+			} else {
+				deleteThemeCSS();
+				args.nickname = "System";
+				args.message = "테마가 " + theme + " 으로 변경되었습니다.";
+				args.platform = "info";
+				for(var i = 0;i < window.ChatAssistX.config.themes[theme].css.length;i++) {
+					addThemeCSS(window.ChatAssistX.config.themes[theme].css[i]);
+				}
+			}
+		}
 
 		if (rawprint) {
 			// 강제개행 문법만 변환
@@ -93,7 +115,7 @@
 
 			//TODO 스트리머 아이콘 커스텀
 			if (args.isStreamer || isStreamer(args.platform, args.nickname)) {
-				args.nickname = '<img style="vertical-align: middle;" src="http://funzinnu.cafe24.com/stream/cdn/b_broadcaster.png" alt="Broadcaster" class="badge">&nbsp;' + nickname;
+				args.nickname = '<img style="vertical-align: middle;" src="http://funzinnu.cafe24.com/stream/cdn/b_broadcaster.png" alt="Broadcaster" class="badge">&nbsp;' + args.nickname;
 			}
 
 			// 명령어 입력은 스킵함
@@ -101,7 +123,7 @@
 		}
 
 		chat = {
-			num: window.chat.cur_count,
+			num: cur_count,
 			platform: args.platform,
 			nickname: args.nickname,
 			message: args.message,
@@ -120,33 +142,33 @@
 			});
 		}
 
-		window.chat.count++;
-		window.chat.cur_count++;
+		count++;
+		cur_count++;
 
 		if (window.ChatAssistX.config.chat.chatFade != 0) {
 			var fadeTime = window.ChatAssistX.config.chat.chatFade * 1000;
 			if (window.ChatAssistX.config.chat.animation == "none") {
 				$chatElement.delay(fadeTime).hide(0, function() {
 					$(this).remove();
-					window.chat.count--;
+					count--;
 					window.chat.sticky = false;
 				});
 			} else {
 				$chatElement.delay(fadeTime).hide(window.ChatAssistX.config.chat.animation, 1000, function() {
 					$(this).remove();
-					window.chat.count--;
+					count--;
 					window.chat.sticky = false;
 				});
 			}
 		} else {
-			if (window.chat.count > window.chat.maxcount) {
-				window.chat.count--;
+			if (count > maxcount) {
+				count--;
 				$remove_temp = $(".chat_container div.chat_div:first-child");
 				$remove_temp.remove();
 			}
 
-			if (window.chat.cur_count > window.chat.maxcount) {
-				window.chat.cur_count = 0;
+			if (cur_count > maxcount) {
+				cur_count = 0;
 			}
 		}
 	}
@@ -202,6 +224,21 @@
 			}
 		}
 		return true;
+	}
+	
+	function addThemeCSS(cssfile) {
+		var head  = document.getElementsByTagName('head')[0];
+		var link  = document.createElement('link');
+		link.rel  = 'stylesheet';
+		link.type = 'text/css';
+		link.href = cssfile;
+		head.appendChild(link);
+	}
+	
+	function deleteThemeCSS() {
+		while(document.querySelector('link:not([defcss="true"])') !== null) {
+			document.querySelector('link:not([defcss="true"])').remove();
+		}
 	}
 
 	/**

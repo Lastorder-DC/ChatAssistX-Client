@@ -3,6 +3,8 @@
 	args_test.nickname = "JSAssistNick";
 	args_test.platform = "twitch";
 	args_test.message = "JSAssist driver is working fine";
+	
+	var provider_name = "JSAssist";
 	var fail_count = 0;
 
 	function FixJSAssistBug(json_string) {
@@ -21,18 +23,23 @@
 		}
 		return json_string;
 	}
+	
+	/**
+	 * 스트리머 여부 반환
+	 * @param {String} nickname
+	 * @returns {Boolean}
+	 */
+	function isStreamer(platform, nickname) {
+		return window.ChatAssistX.config.streamer[platform] == nickname;
+	}
 
-	if (typeof window.ChatAssistX.provider['JSAssist'] !== 'undefined') {
+	if (typeof window.ChatAssistX.provider[provider_name] !== 'undefined') {
 		console.log("JSAssist provider is already loaded!");
 	} else {
 		console.log("JSAssist driver is loading");
-		window.ChatAssistX.provider['JSAssist'] = {};
-		window.ChatAssistX.provider['JSAssist'].connect = function() {
-			//JSAssist 연결함수
-			//console.warn("TODO: Implement JSAssist Connection");
-
-			//window.ChatAssistX.addChatMessage(args_test);
-
+		window.ChatAssistX.provider[provider_name] = {};
+		window.ChatAssistX.provider[provider_name].chatPresets = {};
+		window.ChatAssistX.provider[provider_name].connect = function() {
 			var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
 			ws.onopen = function() {
 				fail_count = 0;
@@ -42,9 +49,26 @@
 
 				if (data.type == "chat_message") {
 					data.nickname = data.username;
+					data.message = data.message.trim();
+					
+					if(isStreamer(data.platform, data.nickname) && data.message.match(/^!!preset ([^ ]+)/) != null) {
+						if(typeof window.ChatAssistX.provider[provider_name].chatPresets[data.message.match(/^!!preset ([^ ]+)/)[1]] === 'undefined') {
+							data.nickname = "error";
+							data.message = "프리셋 " + data.message.match(/^!!preset ([^ ]+)/)[1] + " 은 존재하지 않습니다!";
+							data.platform = "info";
+						} else {
+							window.ChatAssistX.config.preset = data.message.match(/^!!preset ([^ ]+)/)[1];
+							data.nickname = "System";
+							data.message = "프리셋이 " + window.ChatAssistX.config.preset + " 으로 변경되었습니다.";
+							data.platform = "info";
+							window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[window.ChatAssistX.config.preset];
+						}
+					}
+					
 					window.ChatAssistX.addChatMessage(data);
 				} else if (data.type == "config") {
-					//if (data.presetName == window.config.preset) window.chat.config = data;
+					window.ChatAssistX.provider[provider_name].chatPresets[data.presetName] = data;
+					if (data.presetName == window.ChatAssistX.config.preset) window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[data.presetName];
 				}
 			};
 			ws.onclose = function() {
@@ -60,7 +84,7 @@
 					console.error("100회 이상 접속 실패로 접속 시도를 중단합니다.");
 				} else {
 					//console.error("JSAssist connect failed " + window.chat.failcount + " times.");
-					setTimeout(window.ChatAssistX.provider['JSAssist'].connect, 1000);
+					setTimeout(window.ChatAssistX.provider[provider_name].connect, 1000);
 				}
 			};
 

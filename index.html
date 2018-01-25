@@ -15,8 +15,13 @@
 	<link rel="stylesheet" href="./chatassist.css" type="text/css" defcss="true" />
 
 	<script>
-		alertify.set('notifier','position', 'top-center');
-		window.ChatAssistX.init("https://gist.githubusercontent.com/Lastorder-DC/30dbbe68688788eeb5c6dae5c65cc1c8/raw/config.json");
+		(function(window) {
+			var url_string = window.location.href;
+			var url = new URL(url_string);
+
+			alertify.set('notifier','position', 'top-center');
+			window.ChatAssistX.init(url.searchParams.get("config"));
+		})(window);
 	</script>
 </head>
 <body>

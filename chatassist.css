@@ -21,6 +21,13 @@
     vertical-align: middle;
 }
 
+.chat_platform_mixer {
+    width: 16px;
+    margin-right: 5px;
+    content: url('./img/icon_mixer_small.png');
+    vertical-align: middle;
+}
+
 .chat_div_fixed {
     position: fixed;
     top: 0;

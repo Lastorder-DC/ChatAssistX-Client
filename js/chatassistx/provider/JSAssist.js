@@ -5,7 +5,9 @@
 	args_test.message = "JSAssist driver is working fine";
 	
 	var provider_name = "JSAssist";
+	var version = "v1.0.0"
 	var fail_count = 0;
+	var ext_twitch = "TAPIC";
 
 	function FixJSAssistBug(json_string) {
 		var message;
@@ -39,33 +41,41 @@
 		console.log("JSAssist driver is loading");
 		window.ChatAssistX.provider[provider_name] = {};
 		window.ChatAssistX.provider[provider_name].chatPresets = {};
-		window.ChatAssistX.provider[provider_name].connect = function() {
+		window.ChatAssistX.provider[provider_name].connect = function(plugin_config) {
 			var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
 			ws.onopen = function() {
 				fail_count = 0;
 			};
 			ws.onmessage = function(evt) {
 				var data = JSON.parse(FixJSAssistBug(evt.data));
+				var ignore_twitch = false;
+				
+				if(typeof window.ChatAssistX.provider[ext_twitch] !== 'undefined' && !!window.ChatAssistX.provider[ext_twitch].loaded) {
+					ignore_twitch = true;
+				}
 
 				if (data.type == "chat_message") {
 					data.nickname = data.username;
 					data.message = data.message.trim();
-					
-					if(isStreamer(data.platform, data.nickname) && data.message.match(/^!!preset ([^ ]+)/) != null) {
+					data.isStreamer = isStreamer(data.platform, data.nickname);
+					data.isMod = false;
+
+					if(data.isStreamer && data.message.match(/^!!preset ([^ ]+)/) != null) {
 						if(typeof window.ChatAssistX.provider[provider_name].chatPresets[data.message.match(/^!!preset ([^ ]+)/)[1]] === 'undefined') {
-							data.nickname = "error";
-							data.message = "프리셋 " + data.message.match(/^!!preset ([^ ]+)/)[1] + " 은 존재하지 않습니다!";
-							data.platform = "info";
+							window.ChatAssistX.addNotice("프리셋 " + data.message.match(/^!!preset ([^ ]+)/)[1] + " 은 존재하지 않습니다!","error");
 						} else {
 							window.ChatAssistX.config.preset = data.message.match(/^!!preset ([^ ]+)/)[1];
-							data.nickname = "System";
-							data.message = "프리셋이 " + window.ChatAssistX.config.preset + " 으로 변경되었습니다.";
-							data.platform = "info";
 							window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[window.ChatAssistX.config.preset];
+
+							window.ChatAssistX.addNotice("프리셋이 " + window.ChatAssistX.config.preset + " 으로 변경되었습니다.","info");
+						}
+					} else {
+						if(ignore_twitch) {
+							if(data.platform !== "twitch") window.ChatAssistX.addChatMessage(data);
+						} else {
+							window.ChatAssistX.addChatMessage(data);
 						}
 					}
-					
-					window.ChatAssistX.addChatMessage(data);
 				} else if (data.type == "config") {
 					window.ChatAssistX.provider[provider_name].chatPresets[data.presetName] = data;
 					if (data.presetName == window.ChatAssistX.config.preset) window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[data.presetName];
@@ -78,10 +88,12 @@
 				// 10번 이상 접속 실패시 접속 장애 안내문 출력
 				//addChatMessage("warning", "ChatAssistX Error", "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.",true,false);
 				console.warn("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.");
+				window.ChatAssistX.addNotice("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.","warn");
 				//}
 				if (window.chat.failcount > 29) {
 					//addChatMessage("critical", "ChatAssistX Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
 					console.error("100회 이상 접속 실패로 접속 시도를 중단합니다.");
+					window.ChatAssistX.addNotice("100회 이상 접속 실패로 접속 시도를 중단합니다. 재접속하시려면 새로고침해주세요.","error");
 				} else {
 					//console.error("JSAssist connect failed " + window.chat.failcount + " times.");
 					setTimeout(window.ChatAssistX.provider[provider_name].connect, 1000);

@@ -337,6 +337,10 @@
 		window.ChatAssistX.plugins[plugin_name] = {};
 		window.ChatAssistX.plugins[plugin_name].process = function(args, config) {
 			var message = args.message;
+			
+			//마퀴태그 치환
+			message = message.replace(/\[mq( direction=([^\ ])*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g,replaceMarquee);
+			
 			if(window.ChatAssistX.config.allowEmoticon) {
 				//디시콘치환
 				message = message.replace(/~([^\ ~]*)/g,replaceEmoticon);
@@ -346,9 +350,6 @@
 				//트위치이모지치환
 				message = message.replace(/\\n(\S*?)\\n/g,replaceTwitchEmoticon);
 			}
-			
-			//마퀴태그 치환
-			message = message.replace(/\[mq( direction=([^\ ])*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g,replaceMarquee);
 
 			if(args.message != message) return message;
 			else return false;

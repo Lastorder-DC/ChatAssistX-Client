@@ -15,10 +15,6 @@
 			// 두번째 이후 이미지는 모두 삭제
 			message = message.replace(/\[img ([^\]\"]*)\]/g, "");
 		}
-		
-		// 트위치 이모티콘을 이미지태그로 변환
-		// 내부문법으로 직접 사용 비권장
-		message = message.replace(/\[twitch ([0-9]*)\]/g, "<img class=\"twchimg\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/$1/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >");
 
 		//닫는태그가 지정된 [b][i][s]
 		message = message.replace(/\[b\](.*)\[\/b\]/g, "<b>$1</b>"); //볼드 [b]blah[/b]

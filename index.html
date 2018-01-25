@@ -7,11 +7,15 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/jquery.ui/1.11.4/jquery-ui.min.css" defcss="true" />
 	<script src="https://cdn.jsdelivr.net/handlebarsjs/4.0.8/handlebars.min.js"></script>
 	<script src="https://cdn.rawgit.com/Skhmt/tapic/5.0.2/dist/tapic.min.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/alertify.min.js"></script>
 	<script src="./js/chatassistx/chat-loader.js"></script>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/alertify.min.css" defcss="true"/>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.0/build/css/themes/default.min.css" defcss="true"/>
 	<link rel="stylesheet" href="./jsassist.css" type="text/css" defcss="true" />
 	<link rel="stylesheet" href="./chatassist.css" type="text/css" defcss="true" />
 
 	<script>
+		alertify.set('notifier','position', 'top-center');
 		window.ChatAssistX.init("https://gist.githubusercontent.com/Lastorder-DC/30dbbe68688788eeb5c6dae5c65cc1c8/raw/config.json");
 		var args_test = {};
 		args_test.nickname = "TestNick";

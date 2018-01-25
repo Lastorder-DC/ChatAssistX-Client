@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    2.0.0-dev1
- *       Last updated by Lastorder-DC on 2017-12-27.
+ *                 V E R S I O N    2.0.0-alpha1
+ *       Last updated by Lastorder-DC on 2018-01-24.
  */
 
 (function(window) {
@@ -12,6 +12,10 @@
 	var cur_count = 0;
 	var count = 0;
 	var maxcount = 30;
+	
+	var plugins_loaded = false;
+	var plugin_configs = {};
+	var provider_configs = {};
 
 	window.chat = {};
 	window.ChatAssistX = {};
@@ -43,12 +47,22 @@
 	window.ChatAssistX.init = function(config) {
 		if (typeof config === "string") {
 			LoadConfig(config);
-
 		} else {
-			loadPlugins(config.plugins);
-			loadProvider(config.provider);
+			plugin_configs = config.plugins;
+			provider_configs = config.provider;
+			loadPlugins(plugin_configs);
+			loadProvider(provider_configs);
 			CompileChat();
 			window.ChatAssistX.config = config.config;
+			
+			if(window.ChatAssistX.config.theme !== "") {
+				if(typeof window.ChatAssistX.config.themes[window.ChatAssistX.config.theme] === 'undefined') {
+					window.ChatAssistX.addNotice("기본 테마 " + window.ChatAssistX.config.theme + " 은 존재하지 않아 적용되지 않았습니다.", "error")
+				}
+				for(var i = 0;i < window.ChatAssistX.config.themes[window.ChatAssistX.config.theme].css.length;i++) {
+					addThemeCSS(window.ChatAssistX.config.themes[window.ChatAssistX.config.theme].css[i]);
+				}
+			}
 		}
 	}
 
@@ -56,8 +70,15 @@
 		//provider들의 연결함수 실행
 		var list = window.ChatAssistX.provider;
 		for (var id in list) {
-			if(!list[id].connect()) {
-				console.log("Cannot connect provider " + id);
+			if(!list[id].connect(provider_configs[id].config)) {
+				console.error("Cannot connect provider " + id);
+			}
+		}
+		
+		list = window.ChatAssistX.plugins;
+		for (var id2 in list) {
+			if(!list[id2].init(plugin_configs[id2].config)) {
+				console.error("Cannot init plugin " + id2);
 			}
 		}
 	}
@@ -89,10 +110,12 @@
 				for(var i = 0;i < window.ChatAssistX.config.themes[theme].css.length;i++) {
 					addThemeCSS(window.ChatAssistX.config.themes[theme].css[i]);
 				}
+				
+				window.ChatAssistX.config.theme = theme;
 			}
 		}
 
-		if (rawprint) {
+		if (args.rawprint) {
 			// 강제개행 문법만 변환
 			args.message = args.message.replace(/\[br\]/g, "<br />");
 		} else {
@@ -112,14 +135,23 @@
 			if (args.isMod) {
 				args.nickname = "<b>" + args.nickname + "</b>";
 			}
-
-			//TODO 스트리머 아이콘 커스텀
+			
 			if (args.isStreamer || isStreamer(args.platform, args.nickname)) {
-				args.nickname = '<img style="vertical-align: middle;" src="http://funzinnu.cafe24.com/stream/cdn/b_broadcaster.png" alt="Broadcaster" class="badge">&nbsp;' + args.nickname;
+				var badge_streamer = window.ChatAssistX.config.themes[window.ChatAssistX.config.theme].image.streamer;
+				if(badge_streamer === "") badge_streamer = "https://static-cdn.jtvnw.net/chat-badges/broadcaster.png";
+				args.nickname = '<img style="vertical-align: middle;" src="' + badge_streamer + '" alt="Broadcaster" class="badge">&nbsp;' + args.nickname;
 			}
 
 			// 명령어 입력은 스킵함
 			if (args.message.indexOf("DO_NOT_PRINT") != -1) return;
+			
+			var list = window.ChatAssistX.plugins;
+			for (var id in list) {
+				var parsedMessage = list[id].process(args, plugin_configs[id].config);
+				if(!!parsedMessage) {
+					args.message = parsedMessage;
+				}
+			}
 		}
 
 		chat = {
@@ -145,7 +177,7 @@
 		count++;
 		cur_count++;
 
-		if (window.ChatAssistX.config.chat.chatFade != 0) {
+		if (window.ChatAssistX.config.chat.chatFade !== 0) {
 			var fadeTime = window.ChatAssistX.config.chat.chatFade * 1000;
 			if (window.ChatAssistX.config.chat.animation == "none") {
 				$chatElement.delay(fadeTime).hide(0, function() {
@@ -160,6 +192,16 @@
 					window.chat.sticky = false;
 				});
 			}
+			
+			if (count > maxcount) {
+				count--;
+				$remove_temp = $(".chat_container div.chat_div:first-child");
+				$remove_temp.remove();
+			}
+
+			if (cur_count > maxcount) {
+				cur_count = 0;
+			}
 		} else {
 			if (count > maxcount) {
 				count--;
@@ -173,30 +215,31 @@
 		}
 	}
 
-	window.ChatAssistX.addNotice = function(message) {
-		//상단공지 추가 함수
-		//큐에 추가되어 일정주기로 갱신됨
+	window.ChatAssistX.addNotice = function(message, type) {
+		if(type == "info") alertify.success(message);
+		if(type == "warn") alertify.warning(message);
+		if(type == "error") alertify.error(message);
 	}
 
 	function loadPlugins(list) {
+		var id;
+		
 		//플러그인 불러오는 함수
 		window.ChatAssistX.plugin_count = 0;
 		window.ChatAssistX.loaded_plugin_count = 0;
-		for (var id in list) {
+		for (id in list) {
 			if (list[id].use) {
 				window.ChatAssistX.plugin_count++;
 			}
 		}
-		for (var id in list) {
+		for (id in list) {
 			if (list[id].use) {
 				console.log("Loading plugin : " + id);
-				$.loadScript('./js/chatassistx/plugins/' + id + '.js', function() {
-					/*
+				$.loadScript('./js/chatassistx/plugins/' + id + '.js', function(jqXHR, textStatus) {
 					window.ChatAssistX.loaded_plugin_count++;
 					if(window.ChatAssistX.plugin_count == window.ChatAssistX.loaded_plugin_count) {
-						window.ChatAssistX.connect();
+						plugins_loaded = true;
 					}
-					*/
 				});
 			}
 		}
@@ -204,18 +247,20 @@
 	}
 
 	function loadProvider(list) {
+		var id;
+		
 		//provider 불러오는 함수
 		window.ChatAssistX.provider_count = 0;
 		window.ChatAssistX.loaded_provider_count = 0;
-		for (var id in list) {
+		for (id in list) {
 			if (list[id].use) {
 				window.ChatAssistX.provider_count++;
 			}
 		}
-		for (var id in list) {
+		for (id in list) {
 			if (list[id].use) {
 				console.log("Loading provider : " + id);
-				$.loadScript('./js/chatassistx/provider/' + id + '.js', function() {
+				$.loadScript('./js/chatassistx/provider/' + id + '.js', function(jqXHR, textStatus) {
 					window.ChatAssistX.loaded_provider_count++;
 					if(window.ChatAssistX.provider_count == window.ChatAssistX.loaded_provider_count) {
 						window.ChatAssistX.connect();
@@ -351,7 +396,7 @@
 		jQuery.ajax({
 			url: url,
 			dataType: 'script',
-			success: callback,
+			complete: callback,
 			async: true
 		});
 	}

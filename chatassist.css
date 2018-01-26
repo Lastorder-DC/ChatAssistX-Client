@@ -42,12 +42,11 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+	width: 100%;
     background-color: #333;
     background-repeat: repeat;
     box-shadow: 0 0px 20px 20px #333;
     z-index:9999;
-    width: 100%;
 }
 
 .fixed_chat .chat_text_message {
@@ -71,8 +70,7 @@
     font-family: Consolas !important;
     text-align: center;
     color: white;
-    
-    width: 90%;
+    width: 180px;
     height: auto;
     max-height: 200px;
     padding: 5px;

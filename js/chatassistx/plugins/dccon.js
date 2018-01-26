@@ -270,7 +270,7 @@
 			});
 
 			for (var replace_id in replace_list) {
-				regExp = new RegExp(escapeRegExp(replace_id), "g");
+				regExp = new RegExp(replace_id.escapeRegExp(), "g");
 				message = message.replace(regExp, "[twitch " + replace_list[replace_id] + "]");
 			}
 		}
@@ -319,15 +319,6 @@
 
 		// 마퀴태그 만들어 반환
 		return '<marquee' + direction + behavior + loop + scrollamount + scrolldelay + '>' + body + '</marquee>';
-	}
-
-	/**
-	 * 정규식 특수문자 이스케이프 함수
-	 * @param {String} str
-	 * @returns {String}
-	 */
-	function escapeRegExp(str) {
-		return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 	}
 
 	if (typeof window.ChatAssistX.plugins[plugin_name] !== 'undefined') {

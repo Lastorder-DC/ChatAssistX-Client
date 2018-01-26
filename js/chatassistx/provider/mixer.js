@@ -44,6 +44,7 @@
 					}
 					
 					parsedData.nickname = parsedData.user_name;
+					parsedData.platform = "mixer";
 					parsedData.message = message;
 					parsedData.isStreamer = false;
 					parsedData.isMod = false;

@@ -25,14 +25,18 @@
 	window.ChatAssistX.provider = [];
 	window.ChatAssistX.provider_count = 0;
 	window.ChatAssistX.loaded_provider_count = 0;
+	
+	String.prototype.capFirst = function() {
+		return this.charAt(0).toUpperCase() + this.slice(1);
+	}
 
 	/**
 	 * 정규식 특수문자 이스케이프 함수
 	 * @param {String} str
 	 * @returns {String}
 	 */
-	window.escapeRegExp = function(str) {
-		return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+	String.prototype.escapeRegExp = function() {
+		return this.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 	}
 
 	/**
@@ -40,8 +44,18 @@
 	 * @param {String} str
 	 * @returns {String}
 	 */
+	String.prototype.htmlEntities = function() {
+		return String(this).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+	}
+	
+	// @deprecated this functions will be removed since they moved to string prototype.
+	window.escapeRegExp = function(str) {
+		console.warn("escapeRegExp function is moved to String prototype.");
+		return str.escapeRegExp();
+	}
 	window.htmlEntities = function(str) {
-		return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+		console.warn("htmlEntities function is moved to String prototype.");
+		return str.htmlEntities();
 	}
 
 	window.ChatAssistX.init = function(config) {
@@ -66,7 +80,7 @@
 		}
 	}
 
-	window.ChatAssistX.connect = function() {
+	function InitProvider() {
 		//provider들의 연결함수 실행
 		var list = window.ChatAssistX.provider;
 		for (var id in list) {
@@ -74,15 +88,17 @@
 				console.error("Cannot connect provider " + id);
 			}
 		}
-		
-		list = window.ChatAssistX.plugins;
-		for (var id2 in list) {
-			if(!list[id2].init(plugin_configs[id2].config)) {
-				console.error("Cannot init plugin " + id2);
+	}
+	
+	function InitPlugins() {
+		var list = window.ChatAssistX.plugins;
+		for (var id in list) {
+			if(!list[id].init(plugin_configs[id].config)) {
+				console.error("Cannot init plugin " + id);
 			}
 		}
 	}
-
+	
 	window.ChatAssistX.addChatMessage = function(args) {
 		//채팅 플러그인들 실행후 반환된 값 이용 채팅 출력
 		//기본전달 값
@@ -120,12 +136,12 @@
 			args.message = args.message.replace(/\[br\]/g, "<br />");
 		} else {
 			// 닉네임 HTML 제거
-			args.nickname = htmlEntities(args.nickname);
+			args.nickname = args.nickname.htmlEntities();
 
 			if (filterNick(args.nickname)) return;
 
 			// 메세지 HTML 제거
-			args.message = htmlEntities(args.message);
+			args.message = args.message.htmlEntities();
 
 			// 플랫폼 아이콘 미사용시
 			if (!window.ChatAssistX.config.chat.platformIcon) {
@@ -161,8 +177,8 @@
 			message: args.message,
 			notitle: "NOTITLE"
 		};
-		//$chatElement = sticky ? $(window.chat.stickytemplate(chat)) : $(window.chat.template(chat));
-		$chatElement = $(window.chat.template(chat));
+		
+		$chatElement = args.nickname === "NOTITLE" ? $(window.chat.stickytemplate(chat)) : $(window.chat.template(chat));
 		$chatElement.appendTo($(".chat_container"));
 		updateStyle();
 		if (window.ChatAssistX.config.chat.animation == "none") {
@@ -177,8 +193,10 @@
 		count++;
 		cur_count++;
 
-		if (window.ChatAssistX.config.chat.chatFade !== 0) {
+		if (args.nickname === "NOTITLE" || window.ChatAssistX.config.chat.chatFade !== 0) {
 			var fadeTime = window.ChatAssistX.config.chat.chatFade * 1000;
+			if(args.nickname === "NOTITLE") fadeTime = 5000;
+			
 			if (window.ChatAssistX.config.chat.animation == "none") {
 				$chatElement.delay(fadeTime).hide(0, function() {
 					$(this).remove();
@@ -239,6 +257,7 @@
 					window.ChatAssistX.loaded_plugin_count++;
 					if(window.ChatAssistX.plugin_count == window.ChatAssistX.loaded_plugin_count) {
 						plugins_loaded = true;
+						InitPlugins();
 					}
 				});
 			}
@@ -263,7 +282,7 @@
 				$.loadScript('./js/chatassistx/provider/' + id + '.js', function(jqXHR, textStatus) {
 					window.ChatAssistX.loaded_provider_count++;
 					if(window.ChatAssistX.provider_count == window.ChatAssistX.loaded_provider_count) {
-						window.ChatAssistX.connect();
+						InitProvider();
 					}
 				});
 			}

@@ -26,7 +26,7 @@
 
 		window.ChatAssistX.addChatMessage(data);
 	}
-	
+
 	function increaseCount(type) {
 		console.warn("function increaseCount is stub!");
 	}
@@ -232,7 +232,7 @@
 	function replaceTwitchEmoticon(match, emoticon_key, offset) {
 		var twitch = list.global;
 		var sub = list.sub;
-		
+
 		if (typeof twitch[emoticon_key] == "undefined") {
 			if (typeof sub[emoticon_key] == "undefined") {
 				return match;
@@ -251,9 +251,11 @@
 	function TAPIC_replaceTwitchEmoticon(message, emotes) {
 		var ranges;
 		var id;
+		var i;
 		var emote_id;
 		var regExp;
 		var replace_list = {};
+		var id_list = [];
 
 		if (typeof emotes != 'undefined') {
 			var emote_list = emotes.split("/");
@@ -266,18 +268,23 @@
 					ranges = ranges[0].split("-");
 					emote_id = message.substring(parseInt(ranges[0]), parseInt(ranges[1]) + 1);
 					replace_list[emote_id] = id;
+					id_list.push(emote_id);
 				}
 			});
+			
+			id_list = id_list.sort(function(a, b) {
+				return b.length - a.length;
+			});
 
-			for (var replace_id in replace_list) {
-				regExp = new RegExp(replace_id.escapeRegExp(), "g");
-				message = message.replace(regExp, "[twitch " + replace_list[replace_id] + "]");
+			for (i = 0; i < id_list.length; i++) {
+				regExp = new RegExp(id_list[i].escapeRegExp(), "g");
+				message = message.replace(regExp, "[twitch " + replace_list[id_list[i]] + "]");
 			}
 		}
 
 		return message;
 	}
-	
+
 	/**
 	 * 메세지의 마퀴태그 문법 파싱후 <marquee> 태그 반환
 	 * @param {String} match
@@ -328,24 +335,24 @@
 		window.ChatAssistX.plugins[plugin_name] = {};
 		window.ChatAssistX.plugins[plugin_name].process = function(args, config) {
 			var message = args.message;
-			
+
 			//마퀴태그 치환
-			message = message.replace(/\[mq( direction=([^\ ])*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g,replaceMarquee);
-			
-			if(window.ChatAssistX.config.allowEmoticon) {
+			message = message.replace(/\[mq( direction=([^\ ])*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g, replaceMarquee);
+
+			if (window.ChatAssistX.config.allowEmoticon) {
 				//디시콘치환
-				message = message.replace(/~([^\ ~]*)/g,replaceEmoticon);
+				message = message.replace(/~([^\ ~]*)/g, replaceEmoticon);
 			}
-			
-			if(window.ChatAssistX.config.enableTwitchEmoticon) {
+
+			if (window.ChatAssistX.config.enableTwitchEmoticon) {
 				//트위치이모지치환
-				if(args.emotes) message = TAPIC_replaceTwitchEmoticon(args.message, args.emotes);
-				else message = message.replace(/\\n(\S*?)\\n/g,replaceTwitchEmoticon);
+				if (args.emotes) message = TAPIC_replaceTwitchEmoticon(args.message, args.emotes);
+				else message = message.replace(/\\n(\S*?)\\n/g, replaceTwitchEmoticon);
 			}
-			
+
 			message = message.replace(/\[twitch ([0-9]*)\]/g, "<img class=\"twchimg\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/$1/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >");
 
-			if(args.message != message) return message;
+			if (args.message != message) return message;
 			else return false;
 		}
 

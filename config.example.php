@@ -64,6 +64,17 @@ header("Content-Type: application/json; charset=utf-8");?>{
 					"바꿀말2": "바꿔질말2"
 				}
 			}
+		},
+		"block" : {
+			"use": true,
+			"config": {
+				"block_list": {
+					"나쁜말1": "keyword",
+					"나쁜닉네임1": "nickname",
+					"나쁜말2": "keyword",
+					"나쁜닉네임2": "nickname"
+				}
+			}
 		}
 	},
 	"provider": {

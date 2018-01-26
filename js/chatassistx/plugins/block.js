@@ -1,8 +1,5 @@
 (function(window) {
 	var plugin_name = "block";
-	var do_not_print = false;
-	var block_nick = [];
-	var block_chat = [];
 
 	if (typeof window.ChatAssistX.plugins[plugin_name] !== 'undefined') {
 		console.log(plugin_name.capFirst() + " plugin is already loaded!");
@@ -10,7 +7,11 @@
 		console.log(plugin_name.capFirst() + " plugin is loaded");
 		window.ChatAssistX.plugins[plugin_name] = {};
 		window.ChatAssistX.plugins[plugin_name].process = function(args, config) {
+			var block_nick = [];
+			var block_chat = [];
 			var message = args.message;
+			var do_not_print = false;
+			
 			if(typeof config === 'undefined') {
 				console.error("Block plugin loaded without block_list. quitting...");
 				window.ChatAssistX.plugins[plugin_name].process = function(args, config) {

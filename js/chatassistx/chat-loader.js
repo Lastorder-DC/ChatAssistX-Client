@@ -147,6 +147,14 @@
 			if (!window.ChatAssistX.config.chat.platformIcon) {
 				args.platform = "none";
 			}
+			
+			var list = window.ChatAssistX.plugins;
+			for (var id in list) {
+				var parsedMessage = list[id].process(args, plugin_configs[id].config);
+				if(!!parsedMessage) {
+					args.message = parsedMessage;
+				}
+			}
 
 			if (args.isMod) {
 				args.nickname = "<b>" + args.nickname + "</b>";
@@ -157,17 +165,9 @@
 				if(badge_streamer === "") badge_streamer = "https://static-cdn.jtvnw.net/chat-badges/broadcaster.png";
 				args.nickname = '<img style="vertical-align: middle;" src="' + badge_streamer + '" alt="Broadcaster" class="badge">&nbsp;' + args.nickname;
 			}
-
+			
 			// 명령어 입력은 스킵함
 			if (args.message.indexOf("DO_NOT_PRINT") != -1) return;
-			
-			var list = window.ChatAssistX.plugins;
-			for (var id in list) {
-				var parsedMessage = list[id].process(args, plugin_configs[id].config);
-				if(!!parsedMessage) {
-					args.message = parsedMessage;
-				}
-			}
 		}
 
 		chat = {

@@ -196,7 +196,6 @@
 					addChatMessage("info", "불러오는중", "트위치 구독 이모티콘을 불러왔습니다. (3 / 3)", true, false);
 
 					list.inited = true;
-					addChatMessage("info", "NOTITLE", "<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + plugin_version + "[br]초 기 화    성 공</pre></span>", true, true);
 				} catch (e) {
 					fail_count++;
 					if (fail_count > 10) addChatMessage("info", "이모티콘 초기화 오류", "이모티콘 JSON 파싱중 오류가 발생했습니다.", true, false);

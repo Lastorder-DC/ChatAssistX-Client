@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    2.0.0-alpha1
+ *                 V E R S I O N    2.0.0-alpha2
  *       Last updated by Lastorder-DC on 2018-01-24.
  */
 
@@ -19,6 +19,7 @@
 
 	window.chat = {};
 	window.ChatAssistX = {};
+	window.ChatAssistX.version = "2.0.0-alpha2";
 	window.ChatAssistX.plugins = [];
 	window.ChatAssistX.plugin_count = 0;
 	window.ChatAssistX.loaded_plugin_count = 0;
@@ -28,7 +29,7 @@
 	
 	String.prototype.capFirst = function() {
 		return this.charAt(0).toUpperCase() + this.slice(1);
-	}
+	};
 
 	/**
 	 * 정규식 특수문자 이스케이프 함수
@@ -37,7 +38,7 @@
 	 */
 	String.prototype.escapeRegExp = function() {
 		return this.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-	}
+	};
 
 	/**
 	 * HTML 필터링
@@ -46,16 +47,34 @@
 	 */
 	String.prototype.htmlEntities = function() {
 		return String(this).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-	}
+	};
 	
 	// @deprecated this functions will be removed since they moved to string prototype.
 	window.escapeRegExp = function(str) {
 		console.warn("escapeRegExp function is moved to String prototype.");
 		return str.escapeRegExp();
-	}
+	};
 	window.htmlEntities = function(str) {
 		console.warn("htmlEntities function is moved to String prototype.");
 		return str.htmlEntities();
+	};
+	
+	/**
+	 * 진행상황을 채팅으로 올림
+	 * 고정메세지, rawprint 여부 신경쓰지 않으며 chatloader의 addChatMessage 호출함
+	 * @returns {Boolean}
+	 */
+	function addChatMessage(platform, nickname, message, sticky, raw) {
+		var data = {};
+
+		data.platform = platform;
+		data.nickname = nickname;
+		data.message = message;
+		data.isStreamer = false;
+		data.isMod = false;
+		data.rawprint = true;
+
+		window.ChatAssistX.addChatMessage(data);
 	}
 
 	window.ChatAssistX.init = function(config) {
@@ -71,14 +90,16 @@
 			
 			if(window.ChatAssistX.config.theme !== "") {
 				if(typeof window.ChatAssistX.config.themes[window.ChatAssistX.config.theme] === 'undefined') {
-					window.ChatAssistX.addNotice("기본 테마 " + window.ChatAssistX.config.theme + " 은 존재하지 않아 적용되지 않았습니다.", "error")
+					window.ChatAssistX.addNotice("기본 테마 " + window.ChatAssistX.config.theme + " 은 존재하지 않아 적용되지 않았습니다.", "error");
 				}
 				for(var i = 0;i < window.ChatAssistX.config.themes[window.ChatAssistX.config.theme].css.length;i++) {
 					addThemeCSS(window.ChatAssistX.config.themes[window.ChatAssistX.config.theme].css[i]);
 				}
 			}
+			
+			addChatMessage("info", "NOTITLE", "<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + window.ChatAssistX.version + "</pre></span>", true, true);
 		}
-	}
+	};
 
 	function InitProvider() {
 		//provider들의 연결함수 실행

@@ -7,6 +7,7 @@
 	var provider_name = "JSAssist";
 	var version = "v1.0.0"
 	var fail_count = 0;
+	var ignore_twitch = true;
 
 	function FixJSAssistBug(json_string) {
 		var message;
@@ -38,20 +39,21 @@
 		console.log("JSAssist/TAPIC provider is already loaded!");
 	} else {
 		console.log("JSAssist/TAPIC driver is loading");
+
 		window.ChatAssistX.provider[provider_name] = {};
 		window.ChatAssistX.provider[provider_name].chatPresets = {};
 		window.ChatAssistX.provider[provider_name].connect = function(plugin_config) {
+			if (typeof plugin_config.channelname === 'undefined' || plugin_config.channelname === "" || plugin_config.do_not_use_tapic) {
+				ignore_twitch = false;
+			}
+
 			var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
 			ws.onopen = function() {
 				fail_count = 0;
 			};
 			ws.onmessage = function(evt) {
 				var data = JSON.parse(FixJSAssistBug(evt.data));
-				var ignore_twitch = true;
 
-				if (typeof plugin_config.channelname === 'undefined' || plugin_config.channelname === "" || plugin_config.do_not_use_tapic) {
-					ignore_twitch = false;
-				}
 
 				if (data.type == "chat_message") {
 					data.nickname = data.username;
@@ -100,38 +102,40 @@
 				}
 			};
 
-			if (typeof plugin_config.oauth === 'undefined' || plugin_config.oauth === "") {
-				console.warn("TAPIC is using default oauth value!");
-				plugin_config.oauth = "3f3bf3d800zru10drjjl4j7fagr9aa";
-			}
-			TAPIC.setup(plugin_config.oauth, function(username) {
-				TAPIC.setRefreshRate(10);
-
-				TAPIC.joinChannel(plugin_config.channelname, function() {
-					console.info("TAPIC Connected!");
-				});
-			});
-
-			TAPIC.listen('message', function(e) {
-				var data = {};
-				data.isStreamer = false;
-				data.isMod = false;
-				data.rawprint = false;
-				data.emotes = e.emotes;
-				data.nickname = e.from;
-				data.message = e.text.trim();
-				data.platform = "twitch";
-
-				if (e.streamer || e.badges.indexOf("broadcaster/1") != -1) {
-					data.isStreamer = true;
-					data.isMod = false;
-				} else if (e.mod) {
-					data.isStreamer = false;
-					data.isMod = true;
+			if (ignore_twitch) {
+				if (typeof plugin_config.oauth === 'undefined' || plugin_config.oauth === "") {
+					console.warn("TAPIC is using default oauth value!");
+					plugin_config.oauth = "3f3bf3d800zru10drjjl4j7fagr9aa";
 				}
+				TAPIC.setup(plugin_config.oauth, function(username) {
+					TAPIC.setRefreshRate(10);
 
-				window.ChatAssistX.addChatMessage(data);
-			});
+					TAPIC.joinChannel(plugin_config.channelname, function() {
+						console.info("TAPIC Connected!");
+					});
+				});
+
+				TAPIC.listen('message', function(e) {
+					var data = {};
+					data.isStreamer = false;
+					data.isMod = false;
+					data.rawprint = false;
+					data.emotes = e.emotes;
+					data.nickname = e.from;
+					data.message = e.text.trim();
+					data.platform = "twitch";
+
+					if (e.streamer || e.badges.indexOf("broadcaster/1") != -1) {
+						data.isStreamer = true;
+						data.isMod = false;
+					} else if (e.mod) {
+						data.isStreamer = false;
+						data.isMod = true;
+					}
+
+					window.ChatAssistX.addChatMessage(data);
+				});
+			}
 
 			return true;
 		}

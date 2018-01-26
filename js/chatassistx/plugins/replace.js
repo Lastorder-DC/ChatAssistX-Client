@@ -23,13 +23,6 @@
 				console.warn("replace_list should be array, not string.");
 			}
 			
-			if(config.length === 0) {
-				console.warn("Replace plugin loaded without word to replace. quitting...");
-				window.ChatAssistX.plugins[plugin_name].process = function(args, config) {
-					return false;
-				};
-			}
-			
 			for(var findword in config.replace_list) {
 				//console.info(findword + " => " + config.replace_list[findword]);
 				var keyword_test = new RegExp(findword.escapeRegExp(), "g");

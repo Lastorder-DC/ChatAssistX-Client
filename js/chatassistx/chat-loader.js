@@ -26,6 +26,7 @@
 	window.ChatAssistX.provider = [];
 	window.ChatAssistX.provider_count = 0;
 	window.ChatAssistX.loaded_provider_count = 0;
+	window.ChatAssistX.commands = [];
 	
 	String.prototype.capFirst = function() {
 		return this.charAt(0).toUpperCase() + this.slice(1);
@@ -33,7 +34,6 @@
 
 	/**
 	 * 정규식 특수문자 이스케이프 함수
-	 * @param {String} str
 	 * @returns {String}
 	 */
 	String.prototype.escapeRegExp = function() {
@@ -42,7 +42,6 @@
 
 	/**
 	 * HTML 필터링
-	 * @param {String} str
 	 * @returns {String}
 	 */
 	String.prototype.htmlEntities = function() {
@@ -129,29 +128,50 @@
 		var $chatElement;
 		var $remove_temp;
 		var chat;
-		var rawprint = false;
 		//window.ChatAssistX.config.themes
 		
-		if(isStreamer(args.platform, args.nickname) && args.message.match(/^!!theme ([^ ]+)/) != null) {
+		// register theme command
+		window.ChatAssistX.commands["theme"] = {};
+		window.ChatAssistX.commands["theme"].cooldown = 0;
+		window.ChatAssistX.commands["theme"].lastusetime = -1;
+		window.ChatAssistX.commands["theme"].permission = "streamer";
+		window.ChatAssistX.commands["theme"].cmdFunc = function(args) {
+			var notice = {};
 			var theme = args.message.match(/^!!theme ([^ ]+)/)[1];
 			
 			if(typeof window.ChatAssistX.config.themes[theme] === 'undefined') {
-				args.nickname = "error";
-				args.message = "테마 " + theme + " 은 존재하지 않습니다!";
-				args.platform = "info";
+				notice.nickname = "error";
+				notice.message = "테마 " + theme + "(은)는 존재하지 않습니다!";
+				notice.platform = "info";
 			} else {
 				deleteThemeCSS();
-				args.nickname = "System";
-				args.message = "테마가 " + theme + " 으로 변경되었습니다.";
-				args.platform = "info";
+				notice.nickname = "System";
+				notice.message = "테마가 " + theme + "(으)로 변경되었습니다.";
+				notice.platform = "info";
 				for(var i = 0;i < window.ChatAssistX.config.themes[theme].css.length;i++) {
 					addThemeCSS(window.ChatAssistX.config.themes[theme].css[i]);
 				}
 				
 				window.ChatAssistX.config.theme = theme;
 			}
+		};
+		
+		var command = args.message.match(/^!!([^ ]+) ([^ ]+)/)[1];
+		if(typeof command !== 'undefined') {
+			if(window.ChatAssistX.commands.indexOf(command) !== -1) {
+				var permission = window.ChatAssistX.commands[command].permission;
+				
+				if((permission === "streamer" && args.isStreamer) ||
+					(permission === "moderator" && args.isMod) ||
+					(permission === "user")
+				) {
+					window.ChatAssistX.commands[command].cmdFunc(args);
+				} else {
+					console.error("Invalid command or low permission!");
+				}
+			}
 		}
-
+		
 		if (args.rawprint) {
 			// 강제개행 문법만 변환
 			args.message = args.message.replace(/\[br\]/g, "<br />");
@@ -188,7 +208,7 @@
 			}
 			
 			// 명령어 입력은 스킵함
-			if (args.message.indexOf("DO_NOT_PRINT") != -1) return;
+			if (args.message.indexOf("DO_NOT_PRINT") !== -1) return;
 		}
 
 		chat = {
@@ -202,7 +222,7 @@
 		$chatElement = args.nickname === "NOTITLE" ? $(window.chat.stickytemplate(chat)) : $(window.chat.template(chat));
 		$chatElement.appendTo($(".chat_container"));
 		updateStyle();
-		if (window.ChatAssistX.config.chat.animation == "none") {
+		if (window.ChatAssistX.config.chat.animation === "none") {
 			$chatElement.show();
 		} else {
 			$chatElement.show(window.ChatAssistX.config.chat.animation, {
@@ -218,7 +238,7 @@
 			var fadeTime = window.ChatAssistX.config.chat.chatFade * 1000;
 			if(args.nickname === "NOTITLE") fadeTime = 5000;
 			
-			if (window.ChatAssistX.config.chat.animation == "none") {
+			if (window.ChatAssistX.config.chat.animation === "none") {
 				$chatElement.delay(fadeTime).hide(0, function() {
 					$(this).remove();
 					count--;
@@ -252,13 +272,13 @@
 				cur_count = 0;
 			}
 		}
-	}
+	};
 
 	window.ChatAssistX.addNotice = function(message, type) {
-		if(type == "info") alertify.success(message);
-		if(type == "warn") alertify.warning(message);
-		if(type == "error") alertify.error(message);
-	}
+		if(type === "info") alertify.success(message);
+		if(type === "warn") alertify.warning(message);
+		if(type === "error") alertify.error(message);
+	};
 
 	function loadPlugins(list) {
 		var id;
@@ -274,9 +294,9 @@
 		for (id in list) {
 			if (list[id].use) {
 				console.log("Loading plugin : " + id);
-				$.loadScript('./js/chatassistx/plugins/' + id + '.js', function(jqXHR, textStatus) {
+				$.loadScript('./js/chatassistx/plugins/' + id + '.js', function() {
 					window.ChatAssistX.loaded_plugin_count++;
-					if(window.ChatAssistX.plugin_count == window.ChatAssistX.loaded_plugin_count) {
+					if(window.ChatAssistX.plugin_count === window.ChatAssistX.loaded_plugin_count) {
 						plugins_loaded = true;
 						InitPlugins();
 					}
@@ -300,9 +320,9 @@
 		for (id in list) {
 			if (list[id].use) {
 				console.log("Loading provider : " + id);
-				$.loadScript('./js/chatassistx/provider/' + id + '.js', function(jqXHR, textStatus) {
+				$.loadScript('./js/chatassistx/provider/' + id + '.js', function() {
 					window.ChatAssistX.loaded_provider_count++;
-					if(window.ChatAssistX.provider_count == window.ChatAssistX.loaded_provider_count) {
+					if(window.ChatAssistX.provider_count === window.ChatAssistX.loaded_provider_count) {
 						InitProvider();
 					}
 				});
@@ -400,17 +420,17 @@
 		if (window.ChatAssistX.config.ignoreNickname === '') return false;
 		var list = window.ChatAssistX.config.ignoreNickname.split(",");
 
-		if (list.indexOf(nickname.toLowerCase()) != -1) return true;
-		else return false;
+		return list.indexOf(nickname.toLowerCase()) !== -1;
 	}
 
 	/**
 	 * 스트리머 여부 반환
+	 * @param {String} platform
 	 * @param {String} nickname
 	 * @returns {Boolean}
 	 */
 	function isStreamer(platform, nickname) {
-		return window.ChatAssistX.config.streamer[platform] == nickname;
+		return window.ChatAssistX.config.streamer[platform] === nickname;
 	}
 
 	/**

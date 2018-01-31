@@ -5,10 +5,15 @@
 	args_test.message = "JSAssist driver is working fine";
 
 	var provider_name = "JSAssist";
-	var version = "v1.0.0"
+	var version = "v1.0.0";
 	var fail_count = 0;
 	var ignore_twitch = true;
-
+	
+	/**
+	 * JSAssist의 고질적인 JSON 버그 수정
+	 * @param {String} json_string
+	 * @returns {String}
+	 */
 	function FixJSAssistBug(json_string) {
 		var message;
 
@@ -16,7 +21,7 @@
 		// 이모티콘으로 트위치 이모티콘 영문명을 추가해주면 잘 동작함
 		json_string = json_string.replace(/(?:\r\n|\r|\n)/g, "\\n");
 
-		if (json_string.indexOf('"message" : "') != -1) {
+		if (json_string.indexOf('"message" : "') !== -1) {
 			message = json_string.substring(json_string.indexOf('"message" : "') + 13, json_string.indexOf('", "type" : '));
 			// 메세지 맨 마지막에 \가 오면 이스케이프로 처리되어 발생하는 문제 수정
 			json_string = json_string.replace(message, message.replace(/\\/g, '\\\\'));
@@ -28,11 +33,12 @@
 
 	/**
 	 * 스트리머 여부 반환
+	 * @param {String} platform
 	 * @param {String} nickname
 	 * @returns {Boolean}
 	 */
 	function isStreamer(platform, nickname) {
-		return window.ChatAssistX.config.streamer[platform] == nickname;
+		return window.ChatAssistX.config.streamer[platform] === nickname;
 	}
 
 	if (typeof window.ChatAssistX.provider[provider_name] !== 'undefined') {
@@ -46,6 +52,35 @@
 			if (typeof plugin_config.channelname === 'undefined' || plugin_config.channelname === "" || plugin_config.do_not_use_tapic) {
 				ignore_twitch = false;
 			}
+			
+			var notice = {};
+			notice.nickname = "System";
+			notice.message = "Using JSAssist Plugin " + version;
+			notice.platform = "info";
+			window.ChatAssistX.addChatMessage(notice);
+			
+			window.ChatAssistX.commands["preset"] = {};
+			window.ChatAssistX.commands["preset"].cooldown = 0;
+			window.ChatAssistX.commands["preset"].lastusetime = -1;
+			window.ChatAssistX.commands["preset"].permission = "streamer";
+			window.ChatAssistX.commands["preset"].cmdFunc = function(args) {
+				var notice = {};
+				
+				if (typeof window.ChatAssistX.provider[provider_name].chatPresets[args.message.match(/^!!preset ([^ ]+)/)[1]] === 'undefined') {
+					notice.nickname = "System";
+					notice.message = "프리셋 " + args.message.match(/^!!preset ([^ ]+)/)[1] + "(은)는 존재하지 않습니다!";
+					notice.platform = "info";
+				} else {
+					window.ChatAssistX.config.preset = args.message.match(/^!!preset ([^ ]+)/)[1];
+					window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[window.ChatAssistX.config.preset];
+					
+					notice.nickname = "System";
+					notice.message = "프리셋이 " + window.ChatAssistX.config.preset + "(으)로 변경되었습니다.";
+					notice.platform = "info";
+				}
+				
+				window.ChatAssistX.addChatMessage(notice);
+			};
 
 			var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
 			ws.onopen = function() {
@@ -55,32 +90,21 @@
 				var data = JSON.parse(FixJSAssistBug(evt.data));
 
 
-				if (data.type == "chat_message") {
+				if (data.type === "chat_message") {
 					data.nickname = data.username;
 					data.message = data.message.trim();
 					data.isStreamer = isStreamer(data.platform, data.nickname);
 					data.isMod = false;
 					data.emotes = false;
-
-					if (data.isStreamer && data.message.match(/^!!preset ([^ ]+)/) != null) {
-						if (typeof window.ChatAssistX.provider[provider_name].chatPresets[data.message.match(/^!!preset ([^ ]+)/)[1]] === 'undefined') {
-							window.ChatAssistX.addNotice("프리셋 " + data.message.match(/^!!preset ([^ ]+)/)[1] + " 은 존재하지 않습니다!", "error");
-						} else {
-							window.ChatAssistX.config.preset = data.message.match(/^!!preset ([^ ]+)/)[1];
-							window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[window.ChatAssistX.config.preset];
-
-							window.ChatAssistX.addNotice("프리셋이 " + window.ChatAssistX.config.preset + " 으로 변경되었습니다.", "info");
-						}
+					
+					if (ignore_twitch) {
+						if (data.platform !== "twitch") window.ChatAssistX.addChatMessage(data);
 					} else {
-						if (ignore_twitch) {
-							if (data.platform !== "twitch") window.ChatAssistX.addChatMessage(data);
-						} else {
-							window.ChatAssistX.addChatMessage(data);
-						}
+						window.ChatAssistX.addChatMessage(data);
 					}
-				} else if (data.type == "config") {
+				} else if (data.type === "config") {
 					window.ChatAssistX.provider[provider_name].chatPresets[data.presetName] = data;
-					if (data.presetName == window.ChatAssistX.config.preset) window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[data.presetName];
+					if (data.presetName === window.ChatAssistX.config.preset) window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[data.presetName];
 				}
 			};
 			ws.onclose = function() {
@@ -90,12 +114,12 @@
 				// 10번 이상 접속 실패시 접속 장애 안내문 출력
 				//addChatMessage("warning", "ChatAssistX Error", "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.",true,false);
 				console.warn("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.");
-				window.ChatAssistX.addNotice("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.", "warn");
+				window.ChatAssistX.addNotice("JSAssist 연결 실패", "warn");
 				//}
 				if (window.chat.failcount > 29) {
 					//addChatMessage("critical", "ChatAssistX Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
 					console.error("100회 이상 접속 실패로 접속 시도를 중단합니다.");
-					window.ChatAssistX.addNotice("100회 이상 접속 실패로 접속 시도를 중단합니다. 재접속하시려면 새로고침해주세요.", "error");
+					window.ChatAssistX.addNotice("JSAssist 연결 오류", "error");
 				} else {
 					//console.error("JSAssist connect failed " + window.chat.failcount + " times.");
 					setTimeout(window.ChatAssistX.provider[provider_name].connect, 1000);
@@ -105,9 +129,10 @@
 			if (ignore_twitch) {
 				if (typeof plugin_config.oauth === 'undefined' || plugin_config.oauth === "") {
 					console.warn("TAPIC is using default oauth value!");
+					// default hardcoded oauth value - do not change!
 					plugin_config.oauth = "71g7xd68c55kb05rvzhbtt2fvey16i";
 				}
-				TAPIC.setup(plugin_config.oauth, function(username) {
+				TAPIC.setup(plugin_config.oauth, function() {
 					TAPIC.setRefreshRate(10);
 
 					TAPIC.joinChannel(plugin_config.channelname, function() {
@@ -125,7 +150,7 @@
 					data.message = e.text.trim();
 					data.platform = "twitch";
 
-					if (e.streamer || e.badges.indexOf("broadcaster/1") != -1) {
+					if (e.streamer || e.badges.indexOf("broadcaster/1") !== -1) {
 						data.isStreamer = true;
 						data.isMod = false;
 					} else if (e.mod) {

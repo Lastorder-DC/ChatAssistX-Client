@@ -154,7 +154,7 @@
 		
 		var command = args.message.match(/^!!([^ ]+) ([^ ]+)/);
 		if(command !== null && typeof command[1] !== 'undefined') {
-			if(window.ChatAssistX.commands.indexOf(command[1]) !== -1) {
+			if(typeof window.ChatAssistX.commands[command[1]] !== 'undefined') {
 				var permission = window.ChatAssistX.commands[command[1]].permission;
 				
 				if((permission === "streamer" && args.isStreamer) ||

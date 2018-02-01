@@ -154,16 +154,16 @@
 		
 		var command = args.message.match(/^!!([^ ]+) ([^ ]+)/);
 		if(command !== null && typeof command[1] !== 'undefined') {
-			if(window.ChatAssistX.commands.indexOf(command) !== -1) {
-				var permission = window.ChatAssistX.commands[command].permission;
+			if(window.ChatAssistX.commands.indexOf(command[1]) !== -1) {
+				var permission = window.ChatAssistX.commands[command[1]].permission;
 				
 				if((permission === "streamer" && args.isStreamer) ||
 					(permission === "moderator" && args.isMod) ||
 					(permission === "user")
 				) {
-					window.ChatAssistX.commands[command].cmdFunc(args);
+					window.ChatAssistX.commands[command[1]].cmdFunc(args);
 				} else {
-					console.error("Invalid command or low permission!");
+					args.message = "권한이 부족해 명령어가 실행되지 않았습니다 - " + command[1];
 				}
 			}
 		}

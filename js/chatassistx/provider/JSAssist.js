@@ -55,12 +55,6 @@
 				ignore_twitch = false;
 			}
 			
-			var notice = {};
-			notice.nickname = "System";
-			notice.message = "Using JSAssist Plugin " + version;
-			notice.platform = "info";
-			window.ChatAssistX.addChatMessage(notice);
-			
 			window.ChatAssistX.commands["preset"] = {};
 			window.ChatAssistX.commands["preset"].cooldown = 0;
 			window.ChatAssistX.commands["preset"].lastusetime = -1;
@@ -172,6 +166,12 @@
 			}
 			
 			return true;
-		}
+		};
+		
+		var notice = {};
+		notice.nickname = "System";
+		notice.message = "Using JSAssist Plugin " + version;
+		notice.platform = "info";
+		window.ChatAssistX.addChatMessage(notice);
 	}
 })(window);

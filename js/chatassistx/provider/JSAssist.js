@@ -56,7 +56,7 @@
 			}
 			
 			if(plugin_config.do_not_use_jsassist) {
-				ignore_twitch = false;
+				ignore_twitch = true;
 			} else {
 				var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
 				ws.onopen = function() {

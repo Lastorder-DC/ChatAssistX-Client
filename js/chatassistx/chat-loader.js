@@ -162,6 +162,7 @@
 					(permission === "user")
 				) {
 					window.ChatAssistX.commands[command[1]].cmdFunc(args);
+					args.message = "DO_NOT_PRINT";
 				} else {
 					args.message = "권한이 부족해 명령어가 실행되지 않았습니다 - " + command[1];
 				}

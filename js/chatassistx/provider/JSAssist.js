@@ -84,24 +84,14 @@
 					}
 				};
 				ws.onclose = function() {
-					var notice = {};
-					
 					is_connected = false;
-					notice.nickname = "System";
-					notice.message = "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.";
-					notice.platform = "info";
-					if(fail_count > 9 && fail_count % 10 === 0) window.ChatAssistX.addChatMessage(notice);
+					if(fail_count > 9 && fail_count % 10 === 0) window.ChatAssistX.addNotice("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.","system");
 					
 					fail_count++;
 					console.warn("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.");
 					//}
 					if (fail_count > 100) {
-						//addChatMessage("critical", "ChatAssistX Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
-						notice.nickname = "System";
-						notice.message = "100회 이상 접속 실패로 JSAssist 접속 시도를 중단합니다.[br]JSAssist가 켜져 있는지, 동시에 두개가 실행되어 있는건 아닌지 확인후 새로고침해주세요.";
-						notice.platform = "info";
-						
-						window.ChatAssistX.addChatMessage(notice);
+						window.ChatAssistX.addNotice("100회 이상 접속 실패로 JSAssist 접속 시도를 중단합니다.[br]JSAssist가 켜져 있는지, 동시에 두개가 실행되어 있는건 아닌지 확인후 새로고침해주세요.","system");
 						console.error("100회 이상 접속 실패로 접속 시도를 중단합니다.");
 					} else {
 						//console.error("JSAssist connect failed " + window.chat.failcount + " times.");
@@ -115,22 +105,13 @@
 			window.ChatAssistX.commands["preset"].lastusetime = -1;
 			window.ChatAssistX.commands["preset"].permission = "streamer";
 			window.ChatAssistX.commands["preset"].cmdFunc = function(args) {
-				var notice = {};
-				
 				if (typeof window.ChatAssistX.provider[provider_name].chatPresets[args.message.match(/^!!preset ([^ ]+)/)[1]] === 'undefined') {
-					notice.nickname = "System";
-					notice.message = "프리셋 " + args.message.match(/^!!preset ([^ ]+)/)[1] + "(은)는 존재하지 않습니다!";
-					notice.platform = "info";
+					window.ChatAssistX.addNotice("프리셋 " + args.message.match(/^!!preset ([^ ]+)/)[1] + "(은)는 존재하지 않습니다!","system");
 				} else {
 					window.ChatAssistX.config.preset = args.message.match(/^!!preset ([^ ]+)/)[1];
 					window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[window.ChatAssistX.config.preset];
-					
-					notice.nickname = "System";
-					notice.message = "프리셋이 " + window.ChatAssistX.config.preset + "(으)로 변경되었습니다.";
-					notice.platform = "info";
+					window.ChatAssistX.addNotice("프리셋이 " + window.ChatAssistX.config.preset + "(으)로 변경되었습니다.","system");
 				}
-				
-				window.ChatAssistX.addChatMessage(notice);
 			};
 			
 			if (ignore_twitch) {
@@ -172,10 +153,6 @@
 			return true;
 		};
 		
-		var notice = {};
-		notice.nickname = "System";
-		notice.message = "Using JSAssist Plugin " + version;
-		notice.platform = "info";
-		window.ChatAssistX.addChatMessage(notice);
+		window.ChatAssistX.addNotice("JSAssist/TAPIC Provider " + version + " loading...","system");
 	}
 })(window);

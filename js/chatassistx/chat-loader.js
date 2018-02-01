@@ -140,14 +140,10 @@
 			var theme = args.message.match(/^!!theme ([^ ]+)/)[1];
 			
 			if(typeof window.ChatAssistX.config.themes[theme] === 'undefined') {
-				notice.nickname = "error";
-				notice.message = "테마 " + theme + "(은)는 존재하지 않습니다!";
-				notice.platform = "info";
+				window.ChatAssistX.addNotice("테마 " + theme + "(은)는 존재하지 않습니다!","system");
 			} else {
 				deleteThemeCSS();
-				notice.nickname = "System";
-				notice.message = "테마가 " + theme + "(으)로 변경되었습니다.";
-				notice.platform = "info";
+				window.ChatAssistX.addNotice("테마가 " + theme + "(으)로 변경되었습니다.","system");
 				for(var i = 0;i < window.ChatAssistX.config.themes[theme].css.length;i++) {
 					addThemeCSS(window.ChatAssistX.config.themes[theme].css[i]);
 				}
@@ -278,6 +274,14 @@
 		if(type === "info") alertify.success(message);
 		if(type === "warn") alertify.warning(message);
 		if(type === "error") alertify.error(message);
+		if(type === "system") {
+			var notice = {};
+			notice.nickname = "System";
+			notice.message = message;
+			notice.platform = "info";
+			
+			window.ChatAssistX.addChatMessage(notice);
+		}
 	};
 
 	function loadPlugins(list) {

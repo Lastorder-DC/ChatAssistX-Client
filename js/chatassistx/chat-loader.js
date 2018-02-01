@@ -156,8 +156,8 @@
 			}
 		};
 		
-		var command = args.message.match(/^!!([^ ]+) ([^ ]+)/)[1];
-		if(typeof command !== 'undefined') {
+		var command = args.message.match(/^!!([^ ]+) ([^ ]+)/);
+		if(command !== null && typeof command[1] !== 'undefined') {
 			if(window.ChatAssistX.commands.indexOf(command) !== -1) {
 				var permission = window.ChatAssistX.commands[command].permission;
 				

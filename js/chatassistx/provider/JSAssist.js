@@ -55,6 +55,61 @@
 				ignore_twitch = false;
 			}
 			
+			if(plugin_config.do_not_use_jsassist) {
+				ignore_twitch = false;
+			} else {
+				var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
+				ws.onopen = function() {
+					fail_count = 0;
+				};
+				ws.onmessage = function(evt) {
+					var data = JSON.parse(FixJSAssistBug(evt.data));
+					
+					
+					if (data.type === "chat_message") {
+						data.nickname = data.username;
+						data.message = data.message.trim();
+						data.isStreamer = isStreamer(data.platform, data.nickname);
+						data.isMod = false;
+						data.emotes = false;
+						
+						if (ignore_twitch) {
+							if (data.platform !== "twitch") window.ChatAssistX.addChatMessage(data);
+						} else {
+							window.ChatAssistX.addChatMessage(data);
+						}
+					} else if (data.type === "config") {
+						window.ChatAssistX.provider[provider_name].chatPresets[data.presetName] = data;
+						if (data.presetName === window.ChatAssistX.config.preset) window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[data.presetName];
+					}
+				};
+				ws.onclose = function() {
+					var notice = {};
+					
+					is_connected = false;
+					notice.nickname = "System";
+					notice.message = "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.";
+					notice.platform = "info";
+					if(fail_count > 9 && fail_count % 10 === 0) window.ChatAssistX.addChatMessage(notice);
+					
+					fail_count++;
+					console.warn("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.");
+					//}
+					if (fail_count > 100) {
+						//addChatMessage("critical", "ChatAssistX Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
+						notice.nickname = "System";
+						notice.message = "100회 이상 접속 실패로 JSAssist 접속 시도를 중단합니다.[br]JSAssist가 켜져 있는지, 동시에 두개가 실행되어 있는건 아닌지 확인후 새로고침해주세요.";
+						notice.platform = "info";
+						
+						window.ChatAssistX.addChatMessage(notice);
+						console.error("100회 이상 접속 실패로 접속 시도를 중단합니다.");
+					} else {
+						//console.error("JSAssist connect failed " + window.chat.failcount + " times.");
+						setTimeout(window.ChatAssistX.provider[provider_name].connect, 1000);
+					}
+				};
+			}
+			
 			window.ChatAssistX.commands["preset"] = {};
 			window.ChatAssistX.commands["preset"].cooldown = 0;
 			window.ChatAssistX.commands["preset"].lastusetime = -1;
@@ -76,57 +131,6 @@
 				}
 				
 				window.ChatAssistX.addChatMessage(notice);
-			};
-			
-			var ws = new WebSocket("ws://localhost:4649/JSAssistChatServer");
-			ws.onopen = function() {
-				fail_count = 0;
-			};
-			ws.onmessage = function(evt) {
-				var data = JSON.parse(FixJSAssistBug(evt.data));
-				
-				
-				if (data.type === "chat_message") {
-					data.nickname = data.username;
-					data.message = data.message.trim();
-					data.isStreamer = isStreamer(data.platform, data.nickname);
-					data.isMod = false;
-					data.emotes = false;
-					
-					if (ignore_twitch) {
-						if (data.platform !== "twitch") window.ChatAssistX.addChatMessage(data);
-					} else {
-						window.ChatAssistX.addChatMessage(data);
-					}
-				} else if (data.type === "config") {
-					window.ChatAssistX.provider[provider_name].chatPresets[data.presetName] = data;
-					if (data.presetName === window.ChatAssistX.config.preset) window.ChatAssistX.config.chat = window.ChatAssistX.provider[provider_name].chatPresets[data.presetName];
-				}
-			};
-			ws.onclose = function() {
-				var notice = {};
-				
-				is_connected = false;
-				notice.nickname = "System";
-				notice.message = "JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.";
-				notice.platform = "info";
-				if(fail_count > 9 && fail_count % 10 === 0) window.ChatAssistX.addChatMessage(notice);
-				
-				fail_count++;
-				console.warn("JSAssist에 연결할 수 없습니다. JSAssist가 실행중이고 방화벽 소프트웨어에 의해 차단되지 않았는지 확인해주세요.");
-				//}
-				if (fail_count > 100) {
-					//addChatMessage("critical", "ChatAssistX Critical Error", "100회 이상 접속 실패로 접속 시도를 중단합니다.",true,false);
-					notice.nickname = "System";
-					notice.message = "100회 이상 접속 실패로 JSAssist 접속 시도를 중단합니다.[br]JSAssist가 켜져 있는지, 동시에 두개가 실행되어 있는건 아닌지 확인후 새로고침해주세요.";
-					notice.platform = "info";
-					
-					window.ChatAssistX.addChatMessage(notice);
-					console.error("100회 이상 접속 실패로 접속 시도를 중단합니다.");
-				} else {
-					//console.error("JSAssist connect failed " + window.chat.failcount + " times.");
-					setTimeout(window.ChatAssistX.provider[provider_name].connect, 1000);
-				}
 			};
 			
 			if (ignore_twitch) {

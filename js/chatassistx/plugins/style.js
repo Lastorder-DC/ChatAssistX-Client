@@ -63,7 +63,7 @@
 				if(typeof option[1] === 'undefined') {
 					window.ChatAssistX.addNotice("사용법 : !!image on|off - 외부이미지 문법을 켜거나 끕니다.","system");
 				} else {
-					if(option[1] === "true") {
+					if(option[1] === "on") {
 						window.ChatAssistX.config.allowExternalSource = true;
 						window.ChatAssistX.addNotice("외부이미지 문법이 켜졌습니다.","system");
 					} else {

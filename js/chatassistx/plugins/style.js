@@ -47,11 +47,32 @@
 		window.ChatAssistX.plugins[plugin_name].process = function(args, config) {
 			var processedMessage = replaceStyle(args.message);
 
-			if (processedMessage != args.message) return processedMessage;
+			if (processedMessage !== args.message) return processedMessage;
 			else return false;
 		}
 
 		window.ChatAssistX.plugins[plugin_name].init = function(config) {
+			// register image command
+			window.ChatAssistX.commands["image"] = {};
+			window.ChatAssistX.commands["image"].cooldown = 0;
+			window.ChatAssistX.commands["image"].lastusetime = -1;
+			window.ChatAssistX.commands["image"].permission = "streamer";
+			window.ChatAssistX.commands["image"].cmdFunc = function(args) {
+				var option = args.message.match(/^!!image (on|off)/);
+				
+				if(typeof option[1] === 'undefined') {
+					window.ChatAssistX.addNotice("사용법 : !!image on|off - 외부이미지 문법을 켜거나 끕니다.","system");
+				} else {
+					if(option[1] === "true") {
+						window.ChatAssistX.config.allowExternalSource = true;
+						window.ChatAssistX.addNotice("외부이미지 문법이 켜졌습니다.","system");
+					} else {
+						window.ChatAssistX.config.allowExternalSource = false;
+						window.ChatAssistX.addNotice("외부이미지 문법이 꺼졌습니다.","system");
+					}
+				}
+			};
+			
 			return true;
 		}
 	}

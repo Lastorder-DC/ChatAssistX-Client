@@ -60,7 +60,7 @@
 			window.ChatAssistX.commands["image"].cmdFunc = function(args) {
 				var option = args.message.match(/^!!image (on|off)/);
 				
-				if(typeof option[1] === 'undefined') {
+				if(option === null || typeof option[1] === 'undefined') {
 					window.ChatAssistX.addNotice("사용법 : !!image on|off - 외부이미지 문법을 켜거나 끕니다.","system");
 				} else {
 					if(option[1] === "on") {

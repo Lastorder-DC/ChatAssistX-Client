@@ -7,15 +7,17 @@
 	 * @returns {String}
 	 */
 	function replaceStyle(message) {
-		//외부 이미지 문법(기본 비활성화 상태로 상단 설정변수를 true로 바꿔 활성화 가능)
+		// 외부 이미지 문법(기본 비활성화 상태로 상단 설정변수를 true로 바꿔 활성화 가능)
+		// 외부 이미지 문법 이외 다른 문법이나 글자는 무시됩니다.
 		if (window.ChatAssistX.config.allowExternalSource) {
-			// 일단 처음 나오는 이미지는 바꿈
 			var image = message.match(/\[img ([^\]\"]*)\]/);
 			if(image !== null && typeof image[1] !== 'undefined') {
-				message = message.replace(/\[img ([^\]\"]*)\]/, ReferrerKiller.imageHtml(image[1]));
+				var attr = {};
+				attr.style = "max-width:100%; max-height:100%";
+				message = ReferrerKiller.htmlString('<img src="' + image[1] + '" style="border:none; margin: 0; padding: 0;max-width:100%; max-height:100%" />', attr);
 			}
 
-			// 두번째 이후 이미지는 모두 삭제
+			// 나머지 외부 이미지 문법은 모두 삭제
 			message = message.replace(/\[img ([^\]\"]*)\]/g, "");
 		}
 

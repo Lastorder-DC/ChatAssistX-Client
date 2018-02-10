@@ -13,7 +13,6 @@
 			var image = message.match(/\[img ([^\]\"]*)\]/);
 			if(image !== null && typeof image[1] !== 'undefined') {
 				var attr = {};
-				attr.style = "max-width:100%; max-height:100%";
 				message = ReferrerKiller.imageHtml(image[1], attr, attr);
 			}
 

@@ -13,7 +13,7 @@
 			var image = message.match(/\[img ([^\]\"]*)\]/);
 			if(image !== null && typeof image[1] !== 'undefined') {
 				var attr = {};
-				message = ReferrerKiller.imageHtml(image[1], attr, attr);
+				message = ReferrerKiller.imageHtml(image[1]);
 			}
 
 			// 나머지 외부 이미지 문법은 모두 삭제

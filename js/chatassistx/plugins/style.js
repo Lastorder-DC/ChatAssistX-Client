@@ -10,7 +10,10 @@
 		//외부 이미지 문법(기본 비활성화 상태로 상단 설정변수를 true로 바꿔 활성화 가능)
 		if (window.ChatAssistX.config.allowExternalSource) {
 			// 일단 처음 나오는 이미지는 바꿈
-			message = message.replace(/\[img ([^\]\"]*)\]/, "<img class='extimg' src=\"$1\" />");
+			var image = message.match(/\[img ([^\]\"]*)\]/);
+			if(image !== null && typeof image[1] !== 'undefined') {
+				message = message.replace(/\[img ([^\]\"]*)\]/, ReferrerKiller.imageHtml(image[1]));
+			}
 
 			// 두번째 이후 이미지는 모두 삭제
 			message = message.replace(/\[img ([^\]\"]*)\]/g, "");

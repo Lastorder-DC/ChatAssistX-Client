@@ -14,7 +14,7 @@
 			if(image !== null && typeof image[1] !== 'undefined') {
 				var attr = {};
 				attr.style = "max-width:100%; max-height:100%";
-				message = ReferrerKiller.htmlString('<img src="' + image[1] + '" style="border:none; margin: 0; padding: 0;max-width:100%; max-height:100%" />', attr);
+				message = ReferrerKiller.imageHtml(image[1], attr, attr);
 			}
 
 			// 나머지 외부 이미지 문법은 모두 삭제

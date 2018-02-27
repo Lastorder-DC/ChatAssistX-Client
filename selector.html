@@ -1,166 +1,420 @@
-<html>
+<!DOCTYPE html>
+<html lang="ko">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,minimum-scale=1.0" />
-  <title>디시콘 선택기</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>JSAssist Open DCcon List</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.2.14/spectre-exp.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.2.14/spectre-icons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.2.14/spectre.min.css" />
   <style>
-    div.img {
-      margin: 5px;
-      border: 1px solid #ccc;
-      float: left;
-      width: 100px;
-      height: 100px;
-    }
-    
-    div.img:hover {
-      border: 1px solid #777;
-    }
-    
-    div.img img {
-      width: 100%;
-      height: auto;
-    }
-    
-    div.desc {
-      /*padding: 15px;
-      text-align: center;*/
-      display: none;
-    }
-    
-    input,
-    .input-group {
+    .width100 {
       width: 100%;
     }
-    
-    div.header {
+
+    #search:focus {
+      z-index: auto;
+    }
+
+    @media only screen and (min-width: 1280px) {
+      .container {
+        max-width: 1280px;
+      }
+    }
+
+    body {
+      padding-top: 32px;
+      padding-bottom: 32px;
+      background: #454d5d;
+    }
+
+    .card {
+      border-width: 0px;
+    }
+
+    .chip {
+      margin-right: 8px;
+      margin-bottom: 8px;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -khtml-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .tag-selected {
+      color: #fff;
+      background: #5764c6;
+    }
+
+    .dccon {
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -khtml-user-select: none;
+      -ms-user-select: none;
+    }
+
+/*    .dccon>.card>.card-body {
+      height: 70px;
+    }
+*/
+    #search_clear {
+      cursor: pointer;
+    }
+
+    .toast-container {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 10px;
+      bottom: 0px;
+      right: 0px;
+      padding: 16px;
+      z-index: 400;
     }
-    
-    .emoticon {
-      margin-top: 100px;
-      margin-bottom: 20px;
+
+    .toast {
+      margin-top: 8px;
     }
+
+    .menu {
+      max-height: 360px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    .dccon.tooltip::after {
+      width: 100%;
+/*      margin-left: 9px;
+      margin-right: 9px;
+*/      height: 72px;
+/*      padding: 12px;
+      padding-right: 28px;
+*/			padding:1.5rem;
+/*      white-space: pre-line;
+*/		white-space:pre-wrap;
+      border-top-left-radius: 0px;
+      border-top-right-radius: 0px;
+    }
+
+    .dccon.tooltip.tooltip-bottom:focus::after,
+    .tooltip.tooltip-bottom:hover::after {
+      opacity: 1;
+      -webkit-transform: translate(-50%, -81px);
+      -ms-transform: translate(-50%, -81px);
+      transform: translate(-50%, -81px);		
+    }
+		
+		.col-15		{ width:12.5%; flex:none; }
+		div.card		{ background:transparent; }
+		
+		.img-background			{	opacity:0; width:100px; height:100px; }
+		.card, .card-image	{	height:100%; }
+		.card-image					{	position:relative; }
+		.img-responsive.width100.lazy
+													{ position:absolute;
+														top:0; bottom:0; left:0; right:0;
+														margin:auto; }
   </style>
-  <script src="https://cdn.jsdelivr.net/jquery/1.12.4/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/handlebarsjs/4.0.5/handlebars.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/jquery.quicksearch/2.3.1/jquery.quicksearch.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/jquery.lazyload/1.9.3/jquery.lazyload.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/clipboard.js/1.6.1/clipboard.min.js"></script>
 </head>
+
 <body>
-  <script id="dccon-template" type="text/x-handlebars-template">
-  {{#dccon}}
-  <div class="img">
-    <a href="#" onclick="inputDCCon('~{{name}}');return false;">
-      <img class="lazy" data-original="{{src}}" alt="{{name}}" width="100" height="100">
-    </a>
-    <div class="desc">{{name}}</div>
-  </div>
-  {{/dccon}}
-  </script>
-  <div class="row header">
-    <div class="col-lg-6">
-      <div class="input-group">
-        <input type="text" id="dcconsearch" class="form-control dcconsearch" placeholder="디시콘 검색">
-        <span class="input-group-btn">
-          <button class="btn btn-default" type="button" onclick="resetSearch();">초기화</button>
-        </span>
+  <div class="container">
+    <div class="columns">
+      <div class="column hide-xs show col-md-1 col-2"></div>
+      <div class="column col-xs-12 col-md-10 col-8">
+        <div class="input-group input-inline width100">
+          <span class="input-group-addon">~</span>
+          <div class="form-autocomplete width100">
+            <div class="form-autocomplete-input form-input has-icon-right">
+              <input class="form-input" id="search" type="text" placeholder="디시콘 검색" />
+              <i class="form-icon icon icon-cross" id="search_clear"></i>
+            </div>
+            <ul class="menu hide" id="autocomplete"></ul>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-lg-6">
-      <div class="input-group">
-        <input type="text" id="dcconresult" class="form-control dcconresult" placeholder="선택한 디시콘은 이곳에 입력됩니다.">
-        <span class="input-group-btn">
-          <button class="btn btn-default" type="button" data-clipboard-target="#dcconresult">복사</button>
-        </span>
+    <div class="columns">
+      <div class="column hide-xs show col-md-1 col-2"></div>
+      <div class="column col-xs-12 col-md-10 col-8">
+        <div class="tags"></div>
       </div>
     </div>
+    <div class="columns">
+      <div class="column hide-xs show col-lg-1 col-1"></div>
+      <div class="column col-xs-12 col-lg-10 col-10 columns dccon-list"></div>
+    </div>
+    <div class="toast-container"></div>
+
   </div>
-  <div id="emoticon" class="emoticon">
-  </div>
-  <script>
-    var dcconimage = {};
-    var data = {
-      dccon: []
+	<script type="text/javascript">
+		var stl = null;
+		
+		var resize = function() {
+			if (stl!=null) { stl.remove(); }
+			stl = document.createElement("style");
+			
+			var width = document.body.getElementsByClassName("dccon-list")[0].scrollWidth;
+			if (width < 800)
+			{
+				if (width < 600)
+				{
+					if (width < 500)
+					{
+						if (width < 400)
+						{
+							if (width < 300) { stl.innerText=".col-15{width:50%;}" }
+							else { stl.innerText=".col-15{width:33%;}" }
+						}
+						else { stl.innerText=".col-15{width:25%;}" }
+					}
+					else { stl.innerText=".col-15{width:20%;}" }
+				}
+				else { stl.innerText=".col-15{width:16%;}" }
+			}
+			else { stl.innerText=".col-15{width:12.5%;}" }
+			
+			document.body.appendChild(stl);
+		};
+		
+		window.addEventListener("resize", resize);
+		window.addEventListener("load", resize);
+	</script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.5/jquery.lazy.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.5/jquery.lazy.plugins.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
+  <script src="https://cdn.rawgit.com/teampopong/hangul-jamo-js/eaca39e7/hangul-jamo.js"></script>
+  <script type="text/javascript">
+    var dcconList = [];
+
+    function getUrlParameter(sParam) {
+      var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+      for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+          return sParameterName[1] === undefined ? true : sParameterName[1];
+        }
+      }
     };
 
-    // 디시콘 불러오기 초기화 함수
-    function initChatInject() {
-      // httpRequest 초기화
-      if (window.XMLHttpRequest) { // 파폭, 사파리, 크롬 등등 웹표준 준수 브라우저
-        httpRequest = new XMLHttpRequest();
-      } else if (window.ActiveXObject) { // 쓰레기 IE
-        try {
-          httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
-        } catch (e) {
-          try {
-            httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
-          } catch (e) {}
+    function init() {
+      var seletedTags = [];
+      var currentSearchText = "";
+      var dcconSearchMap = {}; // keyword로 dccon을 찾을 수 있도록 하는 맵
+      var dcconKeywordList = []; // 전체 keyword 리스트
+      var visibleDccon = {};
+      var autocompleteData = {};
+      var tags = [];
+      // dcconSearchMap, dcconKeywordList 초기화
+      for (var i = 0; i < dcconList.length; i++) {
+        var dccon = dcconList[i];
+        for (var j = 0; j < dccon.tags.length; j++) {
+          var tag = dccon.tags[j];
+          if (tags.indexOf(tag) == -1) {
+            tags.push(tag);
+          }
+        }
+        for (var j = 0; j < dccon.keywords.length; j++) {
+          var keyword = dccon.keywords[j];
+          dcconSearchMap[keyword] = dccon;
+          dcconKeywordList.push(keyword);
+          autocompleteData[keyword] = dccon.path;
+          $('div.dccon-list').append(
+							'<div class="dccon column col-xs-6 col-md-4 col-lg-3 col-xl-2 col-15 tooltip tooltip-bottom" data-keyword="' + keyword + '" data-tags="' + dccon.tags.join(',') + '" data-clipboard-text="~' + keyword + '" data-tooltip="' + dccon.keywords
+            .join(', ') + '">' +
+            '  <div class="card">' +
+            '    <div class="card-image">' +
+						'      <img class="img-background" src="' + dccon.path + '">' +
+            '      <img class="img-responsive width100 lazy" data-src="' + dccon.path + '">' +
+            '    </div>' +
+            '  </div>' +
+            '</div>');
+          $('#autocomplete').append(
+            '<li class="menu-item">' +
+            '  <a href="#" class="autocomplete-item" data-keyword="' + keyword + '" data-clipboard-text="~' + keyword + '">' +
+            '    <div class="tile tile-centered">' +
+            '      <div class="tile-icon">' +
+            '        <img data-src="' + dccon.path + '" class="avatar avatar-sm lazy"/>' +
+            '      </div>' +
+            '      <div class="tile-content">' + keyword +
+            '      </div>' +
+            '    </div>' +
+            '  </a>' +
+            '</li>'
+          );
         }
       }
 
-      if (!httpRequest) {
-        alert('ERROR : Cannot init XMLHTTPRequest');
-        return false;
+      var lazyDccon = $(".dccon > .card > .card-image > img.lazy").Lazy({
+        chainable: false,
+        visibleOnly: true
+      });
+      var lazyAutocompletedIcon = $(".autocomplete-item > .tile > .tile-icon > img.lazy").Lazy({
+        chainable: false,
+        visibleOnly: true,
+        appendScroll: $('#autocomplete')
+      });
+
+      $('.autocomplete-item').click(function() {
+        currentSearchText = $(this).data('keyword');
+        $('input#search').val(currentSearchText);
+        updateList();
+        $('#autocomplete').addClass('hide');
+      });
+
+      tags.sort();
+      new Clipboard('.dccon, .autocomplete-item').on('success', function(e) {
+        var $toast = $('<div class="toast toast-primary">' +
+          '디씨콘 "' + e.text + '"을(를) 복사했습니다. 이제 채팅창에 입력하세요!' +
+          '</div>');
+        $toast.delay(3000).fadeOut('slow', function() {
+          $toast.remove();
+        });
+        $('.toast-container').append($toast);
+      });
+
+      for (var i = 0; i < tags.length; i++) {
+        var tag = tags[i];
+        $('div.tags').append('<label class="chip" id="tag-' + i + '" data-tag="' + tag + '">' +
+          tag +
+          '</label>');
       }
 
-      httpRequest.onreadystatechange = LoadDCCon;
-      httpRequest.open('GET', "https://lastorder-dc.github.io/ChatAssistX-Client/dccon.json");
-      httpRequest.send();
-    }
-
-    // 디시콘 불러오기 완료 함수
-    function LoadDCCon() {
-      if (httpRequest.readyState === 4) {
-        if (httpRequest.status === 200) {
-          try {
-            dcconimage = JSON.parse(httpRequest.responseText);
-            $.each(dcconimage, function(index, value) {
-              data.dccon.push({
-                name: index,
-                src: value
-              });
-            });
-
-            var source = $("#dccon-template").html();
-            var template = Handlebars.compile(source);
-            var html = template(data);
-            $('#emoticon').html(html);
-            var qs = $('input#dcconsearch').quicksearch('div#emoticon div.img', {
-              'delay': 100,
-              'selector': 'div.desc',
-              'onAfter': function () {
-                $('body').scroll();
-              }
-            });
-            $("img.lazy").lazyload();
-            new Clipboard('.btn');
-          } catch (e) {
-            alert("Unknown error occured while parsing DCCon JSON.");
+      $('div.tags>.chip').click(function(e) {
+        var $this = $(this);
+        var tag = $this.data('tag');
+        if ($this.hasClass('tag-selected')) {
+          $this.removeClass('tag-selected');
+          var index = seletedTags.indexOf(tag);
+          if (index >= 0) {
+            seletedTags.splice(index, 1);
           }
         } else {
-          alert("Unknown error occured while downloading DCCon JSON.");
+          $this.addClass('tag-selected');
+          seletedTags.push(tag);
         }
+        updateList();
+      });
+
+      $('input#search').on("focusin", function(e) {
+        $('#autocomplete').removeClass('hide').scrollTop(0);
+        lazyAutocompletedIcon.update();
+      });
+
+      $('input#search').on("focusout", function(e) {
+        if (!$(e.relatedTarget).hasClass('autocomplete-item')) {
+          $('#autocomplete').addClass('hide');
+        }
+      });
+      $(document).keydown(
+        function(e) {
+          if (!$('#autocomplete').hasClass('hide')) {
+            var $focusedAutocompleteItem = $('.menu-item:not(".hide")>.autocomplete-item:focus');
+            if (e.keyCode == 40) { // down
+              e.preventDefault();
+              if ($focusedAutocompleteItem.length > 0) {
+                $focusedAutocompleteItem.parent().nextAll('.menu-item:not(".hide")').first().children().focus();
+              } else {
+                $('.menu-item:not(".hide")>.autocomplete-item').first().focus();
+              }
+            } else if (e.keyCode == 38) { // up
+              e.preventDefault();
+              if ($focusedAutocompleteItem.length > 0) {
+                $focusedAutocompleteItem.parent().prevAll('.menu-item:not(".hide")').first().children().focus();
+              }
+            } else if (e.keyCode == 27) { // esc
+              e.preventDefault();
+              $('#autocomplete').addClass('hide');
+            }
+          }
+        });
+
+      function updateList() {
+        visibleDccon = {};
+        $('.dccon').each(function() {
+          var $this = $(this);
+          var keyword = $this.data('keyword');
+          var tags = $this.data('tags').split(',');
+          var dccon = dcconSearchMap[keyword];
+          var searchResult = (function() {
+            if (seletedTags.length > 0) {
+              var hasTag = false;
+              for (var i = 0; i < tags.length; i++) {
+                if (seletedTags.indexOf(tags[i]) != -1) {
+                  hasTag = true;
+                  break;
+                }
+              }
+              if (!hasTag) {
+                return false;
+              }
+            }
+            if (currentSearchText.length > 0 && keyword.indexOf(currentSearchText) == -1) {
+              return false;
+            }
+            return true;
+          })();
+          if (searchResult && visibleDccon[dccon.keywords.join(",")] == undefined) {
+            visibleDccon[dccon.keywords.join(",")] = dccon;
+            $this.removeClass('hide');
+          } else {
+            $this.addClass('hide');
+          }
+        });
+
+        $('.autocomplete-item').each(function() {
+          var $this = $(this);
+          var keyword = $this.data('keyword');
+          if (HANGUL.indexOf(keyword, currentSearchText) != -1) {
+            $this.parent().removeClass('hide');
+          } else {
+            $this.parent().addClass('hide');
+          }
+        });
+        if ($('.menu-item:not(".hide")').length == 0) {
+          $('#autocomplete').addClass('hide');
+        } else if ($('input#search').is(":focus")) {
+          $('#autocomplete').removeClass('hide').scrollTop(0);;
+          lazyAutocompletedIcon.update();
+        }
+
+        lazyDccon.update();
+        lazyAutocompletedIcon.update();
       }
-    }
 
-    function inputDCCon(name) {
-      $('#dcconresult').val(name);
+      $('input#search').on('input', function(e) {
+        currentSearchText = $('input#search').val();
+        updateList();
+      });
+      $('#search_clear').click(function() {
+        $('input#search').val('');
+        currentSearchText = '';
+        updateList();
+      });
+      updateList();
     }
-
-    function resetSearch() {
-      $('#dcconsearch').val('');
-      $('#dcconsearch').trigger("keyup");
-    }
-    
-    window.onload = function () {
-      initChatInject();
-    }
+    $(document).ready(function() {
+      var dcconListUrl = getUrlParameter('dccon_list');
+      if (dcconListUrl == undefined) {
+        dcconListUrl = 'https://lastorder-dc.github.io/ChatAssistX-Client/dccon.json';
+      }
+      $.getJSON(dcconListUrl).done(function(data) {
+          dcconList = data.dccons;
+          init();
+        })
+        .fail(function(jqxhr, textStatus, error) {
+          var err = textStatus + ", " + error;
+          console.log("Request Failed: " + err);
+          init();
+        });
+    });
   </script>
 </body>
 </html>

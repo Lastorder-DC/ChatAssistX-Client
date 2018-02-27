@@ -1,6 +1,6 @@
 (function(window) {
 	var plugin_name = "dccon";
-	var plugin_version = "2.0.0"
+	var plugin_version = "2.1.0"
 	var address = {};
 	var httpRequest;
 	var fail_count;
@@ -75,7 +75,21 @@
 			if (httpRequest.status === 200) {
 				try {
 					fail_count = 0;
-					list.dccon = JSON.parse(httpRequest.responseText);
+					var json = JSON.parse(httpRequest.responseText);
+					if(typeof json.dccons !== 'undefined') {
+						//OpenDCCon
+						list.dccon = {};
+						$.each(json.dccons, function(key, obj) {
+							$.each(obj.keywords, function(idx, keyword) {
+								list.dccon[keyword] = obj.path;
+							});
+						});
+						
+						console.log(list.dccon);
+					} else {
+						//ChatAssistX 1.0 format
+						list.dccon = json;
+					}
 
 					addChatMessage("info", "불러오는중", "디시콘 목록을 불러왔습니다. (1 / 3)", false, false);
 					LoadTwitchEmoticon();

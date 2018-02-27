@@ -80,7 +80,7 @@
 						//OpenDCCon
 						list.dccon = {};
 						$.each(json.dccons, function(key, obj) {
-							$.each(obj, function(idx, keyword) {
+							$.each(obj.keywords, function(idx, keyword) {
 								list.dccon[keyword] = obj.path;
 							});
 						});

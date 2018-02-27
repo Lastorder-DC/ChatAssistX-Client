@@ -403,7 +403,7 @@
     $(document).ready(function() {
       var dcconListUrl = getUrlParameter('dccon_list');
       if (dcconListUrl == undefined) {
-        dcconListUrl = 'https://lastorder-dc.github.io/ChatAssistX-Client/dccon.json';
+        dcconListUrl = 'http://lastorder.xyz/ChatAssistX-Client/dccon.json';
       }
       $.getJSON(dcconListUrl).done(function(data) {
           dcconList = data.dccons;

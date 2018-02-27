@@ -1,0 +1,61 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0" />
+    <title>디시콘 변환기</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        textarea {
+            width:100%;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/clipboard.js/1.6.1/clipboard.min.js"></script>
+</head>
+<body>
+<p>ChatAssistX 1.0 디시콘 형식을 오픈디시콘 형식으로 바꿔줍니다. 중복되는 디시콘은 자동 병합되나 태그는 수동으로 입력해야 합니다.</p>
+<textarea id="original" title="바꿀 디시콘 JSON" rows="20"></textarea>
+<textarea id="converted" readonly="readonly" title="바뀐 디시콘 JSON" rows="20"></textarea>
+<button onclick="ConvertDCCon()">변환하기</button>
+<script>
+	// 디시콘 불러오기 완료 함수
+	function ConvertDCCon() {
+		var dcconimage = {};
+		var data = {
+			dccons: []
+		};
+        try {
+            var $original = $('#original');
+            var $converted = $('#converted');
+
+            dcconimage = JSON.parse($original.val());
+            $.each(dcconimage, function(index, value) {
+            	var merged = false;
+
+				$.each(data.dccons, function(key, obj) {
+					if(obj.path === value) {
+						console.info("Duplication " + index + " merged to [" + obj.keywords.join(",") + "].");
+						data.dccons[key].keywords.push(index);
+						merged = true;
+                    }
+				});
+
+                if(!merged) {
+					data.dccons.push({
+						path: value,
+						keywords: [index],
+						tags: ["변환됨"]
+					});
+				}
+            });
+
+			$converted.val(JSON.stringify(data));
+            //new Clipboard('.btn');
+        } catch (e) {
+            alert("Unknown error occured while parsing DCCon JSON.");
+            console.error(e);
+        }
+	}
+</script>
+</body>
+</html>

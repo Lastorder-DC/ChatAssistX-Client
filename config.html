@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Config Generator</title>
+    <style>
+        ul.tabs {
+            margin: 0;
+            padding: 0;
+            float: left;
+            list-style: none;
+            height: 32px;
+            border-bottom: 1px solid #eee;
+            border-left: 1px solid #eee;
+            width: 100%;
+            font-size:12px;
+        }
+        ul.tabs li {
+            float: left;
+            text-align: center;
+            cursor: pointer;
+            width:82px;
+            height: 31px;
+            line-height: 31px;
+            border: 1px solid #eee;
+            border-left: none;
+            font-weight: bold;
+            background: #fafafa;
+            overflow: hidden;
+            position: relative;
+        }
+        ul.tabs li.active {
+            background: #FFFFFF;
+            border-bottom: 1px solid #FFFFFF;
+        }
+        .tab_container {
+            border: 1px solid #eee;
+            border-top: none;
+            clear: both;
+            float: left;
+            width: 800px;
+            background: #FFFFFF;
+        }
+        .tab_content {
+            min-height: 500px;
+            padding: 5px;
+            font-size: 12px;
+            display: none;
+        }
+        .tab_container .tab_content ul {
+            width:100%;
+            margin: 0;
+            padding: 0;
+        }
+        .tab_container .tab_content ul li {
+            padding:5px;
+            list-style:none;
+        }
+        #container {
+            width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/jquery/1.12.4/jquery.min.js"></script>
+    <script>
+        $(function () {
+            $(".tab_content").hide();
+            $(".tab_content:first").show();
+
+            $("ul.tabs li").click(function () {
+                $("ul.tabs li").removeClass("active").css("color", "#333");
+                $(this).addClass("active").css("color", "darkred");
+                $(".tab_content").hide();
+                var activeTab = $(this).attr("rel");
+                $("#" + activeTab).fadeIn();
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="container">
+        <ul class="tabs">
+            <li class="active" rel="default">기본 설정</li>
+            <li rel="style">기본 스타일</li>
+            <li rel="theme">테마</li>
+            <li rel="plugin">플러그인</li>
+            <li rel="provider">프로바이더</li>
+        </ul>
+        <div class="tab_container">
+            <div id="default" class="tab_content">
+                <h2>기본 설정</h2>
+                <p><label for="ipt_preset">기본 프리셋&nbsp;:&nbsp;</label><input id="ipt_preset" type="text" name="preset" placeholder="default" /></p>
+                <p><label for="ipt_theme">기본 테마&nbsp;:&nbsp;</label><input id="ipt_theme" type="text" name="theme" placeholder="jsassist" /></p>
+                <p><input id="chk_extimg" type="checkbox" name="allowExternalSource" /><label for="chk_extimg">외부 이미지 허용</label></p>
+                <p><input id="chk_dccon" type="checkbox" name="allowEmoticon" /><label for="chk_dccon">디시콘 허용</label></p>
+                <p><input id="chk_twitchemoji" type="checkbox" name="enableTwitchEmoticon" /><label for="chk_twitchemoji">트위치 이모티콘 허용</label></p>
+                <p><label for="ipt_twitch_size">트위치 이모티콘 사이즈&nbsp;:&nbsp;</label><input id="ipt_twitch_size" type="number" name="TwitchEmoticonsize" value="1" /></p>
+                <h3>JSAssist 이용시 플랫폼별 스트리머명</h3>
+                <p><label for="str_kakao">카카오TV&nbsp;:&nbsp;</label><input id="str_kakao" type="text" name="str_kakao" placeholder="카카오TV 닉네임" /></p>
+                <p><label for="str_twitch">트위치&nbsp;:&nbsp;</label><input id="str_twitch" type="text" name="str_twitch" placeholder="트위치 한글닉네임(없으면 아이디)" /></p>
+                <p><label for="str_youtube">유튜브&nbsp;:&nbsp;</label><input id="str_youtube" type="text" name="str_youtube" placeholder="유튜브 채널명" /></p>
+            </div>
+            <div id="style" class="tab_content">
+                <h2>기본 채팅 스타일</h2>
+                <p>주의&nbsp;:&nbsp;JSAssist 사용시 본 설정은 JSAssist의 설정값으로 덮어씌워집니다.</p>
+                <p><input id="chk_icon" type="checkbox" name="platformIcon" /><label for="chk_icon">외부 이미지 허용</label></p>
+                <h3>출력할 플랫폼</h3>
+                <p>
+                    <input id="chk_kakao" type="checkbox" name="platform" value="kakao" /><label for="chk_kakao">카카오TV</label>
+                    <input id="chk_twitch" type="checkbox" name="platform" value="twitch" /><label for="chk_twitch">트위치</label>
+                    <input id="chk_youtube" type="checkbox" name="platform" value="youtube" /><label for="chk_youtube">유튜브</label>
+                </p>
+            </div>
+            <div id="theme" class="tab_content">
+                <h2>테마</h2>
+            </div>
+            <div id="plugin" class="tab_content">
+                <h2>플러그인</h2>
+            </div>
+            <div id="provider" class="tab_content">
+                <h2>프로바이더</h2>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

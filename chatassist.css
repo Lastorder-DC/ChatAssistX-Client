@@ -28,6 +28,13 @@
     vertical-align: middle;
 }
 
+.chat_platform_none {
+    width: 16px;
+    margin-right: 5px;
+    content: url('./img/icon_none_small.png');
+    vertical-align: middle;
+}
+
 .chat_div_fixed {
     position: fixed;
     top: 0;

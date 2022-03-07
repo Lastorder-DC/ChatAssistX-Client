@@ -80,7 +80,7 @@
                     	});
 			
 			client.on("message", function(channel, userstate, message, self) {
-				if (self || userstate["message-type"] !== "chat") return;
+				if (userstate["message-type"] !== "chat") return;
 				
 				var data = {};
 				data.isStreamer = false;

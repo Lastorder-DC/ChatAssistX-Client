@@ -111,7 +111,7 @@
 				}
 				
 				window.ChatAssistX.addChatMessage(data);
-			}
+			});
 			
 			return true;
 		};

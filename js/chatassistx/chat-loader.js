@@ -19,7 +19,7 @@
 
 	window.chat = {};
 	window.ChatAssistX = {};
-	window.ChatAssistX.version = "2.0.3";
+	window.ChatAssistX.version = "2.0.4";
 	window.ChatAssistX.plugins = [];
 	window.ChatAssistX.plugin_count = 0;
 	window.ChatAssistX.loaded_plugin_count = 0;
@@ -199,7 +199,7 @@
 			
 			if (args.isStreamer || isStreamer(args.platform, args.nickname)) {
 				var badge_streamer = window.ChatAssistX.config.themes[window.ChatAssistX.config.theme].image.streamer;
-				if(badge_streamer === "") badge_streamer = "https://static-cdn.jtvnw.net/chat-badges/broadcaster.png";
+				if(badge_streamer === "") badge_streamer = "https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/2";
 				args.nickname = '<img style="vertical-align: middle;" src="' + badge_streamer + '" alt="Broadcaster" class="badge">&nbsp;' + args.nickname;
 			}
 			

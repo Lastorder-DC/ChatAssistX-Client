@@ -113,6 +113,8 @@
 				window.ChatAssistX.addChatMessage(data);
 			});
 			
+			client.connect().catch(console.error);
+			
 			return true;
 		};
 		

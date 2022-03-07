@@ -73,15 +73,6 @@
 					password: plugin_config.oauth
 				},
 				channels: [plugin_config.channelname]
-			);
-			
-			
-			TAPIC.setup(plugin_config.oauth, function() {
-				TAPIC.setRefreshRate(10);
-
-				TAPIC.joinChannel(plugin_config.channelname, function() {
-					console.info("TAPIC Connected!");
-				});
 			});
 			
 			client.on("connected", (address, port) => {

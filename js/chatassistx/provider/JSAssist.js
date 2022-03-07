@@ -87,7 +87,7 @@
 				data.isMod = false;
 				data.rawprint = false;
 				data.nickname = userstate["display-name"];
-				data.message = e.text.trim();
+				data.message = message.trim();
 				data.color = userstate.color;
 				data.platform = "twitch";
 				if(userstate['emotes-raw'] !== null) data.emotes = userstate['emotes-raw'];

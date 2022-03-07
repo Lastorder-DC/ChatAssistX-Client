@@ -62,7 +62,7 @@
 				options: {
 					debug: true,
 					messagesLogLevel: "info",
-					clientId: window.oauth_client_id
+					clientId: "pmxd8z2s9kfykxrw8t665kdv02uay4"
 				},
 				connection: {
 					reconnect: true,

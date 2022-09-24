@@ -363,7 +363,7 @@
 				else message = message.replace(/\\n(\S*?)\\n/g, replaceTwitchEmoticon);
 			}
 
-			message = message.replace(/\[twitch ([0-9]*)\]/g, "<img class=\"twchimg\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/$1/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >");
+			message = message.replace(/\[twitch ([^\]]+)\]/g, "<img class=\"twchimg\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/$1/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >");
 
 			if (args.message != message) return message;
 			else return false;

@@ -363,7 +363,10 @@
 				else message = message.replace(/\\n(\S*?)\\n/g, replaceTwitchEmoticon);
 			}
 
-			message = message.replace(/\[twitch ([^\]]+)\]/g, "<img class=\"twchimg\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/$1/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >");
+			message = message.replace(/\[twitch ([^\]]+)\]/g, function(match, twitchId) {
+				if(twitchId.indexOf("emotesv2") !== -1) return "<img class=\"twchimg twchimg_v2\" src=\"https://static-cdn.jtvnw.net/emoticons/v2/" + twitchId + "/default/light/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >";
+				else return "<img class=\"twchimg\" src=\"https://static-cdn.jtvnw.net/emoticons/v1/" + twitchId + "/" + window.ChatAssistX.config.TwitchEmoticonsize + "\" >";
+			});
 
 			if (args.message != message) return message;
 			else return false;

@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    2.0.3
- *       Last updated by Lastorder-DC on 2019-02-03.
+ *                 V E R S I O N    2.0.5
+ *       Last updated by Lastorder-DC on 2022-09-24.
  */
 
 (function(window) {
@@ -19,7 +19,7 @@
 
 	window.chat = {};
 	window.ChatAssistX = {};
-	window.ChatAssistX.version = "2.0.4";
+	window.ChatAssistX.version = "2.0.5";
 	window.ChatAssistX.plugins = [];
 	window.ChatAssistX.plugin_count = 0;
 	window.ChatAssistX.loaded_plugin_count = 0;

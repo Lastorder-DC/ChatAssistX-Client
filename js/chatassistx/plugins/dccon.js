@@ -350,7 +350,7 @@
 			var message = args.message;
 
 			//마퀴태그 치환
-			message = message.replace(/\[mq( direction=([^\ ])*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g, replaceMarquee);
+			message = message.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g, replaceMarquee);
 
 			if (window.ChatAssistX.config.allowEmoticon) {
 				//디시콘치환

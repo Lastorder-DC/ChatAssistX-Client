@@ -357,7 +357,7 @@
 		if (typeof body == "undefined") return "";
 
 		// 마퀴태그내 이모티콘이 오면 마퀴태그를 무시함
-		if (list.inited && false && true) {
+		if (list.inited && window.config.allowEmoticon && window.config.ignoreMQEmoticon) {
 			// 우선 마퀴태그 내 이모티콘을 변환해봄
 			body = body.replace(/~([^\ ~]*)/g, replaceEmoticon);
 			// 이모티콘이 있다면 그냥 마퀴태그 없이 변환된 이모티콘 이미지만 반환

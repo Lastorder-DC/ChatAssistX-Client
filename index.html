@@ -31,10 +31,10 @@
         
         // 1.6.1.0 추가 - 채널명 입력
         // 기존 tapic은 더이상 사용하지 않습니다.
-        window.config.channelname = url.searchParams.get("twitch");
+        window.config.channelname = !url.searchParams.get("twitch") ? "" : url.searchParams.get("twitch");
 
         // kick 스트리머 아이디 입력
-        window.config.kickid = url.searchParams.get("kick");
+        window.config.kickid = !url.searchParams.get("kick") ? "" : url.searchParams.get("kick");
 
         // 이모티콘
         window.emoticon = {};

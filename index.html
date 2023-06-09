@@ -4,6 +4,7 @@
     <title>ChatAssistX</title>
     <script>
         function convertStringToObject(str) {
+            if(!str) return {};
             const pairs = str.split(',');
             const obj = {};
 

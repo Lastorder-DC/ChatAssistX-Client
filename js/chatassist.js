@@ -619,7 +619,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
 function connect_chat() {
     connect_twitch();
     
-    if(typeof window.config.kickid !== 'undefined') {
+    if(typeof window.config.kickid !== 'undefined' || !!window.config.kickid) {
         connect_kick();
     }
 }

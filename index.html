@@ -1,0 +1,93 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>ChatAssistX</title>
+    <script>
+        // ChatAssist 설정 변수
+        window.config = {};
+        
+        window.config.allowExternalSource = false; // 외부이미지([img 주소] 문법) 허용하려면 true로 변경
+        window.config.allowEmoticon = true; // 디시콘 사용가능유무 사용금지로 바꾸려면 false로 변경
+        window.config.ignoreMQEmoticon = true; // 마퀴태그+디시콘 사용여부 사용하려면 false로 변경
+        window.config.ignoreNickname = "nightbot,twipkr" // 필터링할 닉네임 목록(,로 구분)
+        window.config.enableTwitchEmoticon = true; // 트위치 이모티콘 사용여부
+        window.config.TwitchEmoticonsize = "1.0"; //트위치 이모티콘 크기 1.0/2.0/3.0 처럼 입력
+        window.config.TwitchEmoticonMode = "light"; //트위치 이모티콘 라이트/다크모드 설정. light나 dark 둘중하나 입력
+        
+        // 1.6.1.0 추가 - 채널명 입력
+        // 기존 tapic은 더이상 사용하지 않습니다.
+        window.config.channelname = "put_twitchid"
+
+        // kick 스트리머 아이디 입력
+        window.config.kickid = "put_kickid"
+
+        // 이모티콘
+        window.emoticon = {};
+        window.emoticon.address = "https://example.com/?put_dccon_js_addr";
+        window.emoticon.isActive = false; // 이모티콘 목록 불러와졌는지 여부
+        window.emoticon.list = {}; // 이모티콘 목록(위 address에서 불러와서 채워짐)
+        
+        // 치환 리스트
+        // 입력한 단어는 채팅 위젯에서 치환되어 보입니다
+        // 비울경우 {}로 대체
+        window.config.replace = {
+            "금지표현":"바꿀표현"
+        }
+        
+        // 익명화 설정
+        // 방송에 표시되는 닉네임만 익명화할수 있습니다.
+        window.config.anon = false; // 익명 사용시 true
+        window.config.anon_nickname = "손님";
+        window.config.anon_random = false; // 랜덤 숫자를 붙이려면 "number" 랜덤 문자열을 붙이려면 "string"
+        window.config.random_length = 4; // 랜덤 숫자/닉네임 길이 지정(위에서 number나 string 지정시)
+        window.config.fix_random_id = false; // 랜덤 닉네임 고정(같은 시청자는 같은 랜덤 문자 배정) 활성화시 true - 새로고침시 초기화됨
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.2/jquery-ui.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.7/dist/handlebars.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Lastorder-DC/referrer-killer@84a087203af378c45782a406a58ad2d588ae36c2/referrer-killer.js"></script>
+    <script src="./js/chatassist.js?ver=20230607"></script>
+
+    <!-- TODO : Replace below to local one -->
+    <link rel="stylesheet" href="https://chat.lastorder.xyz/css/jsassist.css" type="text/css"/>
+    <link rel="stylesheet" href="https://chat.lastorder.xyz/css/chatassist.css" type="text/css"/>
+    <style>
+        /* 이곳에 커스텀 CSS 추가 */
+    </style>
+</head>
+<body>
+<script id="chat-template" type="text/x-handlebars-template">
+    <div class="chat_div" id="chat_{{num}}">
+        <span class="chat_platform_{{platform}}"></span>
+        <span class="chat_text_nickname">
+            {{{nickname}}}
+        </span>
+        <div class="chat_text_message">
+            {{{message}}}
+        </div>
+    </div>
+</script>
+<script id="chat-template-sticky" type="text/x-handlebars-template">
+    <div class="fixed_chat">
+    {{#ifCond nickname notitle}}
+        <div class="chat_text_message_sticky_logo">
+            {{{message}}}
+        </div>
+    {{else}}
+        <span class="chat_platform_{{platform}}"></span>
+        <span class="chat_text_nickname">
+            {{{nickname}}}
+        </span>
+        <div class="chat_text_message_sticky">
+            {{{message}}}
+        </div>
+    {{/ifCond}}
+    </div>
+</script>
+<div class="chat_wrapper">
+    <div class="chat_container">
+    </div>
+</div>
+</body>
+</html>

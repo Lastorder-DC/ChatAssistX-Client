@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.9.1.1
+ *                 V E R S I O N    1.9.1.2
  *       Last updated by Lastorder-DC on 2023-06-24.
  */
 // 변수 초기화
@@ -677,6 +677,10 @@ function complete_connect_kick() {
                     addChatMessage("info", "Kick 채팅 연결됨", window.config.kickid + " 채널에 연결되었습니다.", true, false);
                     window.kicksocket.isInited = true;
                 } else if(event.data.indexOf("ChatMessageEvent") !== -1) {
+                    rawMessage = JSON.parse(event.data)
+                    message = JSON.parse(rawMessage.data)
+                    message.body = message.content;
+
                     var ext_args = {};
                     ext_args.isStreamer = rawMessage.data.indexOf('"type":"broadcaster"') !== -1;
                     ext_args.isMod = false;
@@ -684,10 +688,6 @@ function complete_connect_kick() {
                     ext_args.emotes = void 0;
                     ext_args.color = void 0;
                     ext_args.subscriber = false;
-
-                    rawMessage = JSON.parse(event.data)
-                    message = JSON.parse(rawMessage.data)
-                    message.body = message.content;
 
                     addChatMessage("kick", message.sender.username.htmlEntities(), message.content, false, ext_args);
                 }

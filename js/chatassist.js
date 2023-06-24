@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.9.1.0";
+window.chat.version = "1.9.1.2";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;

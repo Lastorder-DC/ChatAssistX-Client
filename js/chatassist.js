@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.9.1.0
+ *                 V E R S I O N    1.9.1.1
  *       Last updated by Lastorder-DC on 2023-06-24.
  */
 // 변수 초기화
@@ -678,7 +678,7 @@ function complete_connect_kick() {
                     window.kicksocket.isInited = true;
                 } else if(event.data.indexOf("ChatMessageEvent") !== -1) {
                     var ext_args = {};
-                    ext_args.isStreamer = false;
+                    ext_args.isStreamer = rawMessage.data.indexOf('"type":"broadcaster"') !== -1;
                     ext_args.isMod = false;
                     ext_args.rawprint = false;
                     ext_args.emotes = void 0;

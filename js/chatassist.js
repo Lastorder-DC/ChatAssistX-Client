@@ -13,6 +13,8 @@ window.chat = {};
 window.chat.socket = null;
 window.kicksocket = {};
 window.kicksocket.isInited = false;
+window.ytsocket = {};
+window.ytsocket.isInited = false;
 
 // 버전 번호
 window.chat.version = "1.9.0.0";
@@ -622,6 +624,28 @@ function connect_chat() {
     if(typeof window.config.kickid !== 'undefined' && !!window.config.kickid) {
         connect_kick();
     }
+    
+    if(typeof window.config.ytChannel !== 'undefined' && !!window.config.ytChannel) {
+        connect_yt();
+    }
+}
+
+function connect_yt() {
+    // 업타임 보장 안하는 개발용 서버
+    window.ytsocket.socket = new WebSocket(`wss://yt-chat.lastorder.xyz/c/${window.config.ytChannel}`);
+    window.ytsocket.isInited = true;
+    window.ytsocket.socket.onmessage = function(event) {
+        var ext_args = {};
+        ext_args.isStreamer = event.data.indexOf('"badge":"OWNER"') !== -1;
+        ext_args.isMod = false;
+        ext_args.rawprint = false;
+        ext_args.emotes = void 0;
+        ext_args.color = void 0;
+        ext_args.subscriber = false;
+
+        message = JSON.parse(event.data);
+        addChatMessage("youtube", message.name.htmlEntities(), message.message, false, ext_args);
+    };
 }
 
 function connect_kick() {

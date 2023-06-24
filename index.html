@@ -36,6 +36,9 @@
         // kick 스트리머 아이디 입력
         window.config.kickid = !url.searchParams.get("kick") ? "" : url.searchParams.get("kick");
 
+        // kick 스트리머 아이디 입력
+        window.config.ytChannel = !url.searchParams.get("ytChannel") ? "" : url.searchParams.get("ytChannel");
+
         // 이모티콘
         window.emoticon = {};
         window.emoticon.address = url.searchParams.get("list");

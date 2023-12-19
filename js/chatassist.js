@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.9.1.2
- *       Last updated by Lastorder-DC on 2023-06-24.
+ *                 V E R S I O N    1.10.0.0
+ *       Last updated by Lastorder-DC on 2023-12-19.
  */
 // 변수 초기화
 window.chat = {};
@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.9.1.2";
+window.chat.version = "1.10.0.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -628,6 +628,10 @@ function connect_chat() {
     if(typeof window.config.ytChannel !== 'undefined' && !!window.config.ytChannel) {
         connect_yt();
     }
+
+    if(typeof window.config.nvrChannel !== 'undefined' && !!window.config.nvrChannel) {
+        connect_naver();
+    }
 }
 
 function connect_yt() {
@@ -762,6 +766,100 @@ function connect_twitch() {
             addChatMessage("twitch", message['display-name'].htmlEntities(), message.body, false, ext_args);
         }
     };
+}
+
+function connect_naver() {
+    const nvrChannel = window.config.nvrChannel;
+    try {
+        // 1. nvrChannel을 이용하여 첫 번째 API 호출
+        var xhr1 = new XMLHttpRequest();
+        xhr1.open('GET', `https://chzzk.lastorder.xyz/?cid=${nvrChannel}&url=https://api.chzzk.naver.com/service/v1/channels/${nvrChannel}`, false);
+        xhr1.send();
+
+        if (xhr1.status === 200) {
+            var data1 = JSON.parse(xhr1.responseText);
+
+            // 2. openLive가 true인 경우 두 번째 API 호출
+            if (data1.content.openLive) {
+                var xhr2 = new XMLHttpRequest();
+                xhr2.open('GET', `https://chzzk.lastorder.xyz/?cid=${nvrChannel}&url=https://api.chzzk.naver.com/polling/v1/channels/${nvrChannel}/live-status`, false);
+                xhr2.send();
+
+                if (xhr2.status === 200) {
+                    var data2 = JSON.parse(xhr2.responseText);
+
+                    // 3. chatChannelId 저장
+                    var chatChannelId = data2.content.chatChannelId;
+
+                    // 5. accessToken 저장
+                    var accessToken = "FDMQhzhRGnkfmofaJVartjZ07ZNBjAfzBheCS1iRtYFUwIecEHfyVyTI0/uQ3u4a1s8jVmL/LV9K8bIH/nFIww==";
+
+                    // 6. 웹소켓 연결
+                    var socket = new WebSocket('wss://kr-ss4.chat.naver.com/chat');
+
+                    // 7. 웹소켓으로 전송할 내용 구성
+                    var init_chat = {
+                        ver: '2',
+                        cmd: 100,
+                        svcid: 'game',
+                        cid: chatChannelId,
+                        bdy: {
+                            uid: null,
+                            devType: 2001,
+                            accTkn: accessToken,
+                            auth: 'READ'
+                        },
+                        tid: 1
+                    };
+
+                    // 8. 웹소켓 응답 저장
+                    var socketResponse = null;
+
+                    socket.onopen = function () {
+                        // 웹소켓 연결이 열렸을 때 init_chat 전송
+                        socket.send(JSON.stringify(init_chat));
+                    };
+
+                    socket.onmessage = function (event) {
+                        socketResponse = JSON.parse(event.data);
+
+                        // 9. sid를 sid 변수에 저장한 후 login 전송
+                        if (socketResponse.cmd === 10100) {
+                            var sid = socketResponse.bdy.sid;
+                            var login = {
+                                ver: '2',
+                                cmd: 5101,
+                                svcid: 'game',
+                                cid: chatChannelId,
+                                sid: sid,
+                                bdy: {
+                                    recentMessageCount: 50
+                                },
+                                tid: 2
+                            };
+                            socket.send(JSON.stringify(login));
+                        } else {
+                            if(Array.isArray(socketResponse.bdy)) {
+                                for(const chat of socketResponse.bdy) {
+                                    const profile = JSON.parse(chat['profile']);
+                                    const ext_args = {};
+                                    ext_args.isStreamer = false;
+                                    ext_args.isMod = false;
+                                    ext_args.rawprint = false;
+                                    ext_args.emotes = void 0;
+                                    ext_args.color = void 0;
+                                    ext_args.subscriber = false;
+                                    addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg, false, ext_args);
+                                }
+                            }
+                        }
+                    };
+                }
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 $(document).ready(function() {

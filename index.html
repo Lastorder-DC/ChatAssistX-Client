@@ -36,8 +36,11 @@
         // kick 스트리머 아이디 입력
         window.config.kickid = !url.searchParams.get("kick") ? "" : url.searchParams.get("kick");
 
-        // kick 스트리머 아이디 입력
+        // 유튜브 스트리머 아이디 입력(불안정함)
         window.config.ytChannel = !url.searchParams.get("ytChannel") ? "" : url.searchParams.get("ytChannel");
+
+        // 치지직 스트리머 채널 아이디 입력(베타)
+        window.config.nvrChannel = !url.searchParams.get("nvrChannel") ? "" : url.searchParams.get("nvrChannel");
 
         // 이모티콘
         window.emoticon = {};

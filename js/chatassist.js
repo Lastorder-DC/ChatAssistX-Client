@@ -347,7 +347,7 @@ function NAVER_replaceEmoticon(message) {
             num = num - 10;
             if (num < 10) {
                 imageFile = 'txt0' + num;
-            } else if (num < 11) {
+            } else {
                 imageFile = 'txt' + num;
             }
         }

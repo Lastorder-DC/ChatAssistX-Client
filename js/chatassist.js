@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.10.1.0
- *       Last updated by Lastorder-DC on 2023-12-26.
+ *                 V E R S I O N    1.10.1.1
+ *       Last updated by Lastorder-DC on 2023-12-27.
  */
 // 변수 초기화
 window.chat = {};
@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.10.1.0";
+window.chat.version = "1.10.1.1";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -872,9 +872,10 @@ function connect_naver() {
                             if(Array.isArray(socketResponse.bdy)) {
                                 for(const chat of socketResponse.bdy) {
                                     //console.log(chat.msg)
+                                    
                                     const profile = JSON.parse(chat['profile']);
                                     const ext_args = {};
-                                    ext_args.isStreamer = false;
+                                    ext_args.isStreamer = (profile['userRoleCode'] == "streamer");
                                     ext_args.isMod = false;
                                     ext_args.rawprint = false;
                                     ext_args.emotes = void 0;

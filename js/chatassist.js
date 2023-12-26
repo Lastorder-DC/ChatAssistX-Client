@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.10.0.0
- *       Last updated by Lastorder-DC on 2023-12-19.
+ *                 V E R S I O N    1.10.1.0
+ *       Last updated by Lastorder-DC on 2023-12-26.
  */
 // 변수 초기화
 window.chat = {};
@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.10.0.0";
+window.chat.version = "1.10.1.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -333,6 +333,32 @@ function KICK_replaceTwitchEmoticon(message) {
     return replacedMessage;
 }
 
+function NAVER_replaceEmoticon(message) {
+    var regex = /{:d_(\d+):}/g;
+    var result = message.replace(regex, function(match, number) {
+        var num = parseInt(number, 10);
+        var imageFile = "";
+
+        if (num < 10) {
+            imageFile = 'cha0' + num;
+        } else if (num < 11) {
+            imageFile = 'cha' + num;
+        } else {
+            num = num - 10;
+            if (num < 10) {
+                imageFile = 'txt0' + num;
+            } else if (num < 11) {
+                imageFile = 'txt' + num;
+            }
+        }
+
+        var imageUrl = `https://ssl.pstatic.net/static/nng/glive/icon/${imageFile}.png`
+        return `<img class="naver_emoticon" src="${imageUrl}" alt="치지직 이모티콘 ${imageFile}">`;
+    });
+  
+    return result;
+  }
+
 /**
  * 명령어 변환 함수
  * @param {String} match
@@ -495,6 +521,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         // 메세지 안 트위치 이모티콘 변환
         if(platform == "twitch") message = TAPIC_replaceTwitchEmoticon(message, ext_args.emotes);
         if(platform == "kick") message = KICK_replaceTwitchEmoticon(message, ext_args.emotes);
+        if(platform == "naver") message = NAVER_replaceEmoticon(message);
 
         // marquee 태그 변환
         message = message.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[^\ ]*)?( scrolldelay=[^\ ]*)?\](.*)\[\/mq\]/gi, replaceMarquee);
@@ -838,9 +865,13 @@ function connect_naver() {
                                 tid: 2
                             };
                             socket.send(JSON.stringify(login));
+                        // 아마도 핑 비스무리한것
+                        } else if (socketResponse.cmd === 0) {
+                            socket.send('{"ver":"2","cmd":10000}');
                         } else {
                             if(Array.isArray(socketResponse.bdy)) {
                                 for(const chat of socketResponse.bdy) {
+                                    //console.log(chat.msg)
                                     const profile = JSON.parse(chat['profile']);
                                     const ext_args = {};
                                     ext_args.isStreamer = false;

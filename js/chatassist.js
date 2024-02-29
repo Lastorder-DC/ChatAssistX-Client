@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.10.1.1
- *       Last updated by Lastorder-DC on 2023-12-27.
+ *                 V E R S I O N    1.11.0.0
+ *       Last updated by Lastorder-DC on 2024-02-29.
  */
 // 변수 초기화
 window.chat = {};
@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.10.1.1";
+window.chat.version = "1.11.0.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -333,27 +333,11 @@ function KICK_replaceTwitchEmoticon(message) {
     return replacedMessage;
 }
 
-function NAVER_replaceEmoticon(message) {
-    var regex = /{:d_(\d+):}/g;
-    var result = message.replace(regex, function(match, number) {
-        var num = parseInt(number, 10);
-        var imageFile = "";
-
-        if (num < 10) {
-            imageFile = 'cha0' + num;
-        } else if (num < 11) {
-            imageFile = 'cha' + num;
-        } else {
-            num = num - 10;
-            if (num < 10) {
-                imageFile = 'txt0' + num;
-            } else {
-                imageFile = 'txt' + num;
-            }
-        }
-
-        var imageUrl = `https://ssl.pstatic.net/static/nng/glive/icon/${imageFile}.png`
-        return `<img class="naver_emoticon" src="${imageUrl}" alt="치지직 이모티콘 ${imageFile}">`;
+function NAVER_replaceEmoticon(message, emotes) {
+    var regex = /{:([^:]+):}/g;
+    var result = message.replace(regex, function(match, code) {
+        if(typeof emotes[code] === 'undefined') return "";
+        else return `<img class="naver_emoticon" src="${emotes[code]}" alt="치지직 이모티콘 ${code}">`;
     });
   
     return result;
@@ -521,7 +505,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         // 메세지 안 트위치 이모티콘 변환
         if(platform == "twitch") message = TAPIC_replaceTwitchEmoticon(message, ext_args.emotes);
         if(platform == "kick") message = KICK_replaceTwitchEmoticon(message, ext_args.emotes);
-        if(platform == "naver") message = NAVER_replaceEmoticon(message);
+        if(platform == "naver") message = NAVER_replaceEmoticon(message, ext_args.emotes);
 
         // marquee 태그 변환
         message = message.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[^\ ]*)?( scrolldelay=[^\ ]*)?\](.*)\[\/mq\]/gi, replaceMarquee);
@@ -708,8 +692,9 @@ function complete_connect_kick() {
                     addChatMessage("info", "Kick 채팅 연결됨", window.config.kickid + " 채널에 연결되었습니다.", true, false);
                     window.kicksocket.isInited = true;
                 } else if(event.data.indexOf("ChatMessageEvent") !== -1) {
-                    rawMessage = JSON.parse(event.data)
-                    message = JSON.parse(rawMessage.data)
+                    var rawMessage = JSON.parse(event.data)
+                    var message = JSON.parse(rawMessage.data)
+                    console.log(message);
                     message.body = message.content;
 
                     var ext_args = {};
@@ -800,7 +785,7 @@ function connect_naver() {
     try {
         // 1. nvrChannel을 이용하여 첫 번째 API 호출
         var xhr1 = new XMLHttpRequest();
-        xhr1.open('GET', `https://chzzk.lastorder.xyz/?cid=${nvrChannel}&url=https://api.chzzk.naver.com/service/v1/channels/${nvrChannel}`, false);
+        xhr1.open('GET', `https://chzzk.lastorder.xyz/?command=getChannel&cid=${nvrChannel}`, false);
         xhr1.send();
 
         if (xhr1.status === 200) {
@@ -809,7 +794,7 @@ function connect_naver() {
             // 2. openLive가 true인 경우 두 번째 API 호출
             if (data1.content.openLive) {
                 var xhr2 = new XMLHttpRequest();
-                xhr2.open('GET', `https://chzzk.lastorder.xyz/?cid=${nvrChannel}&url=https://api.chzzk.naver.com/polling/v1/channels/${nvrChannel}/live-status`, false);
+                xhr2.open('GET', `https://chzzk.lastorder.xyz/?command=getLiveStatus&cid=${nvrChannel}`, false);
                 xhr2.send();
 
                 if (xhr2.status === 200) {
@@ -818,13 +803,13 @@ function connect_naver() {
                     // 3. chatChannelId 저장
                     var chatChannelId = data2.content.chatChannelId;
 
-                    // 5. accessToken 저장
-                    var accessToken = "FDMQhzhRGnkfmofaJVartjZ07ZNBjAfzBheCS1iRtYFUwIecEHfyVyTI0/uQ3u4a1s8jVmL/LV9K8bIH/nFIww==";
+                    // 4. accessToken 저장
+                    var accessToken = data2['access-token'];
 
-                    // 6. 웹소켓 연결
-                    var socket = new WebSocket('wss://kr-ss4.chat.naver.com/chat');
+                    // 5. 웹소켓 연결
+                    var socket = new WebSocket(`wss://kr-ss${Math.floor(Math.random() * 4) + 1}.chat.naver.com/chat`);
 
-                    // 7. 웹소켓으로 전송할 내용 구성
+                    // 6. 웹소켓으로 전송할 내용 구성
                     var init_chat = {
                         ver: '2',
                         cmd: 100,
@@ -839,7 +824,7 @@ function connect_naver() {
                         tid: 1
                     };
 
-                    // 8. 웹소켓 응답 저장
+                    // 7. 웹소켓 응답 저장
                     var socketResponse = null;
 
                     socket.onopen = function () {
@@ -850,7 +835,7 @@ function connect_naver() {
                     socket.onmessage = function (event) {
                         socketResponse = JSON.parse(event.data);
 
-                        // 9. sid를 sid 변수에 저장한 후 login 전송
+                        // 8. sid를 sid 변수에 저장한 후 login 전송
                         if (socketResponse.cmd === 10100) {
                             var sid = socketResponse.bdy.sid;
                             var login = {
@@ -865,20 +850,21 @@ function connect_naver() {
                                 tid: 2
                             };
                             socket.send(JSON.stringify(login));
-                        // 아마도 핑 비스무리한것
+                        // 9. 아마도 핑 비스무리한것 응답
                         } else if (socketResponse.cmd === 0) {
                             socket.send('{"ver":"2","cmd":10000}');
+                        // 10. 채팅 처리
                         } else {
                             if(Array.isArray(socketResponse.bdy)) {
                                 for(const chat of socketResponse.bdy) {
-                                    //console.log(chat.msg)
-                                    
                                     const profile = JSON.parse(chat['profile']);
                                     const ext_args = {};
+                                    const extras = JSON.parse(chat['extras']);
+                                    
                                     ext_args.isStreamer = (profile['userRoleCode'] == "streamer");
                                     ext_args.isMod = false;
                                     ext_args.rawprint = false;
-                                    ext_args.emotes = void 0;
+                                    ext_args.emotes = extras['emojis'];
                                     ext_args.color = void 0;
                                     ext_args.subscriber = false;
                                     addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg, false, ext_args);

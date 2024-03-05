@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.11.1.0
+ *                 V E R S I O N    1.12.0.0
  *       Last updated by Lastorder-DC on 2024-03-05.
  */
 // 변수 초기화
@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.11.1.0";
+window.chat.version = "1.12.0.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -513,15 +513,31 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         // 메세지 안 이모티콘 변환(시동어 ~ 입력후 등록한 이모티콘 이름 입력하면 됨)
         if(window.emoticon.isActive && window.config.allowEmoticon) message = message.replace(/~([^\ ~]*)/gi, replaceEmoticon);
 
-        // 모더레이터는 굵게
-        if(ext_args.isMod) {
-            nickname = "<b>" + nickname + "</b>";
-        }
+        if(platform == "naver") {
+            // 스트리머 뱃지
+            if(ext_args.isStreamer) {
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/streamer.png" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
+            }
 
-        // 스트리머 뱃지
-        if(ext_args.isStreamer) {
-            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-            nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge">&nbsp;' + nickname;
+            // 모더레이터
+            if(ext_args.isMod) {
+                nickname = "<b>" + nickname + "</b>";
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/manager.png" alt="채팅 운영자" class="badge mod">&nbsp;' + nickname;
+            }
+        } else {
+            // 모더레이터는 굵게
+            if(ext_args.isMod) {
+                nickname = "<b>" + nickname + "</b>";
+                nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" alt="Moderator" class="badge mod">&nbsp;' + nickname;
+            }
+
+            // 스트리머 뱃지
+            if(ext_args.isStreamer) {
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge streamer">&nbsp;' + nickname;
+            }
         }
 
         if(window.config.anon && window.chat.isInited && !sticky) {
@@ -862,7 +878,7 @@ function connect_naver() {
                                     const extras = JSON.parse(chat['extras']);
                                     
                                     ext_args.isStreamer = (profile['userRoleCode'] == "streamer");
-                                    ext_args.isMod = false;
+                                    ext_args.isMod = (profile['userRoleCode'] == "streaming_chat_manager");
                                     ext_args.rawprint = false;
                                     ext_args.emotes = extras['emojis'];
                                     ext_args.color = void 0;

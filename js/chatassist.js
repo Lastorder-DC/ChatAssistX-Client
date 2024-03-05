@@ -867,7 +867,7 @@ function connect_naver() {
                                     ext_args.emotes = extras['emojis'];
                                     ext_args.color = void 0;
                                     ext_args.subscriber = false;
-                                    addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg, false, ext_args);
+                                    addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg.htmlEntities(), false, ext_args);
                                 }
                             }
                         }

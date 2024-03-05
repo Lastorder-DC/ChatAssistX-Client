@@ -527,16 +527,16 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
                 nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/manager.png" alt="채팅 운영자" class="badge mod">&nbsp;' + nickname;
             }
         } else {
-            // 모더레이터는 굵게
-            if(ext_args.isMod) {
-                nickname = "<b>" + nickname + "</b>";
-                nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" alt="Moderator" class="badge mod">&nbsp;' + nickname;
-            }
-
             // 스트리머 뱃지
             if(ext_args.isStreamer) {
                 message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
                 nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge streamer">&nbsp;' + nickname;
+            }
+
+            // 모더레이터는 굵게
+            if(ext_args.isMod) {
+                nickname = "<b>" + nickname + "</b>";
+                nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" alt="Moderator" class="badge mod">&nbsp;' + nickname;
             }
         }
 

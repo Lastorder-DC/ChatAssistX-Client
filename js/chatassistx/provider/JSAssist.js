@@ -33,8 +33,114 @@
 	if (typeof window.ChatAssistX.provider[provider_name] !== 'undefined') {
 		console.log("Twitch(tmijs) provider is already loaded!");
 	} else {
-		console.log("Twitch(tmijs) driver is loading");
-		
+		console.log("Twitch(tmijs) driver is loading2");
+        // 1. nvrChannel을 이용하여 첫 번째 API 호출
+        var xhr1 = new XMLHttpRequest();
+		const nvrChannel = window.ChatAssistX.config.nvrChannel;
+        xhr1.open('GET', `https://api.chatassistx.cc/?command=getChannel&cid=${nvrChannel}`, false);
+        xhr1.send();
+		console.log(nvrChannel);
+        if (xhr1.status === 200) {
+            var data1 = JSON.parse(xhr1.responseText);
+			console.log(data1);	
+            // 2. openLive가 true인 경우 두 번째 API 호출
+            if (true) {
+                var xhr2 = new XMLHttpRequest();
+                xhr2.open('GET', `https://api.chatassistx.cc/?command=getLiveStatus&cid=${nvrChannel}`, false);
+                xhr2.send();
+				
+                if (xhr2.status === 200) {
+                    var data2 = JSON.parse(xhr2.responseText);
+
+                    // 3. chatChannelId 저장
+                    var chatChannelId = data2.content.chatChannelId;
+
+					if(true){
+
+						// 4. accessToken 저장
+						var accessToken = data2['access-token'];
+
+						// 5. 웹소켓 연결
+						var socket = new WebSocket(`wss://kr-ss${Math.floor(Math.random() * 4) + 1}.chat.naver.com/chat`);
+
+						// 6. 웹소켓으로 전송할 내용 구성
+						var init_chat = {
+							ver: '2',
+							cmd: 100,
+							svcid: 'game',
+							cid: chatChannelId,
+							bdy: {
+								uid: null,
+								devType: 2001,
+								accTkn: accessToken,
+								auth: 'READ'
+							},
+							tid: 1
+						};
+
+						// 7. 웹소켓 응답 저장
+						var socketResponse = null;
+
+						socket.onopen = function () {
+							// 웹소켓 연결이 열렸을 때 init_chat 전송
+							socket.send(JSON.stringify(init_chat));
+						};
+
+						socket.onmessage = function (event) {
+							socketResponse = JSON.parse(event.data);
+
+							// 8. sid를 sid 변수에 저장한 후 login 전송
+							if (socketResponse.cmd === 10100) {
+								var sid = socketResponse.bdy.sid;
+								var login = {
+									ver: '2',
+									cmd: 5101,
+									svcid: 'game',
+									cid: chatChannelId,
+									sid: sid,
+									bdy: {
+										recentMessageCount: 50
+									},
+									tid: 2
+								};
+								socket.send(JSON.stringify(login));
+							// 9. 아마도 핑 비스무리한것 응답
+							} else if (socketResponse.cmd === 0) {
+								socket.send('{"ver":"2","cmd":10000}');
+							// 10. 채팅 처리
+							} else {
+								if(Array.isArray(socketResponse.bdy)) {
+									for(const chat of socketResponse.bdy) {
+										const profile = JSON.parse(chat['profile']);
+										const ext_args = {};
+										const extras = JSON.parse(chat['extras']);
+										
+										ext_args.isStreamer = (profile['userRoleCode'] == "streamer");
+										ext_args.isMod = (profile['userRoleCode'] == "streaming_chat_manager");
+										ext_args.rawprint = false;
+										ext_args.emotes = extras['emojis'];
+										ext_args.color = void 0;
+										ext_args.subscriber = false;
+										console.log(chat.msg.htmlEntities());
+										var data = {};
+														
+										data.isStreamer = false;
+										data.isMod = false;
+										data.rawprint = false;
+										data.nickname = profile['nickname'].htmlEntities();
+										data.message = chat.msg.htmlEntities();
+										data.platform = "twitch";
+										console.log(data);
+										window.ChatAssistX.addChatMessage(data);
+									}
+								}
+							}
+						};	
+					}
+                    
+                }
+            }
+        }
 		window.ChatAssistX.provider[provider_name] = {};
 		window.ChatAssistX.provider[provider_name].chatPresets = {};
 		window.ChatAssistX.provider[provider_name].connect = function(config) {
@@ -109,15 +215,15 @@
 					data.isStreamer = false;
 					data.isMod = true;
 				}
-				
+				console.log(data);
 				window.ChatAssistX.addChatMessage(data);
 			});
 			
-			client.connect().catch(console.error);
-			
+		client.connect().catch(console.error);
 			return true;
 		};
 		
 		window.ChatAssistX.addNotice("Twitch(tmijs) Provider " + version + " loading...","system");
+		
 	}
 })(window);

@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.12.0.0
- *       Last updated by Lastorder-DC on 2024-03-05.
+ *                 V E R S I O N    1.12.0.1
+ *       Last updated by Lastorder-DC on 2024-03-15.
  */
 // 변수 초기화
 window.chat = {};
@@ -17,7 +17,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.12.0.0";
+window.chat.version = "1.12.0.1";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -801,7 +801,7 @@ function connect_naver() {
     try {
         // 1. nvrChannel을 이용하여 첫 번째 API 호출
         var xhr1 = new XMLHttpRequest();
-        xhr1.open('GET', `https://chzzk.lastorder.xyz/?command=getChannel&cid=${nvrChannel}`, false);
+        xhr1.open('GET', `https://api.chatassistx.cc/?command=getChannel&cid=${nvrChannel}`, false);
         xhr1.send();
 
         if (xhr1.status === 200) {
@@ -810,7 +810,7 @@ function connect_naver() {
             // 2. openLive가 true인 경우 두 번째 API 호출
             if (data1.content.openLive) {
                 var xhr2 = new XMLHttpRequest();
-                xhr2.open('GET', `https://chzzk.lastorder.xyz/?command=getLiveStatus&cid=${nvrChannel}`, false);
+                xhr2.open('GET', `https://api.chatassistx.cc/?command=getLiveStatus&cid=${nvrChannel}`, false);
                 xhr2.send();
 
                 if (xhr2.status === 200) {

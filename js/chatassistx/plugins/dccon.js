@@ -340,7 +340,33 @@
 		// 마퀴태그 만들어 반환
 		return '<marquee' + direction + behavior + loop + scrollamount + scrolldelay + '>' + body + '</marquee>';
 	}
+	
+	function replacePreMarquee(match, 방향, body, offset) {
+		// 빈 값 확인
+		var direction, behavior, loop, scrollamount, scrolldelay;
+		loop="";
+		scrolldelay="";
+		if (방향 == "좌") {behavior = ""; direction = " direction=left";scrollamount = " scrollamount=10";}
+		if (방향 == "우") {behavior = ""; direction = " direction=right";scrollamount = " scrollamount=10";}
+		if (방향 == "상") {behavior = ""; direction = " direction=up";scrollamount = " scrollamount=10";}
+		if (방향 == "하") {behavior = ""; direction = " direction=down";scrollamount = " scrollamount=10";}	
+		if (방향 == "좌우") {behavior = " behavior=alternate"; direction = " direction=right";scrollamount = " scrollamount=10";}
+		if (방향 == "상하") {behavior = " behavior=alternate"; direction = " direction=down";scrollamount = " scrollamount=10";}
+		
+		// 내용이 빈 mq 태그는 무의미하므로 리턴
+		if (typeof body == "undefined") return "";
 
+		// 마퀴태그내 이모티콘이 오면 마퀴태그를 무시함
+		if (list.inited && window.config.allowEmoticon && window.config.ignoreMQEmoticon) {
+			// 우선 마퀴태그 내 이모티콘을 변환해봄
+			body = body.replace(/~([^\ ~]*)/g, replaceEmoticon);
+			// 이모티콘이 있다면 그냥 마퀴태그 없이 변환된 이모티콘 이미지만 반환
+			if (body.match(/<img/) != null) return body;
+		}
+		// 마퀴태그 만들어 반환
+		return '<marquee' + direction + behavior + loop + scrollamount + scrolldelay + '> ' + body + ' </marquee>';
+	}
+	
 	if (typeof window.ChatAssistX.plugins[plugin_name] !== 'undefined') {
 		console.log("DCCON plugin is already loaded!");
 	} else {
@@ -351,7 +377,8 @@
 
 			//마퀴태그 치환
 			message = message.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[0-9]*)?( scrolldelay=[0-9]*)?\](.*)\[\/mq\]/g, replaceMarquee);
-
+			message = message.replace(/\!방향=([^\ ]*)?\!(.*)/g, replacePreMarquee);
+			
 			if (window.ChatAssistX.config.allowEmoticon) {
 				//디시콘치환
 				message = message.replace(/~([^\ ~]*)/g, replaceEmoticon);

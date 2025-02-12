@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.13.0.0
+ *                 V E R S I O N    1.13.0.0-dev
  *       Last updated by Lastorder-DC on 2025-02-12.
  */
 // 변수 초기화
@@ -19,7 +19,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.13.0.0";
+window.chat.version = "1.13.0.0-dev";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;

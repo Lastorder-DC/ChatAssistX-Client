@@ -3,11 +3,13 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.12.0.1
- *       Last updated by Lastorder-DC on 2024-03-15.
+ *                 V E R S I O N    1.13.0.0
+ *       Last updated by Lastorder-DC on 2025-02-12.
  */
 // 변수 초기화
 window.chat = {};
+
+clientId = "6c4013c4-c290-433d-a772-070e02d63585";
 
 // 채팅 소켓
 window.chat.socket = null;
@@ -17,7 +19,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.12.0.1";
+window.chat.version = "1.13.0.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -894,6 +896,40 @@ function connect_naver() {
     } catch (error) {
         console.error(error);
     }
+}
+
+function generateState() {
+    const length = 20;
+    
+    // Uint8Array로 랜덤한 바이트 배열 생성
+    const randomBytes = new Uint8Array(length);
+    crypto.getRandomValues(randomBytes);
+
+    let state = '';
+    for (let i = 0; i < length; i++) {
+        // 바이트 값을 문자 인덱스로 변환
+        const byte = randomBytes[i];
+        if (byte < 16) {
+            state += String.fromCharCode('A'.charCodeAt(0) + byte);
+        } else if (byte < 32) {
+            state += String.fromCharCode('a'.charCodeAt(0) + (byte - 16));
+        } else {
+            state += String.fromCharCode('0'.charCodeAt(0) + (byte - 32));
+        }
+    }
+    return state;
+}
+
+function requestAuthorizationCode() {
+    const url = `https://chzzk.naver.com/account-interlock`;
+    
+    const params = new URLSearchParams({
+        clientId: clientId,
+        redirectUri: "https://chzzk.chatassistx.cc/v1/token/create",
+        state: generateState()
+    });
+    
+    window.location.href = `${url}?${params}`;
 }
 
 $(document).ready(function() {

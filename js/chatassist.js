@@ -899,24 +899,11 @@ function connect_naver() {
 }
 
 function generateState() {
-    const length = 20;
-    
-    // Uint8Array로 랜덤한 바이트 배열 생성
-    const randomBytes = new Uint8Array(length);
-    crypto.getRandomValues(randomBytes);
-
-    let state = '';
-    for (let i = 0; i < length; i++) {
-        // 바이트 값을 문자 인덱스로 변환
-        const byte = randomBytes[i];
-        if (byte < 16) {
-            state += String.fromCharCode('A'.charCodeAt(0) + byte);
-        } else if (byte < 32) {
-            state += String.fromCharCode('a'.charCodeAt(0) + (byte - 16));
-        } else {
-            state += String.fromCharCode('0'.charCodeAt(0) + (byte - 32));
-        }
-    }
+    const length = 20; // 상태 값의 길이
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const state = new Array(length).fill(null).map(() => 
+        chars[Math.floor(Math.random() * chars.length)]
+    ).join('');
     return state;
 }
 

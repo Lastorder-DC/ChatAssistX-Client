@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.13.0.0-dev
- *       Last updated by Lastorder-DC on 2025-02-12.
+ *                 V E R S I O N    1.14.0.0
+ *       Last updated by Lastorder-DC on 2026-03-05.
  */
 // 변수 초기화
 window.chat = {};
@@ -19,7 +19,7 @@ window.ytsocket = {};
 window.ytsocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.13.0.0-dev";
+window.chat.version = "1.14.0.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -826,10 +826,11 @@ function connect_naver() {
 
                     // 5. 웹소켓 연결
                     var socket = new WebSocket(`wss://kr-ss${Math.floor(Math.random() * 4) + 1}.chat.naver.com/chat`);
+                    var pingInterval = null; // Ping 타이머 변수 추가
 
                     // 6. 웹소켓으로 전송할 내용 구성
                     var init_chat = {
-                        ver: '2',
+                        ver: '3',
                         cmd: 100,
                         svcid: 'game',
                         cid: chatChannelId,
@@ -848,6 +849,13 @@ function connect_naver() {
                     socket.onopen = function () {
                         // 웹소켓 연결이 열렸을 때 init_chat 전송
                         socket.send(JSON.stringify(init_chat));
+
+                        // ★ 20초 간격으로 Ping(cmd: 0) 전송 시작
+                        pingInterval = setInterval(function() {
+                            if (socket.readyState === WebSocket.OPEN) {
+                                socket.send(JSON.stringify({ "ver": "3", "cmd": 0 }));
+                            }
+                        }, 20000);
                     };
 
                     socket.onmessage = function (event) {
@@ -857,7 +865,7 @@ function connect_naver() {
                         if (socketResponse.cmd === 10100) {
                             var sid = socketResponse.bdy.sid;
                             var login = {
-                                ver: '2',
+                                ver: '3',
                                 cmd: 5101,
                                 svcid: 'game',
                                 cid: chatChannelId,
@@ -868,13 +876,19 @@ function connect_naver() {
                                 tid: 2
                             };
                             socket.send(JSON.stringify(login));
-                        // 9. 아마도 핑 비스무리한것 응답
+                        
+                        // ★ 서버의 Pong 응답(cmd: 10000) 무시
+                        } else if (socketResponse.cmd === 10000) {
+                            return; 
+                            
+                        // 혹시 모를 기존 cmd: 0 응답 처리 (무시)
                         } else if (socketResponse.cmd === 0) {
-                            socket.send('{"ver":"2","cmd":10000}');
+                            return;
+                            
                         // 10. 채팅 처리
                         } else {
-                            if(Array.isArray(socketResponse.bdy)) {
-                                for(const chat of socketResponse.bdy) {
+                            if (Array.isArray(socketResponse.bdy)) {
+                                for (const chat of socketResponse.bdy) {
                                     const profile = JSON.parse(chat['profile']);
                                     const ext_args = {};
                                     const extras = JSON.parse(chat['extras']);
@@ -888,6 +902,20 @@ function connect_naver() {
                                     addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg.htmlEntities(), false, ext_args);
                                 }
                             }
+                        }
+                    };
+
+                    // ★ 웹소켓 연결이 끊어지면 Ping 타이머 해제
+                    socket.onclose = function () {
+                        if (pingInterval) {
+                            clearInterval(pingInterval);
+                        }
+                    };
+                    
+                    socket.onerror = function (error) {
+                        console.error("WebSocket Error: ", error);
+                        if (pingInterval) {
+                            clearInterval(pingInterval);
                         }
                     };
                 }

@@ -51,7 +51,16 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
         };
 
         window.chat = {
-            isInited: false
+            isInited: false,
+            _pendingPlatforms: new Set(['youtube'])
+        };
+
+        // Mock _markPlatformConnected
+        window._markPlatformConnected = function(platform) {
+            window.chat._pendingPlatforms.delete(platform);
+            if (window.chat._pendingPlatforms.size === 0) {
+                window.chat.isInited = true;
+            }
         };
 
         // Mock addChatMessage
@@ -157,7 +166,7 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             } else if (data.type === "connected") {
                 console.log("YouTube info:", data.message);
                 window.addChatMessage("info", "YouTube", data.message, true, false);
-                window.chat.isInited = true;
+                window._markPlatformConnected('youtube');
             } else if (data.type === "disconnected") {
                 console.log("YouTube disconnected:", data.message);
                 window.addChatMessage("info", "YouTube", data.message || "서버 연결이 종료되었습니다", true, false);

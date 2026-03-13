@@ -1159,119 +1159,128 @@ function connect_naver() {
         if (xhr1.status === 200) {
             var data1 = JSON.parse(xhr1.responseText);
 
-            // 2. openLive가 true인 경우 두 번째 API 호출
-            if (data1.content.openLive) {
-                var xhr2 = new XMLHttpRequest();
-                xhr2.open('GET', `https://api.chatassistx.cc/?command=getLiveStatus&cid=${nvrChannel}`, false);
-                xhr2.send();
+            // 2. channelName 저장
+            var channelName = data1.content.channelName;
 
-                if (xhr2.status === 200) {
-                    var data2 = JSON.parse(xhr2.responseText);
+            if (!channelName) {
+                addChatMessage("error", "치지직 연결 오류", "존재하지 않는 치지직 스트리머 채널이거나 오류입니다.", true, false);
+                return;
+            }
 
-                    // 3. chatChannelId 저장
-                    var chatChannelId = data2.content.chatChannelId;
+            var xhr2 = new XMLHttpRequest();
+            xhr2.open('GET', `https://api.chatassistx.cc/?command=getLiveStatus&cid=${nvrChannel}`, false);
+            xhr2.send();
 
-                    // 4. accessToken 저장
-                    var accessToken = data2['access-token'];
+            if (xhr2.status === 200) {
+                var data2 = JSON.parse(xhr2.responseText);
 
-                    // 5. 웹소켓 연결
-                    var socket = new WebSocket(`wss://kr-ss${Math.floor(Math.random() * 4) + 1}.chat.naver.com/chat`);
-                    var pingInterval = null; // Ping 타이머 변수 추가
-
-                    // 6. 웹소켓으로 전송할 내용 구성
-                    var init_chat = {
-                        ver: '3',
-                        cmd: 100,
-                        svcid: 'game',
-                        cid: chatChannelId,
-                        bdy: {
-                            uid: null,
-                            devType: 2001,
-                            accTkn: accessToken,
-                            auth: 'READ'
-                        },
-                        tid: 1
-                    };
-
-                    // 7. 웹소켓 응답 저장
-                    var socketResponse = null;
-
-                    socket.onopen = function () {
-                        // 웹소켓 연결이 열렸을 때 init_chat 전송
-                        socket.send(JSON.stringify(init_chat));
-
-                        // ★ 20초 간격으로 Ping(cmd: 0) 전송 시작
-                        pingInterval = setInterval(function() {
-                            if (socket.readyState === WebSocket.OPEN) {
-                                socket.send(JSON.stringify({ "ver": "3", "cmd": 0 }));
-                            }
-                        }, 20000);
-
-                        addChatMessage("info", "치지직 채팅 연결됨", nvrChannel + " 채널에 연결되었습니다.", true, false);
-                        _markPlatformConnected('naver');
-                    };
-
-                    socket.onmessage = function (event) {
-                        socketResponse = JSON.parse(event.data);
-
-                        // 8. sid를 sid 변수에 저장한 후 login 전송
-                        if (socketResponse.cmd === 10100) {
-                            var sid = socketResponse.bdy.sid;
-                            var login = {
-                                ver: '3',
-                                cmd: 5101,
-                                svcid: 'game',
-                                cid: chatChannelId,
-                                sid: sid,
-                                bdy: {
-                                    recentMessageCount: 50
-                                },
-                                tid: 2
-                            };
-                            socket.send(JSON.stringify(login));
-                        
-                        // ★ 서버의 Pong 응답(cmd: 10000) 무시
-                        } else if (socketResponse.cmd === 10000) {
-                            return; 
-                            
-                        // 혹시 모를 기존 cmd: 0 응답 처리 (무시)
-                        } else if (socketResponse.cmd === 0) {
-                            return;
-                            
-                        // 10. 채팅 처리
-                        } else {
-                            if (Array.isArray(socketResponse.bdy)) {
-                                for (const chat of socketResponse.bdy) {
-                                    const profile = JSON.parse(chat['profile']);
-                                    const ext_args = {};
-                                    const extras = JSON.parse(chat['extras']);
-                                    
-                                    ext_args.isStreamer = (profile['userRoleCode'] == "streamer");
-                                    ext_args.isMod = (profile['userRoleCode'] == "streaming_chat_manager");
-                                    ext_args.rawprint = false;
-                                    ext_args.emotes = extras['emojis'];
-                                    ext_args.color = void 0;
-                                    ext_args.subscriber = false;
-                                    addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg.htmlEntities(), false, ext_args);
-                                }
-                            }
-                        }
-                    };
-
-                    // ★ 웹소켓 연결이 끊어지면 Ping 타이머 해제
-                    socket.onclose = function () {
-                        if (pingInterval) {
-                            clearInterval(pingInterval);
-                        }
-                    };
-                    
-                    socket.onerror = function (error) {
-                        console.error("WebSocket Error: ", error);
-                        if (pingInterval) {
-                            clearInterval(pingInterval);
-                        }
-                    };
+                // 3. chatChannelId 저장
+                if (!data2.content || !data2.content.chatChannelId) {
+                    addChatMessage("error", "치지직 연결 오류", "채팅창이 존재하지 않는 채널입니다.", true, false);
+                    return;
                 }
+                var chatChannelId = data2.content.chatChannelId;
+
+                // 4. accessToken 저장
+                var accessToken = data2['access-token'];
+
+                // 5. 웹소켓 연결
+                var socket = new WebSocket(`wss://kr-ss${Math.floor(Math.random() * 4) + 1}.chat.naver.com/chat`);
+                var pingInterval = null; // Ping 타이머 변수 추가
+
+                // 6. 웹소켓으로 전송할 내용 구성
+                var init_chat = {
+                    ver: '3',
+                    cmd: 100,
+                    svcid: 'game',
+                    cid: chatChannelId,
+                    bdy: {
+                        uid: null,
+                        devType: 2001,
+                        accTkn: accessToken,
+                        auth: 'READ'
+                    },
+                    tid: 1
+                };
+
+                // 7. 웹소켓 응답 저장
+                var socketResponse = null;
+
+                socket.onopen = function () {
+                    // 웹소켓 연결이 열렸을 때 init_chat 전송
+                    socket.send(JSON.stringify(init_chat));
+
+                    // ★ 20초 간격으로 Ping(cmd: 0) 전송 시작
+                    pingInterval = setInterval(function() {
+                        if (socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify({ "ver": "3", "cmd": 0 }));
+                        }
+                    }, 20000);
+
+                    addChatMessage("info", "치지직 채팅 연결됨", channelName + " 채널에 연결되었습니다.", true, false);
+                    _markPlatformConnected('naver');
+                };
+
+                socket.onmessage = function (event) {
+                    socketResponse = JSON.parse(event.data);
+
+                    // 8. sid를 sid 변수에 저장한 후 login 전송
+                    if (socketResponse.cmd === 10100) {
+                        var sid = socketResponse.bdy.sid;
+                        var login = {
+                            ver: '3',
+                            cmd: 5101,
+                            svcid: 'game',
+                            cid: chatChannelId,
+                            sid: sid,
+                            bdy: {
+                                recentMessageCount: 50
+                            },
+                            tid: 2
+                        };
+                        socket.send(JSON.stringify(login));
+                    
+                    // ★ 서버의 Pong 응답(cmd: 10000) 무시
+                    } else if (socketResponse.cmd === 10000) {
+                        return; 
+                        
+                    // 혹시 모를 기존 cmd: 0 응답 처리 (무시)
+                    } else if (socketResponse.cmd === 0) {
+                        return;
+                        
+                    // 10. 채팅 처리
+                    } else {
+                        if (Array.isArray(socketResponse.bdy)) {
+                            for (const chat of socketResponse.bdy) {
+                                const profile = JSON.parse(chat['profile']);
+                                const ext_args = {};
+                                const extras = JSON.parse(chat['extras']);
+                                
+                                ext_args.isStreamer = (profile['userRoleCode'] == "streamer");
+                                ext_args.isMod = (profile['userRoleCode'] == "streaming_chat_manager");
+                                ext_args.rawprint = false;
+                                ext_args.emotes = extras['emojis'];
+                                ext_args.color = void 0;
+                                ext_args.subscriber = false;
+                                addChatMessage("naver", profile['nickname'].htmlEntities(), chat.msg.htmlEntities(), false, ext_args);
+                            }
+                        }
+                    }
+                };
+
+                // ★ 웹소켓 연결이 끊어지면 Ping 타이머 해제
+                socket.onclose = function () {
+                    if (pingInterval) {
+                        clearInterval(pingInterval);
+                    }
+                };
+                
+                socket.onerror = function (error) {
+                    console.error("WebSocket Error: ", error);
+                    if (pingInterval) {
+                        clearInterval(pingInterval);
+                    }
+                };
             }
         }
     } catch (error) {

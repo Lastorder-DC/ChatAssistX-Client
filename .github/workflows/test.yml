@@ -2,9 +2,9 @@ name: Code Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ legacy ]
   pull_request:
-    branches: [ main ]
+    branches: [ legacy ]
 
 permissions:
   contents: read

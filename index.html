@@ -42,6 +42,9 @@
         // 치지직 스트리머 채널 아이디 입력(베타)
         window.config.nvrChannel = !url.searchParams.get("nvrChannel") ? "" : url.searchParams.get("nvrChannel");
 
+        // 씨미(ci.me) 스트리머 아이디 입력
+        window.config.cimeChannel = !url.searchParams.get("cime") ? "" : url.searchParams.get("cime");
+
         // 이모티콘
         window.emoticon = {};
         window.emoticon.address = url.searchParams.get("list");

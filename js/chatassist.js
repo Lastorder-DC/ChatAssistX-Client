@@ -17,6 +17,8 @@ window.kicksocket = {};
 window.kicksocket.isInited = false;
 window.ytsocket = {};
 window.ytsocket.isInited = false;
+window.cimesocket = {};
+window.cimesocket.isInited = false;
 
 // 버전 번호
 window.chat.version = "1.14.0.0";
@@ -346,6 +348,24 @@ function NAVER_replaceEmoticon(message, emotes) {
   }
 
 /**
+ * 씨미(ci.me) 이모티콘 변환 함수 (stub)
+ * 이모티콘 형식: :emoticon-code: (예: :be-039:)
+ * TODO: 추후 이모티콘 이미지 URL 매핑 구현
+ * @param {String} message
+ * @returns {String}
+ */
+function CIME_replaceEmoticon(message) {
+    // stub: 추후 이모티콘 변환 기능 구현 예정
+    // 이모티콘 패턴은 :code: 형태 (예: :be-039:)
+    // var regex = /:([a-zA-Z0-9_-]+):/g;
+    // message = message.replace(regex, function(match, code) {
+    //     // TODO: 이모티콘 코드에 해당하는 이미지 URL로 변환
+    //     return match;
+    // });
+    return message;
+}
+
+/**
  * 명령어 변환 함수
  * @param {String} match
  * @param {String} command
@@ -508,6 +528,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         if(platform == "twitch") message = TAPIC_replaceTwitchEmoticon(message, ext_args.emotes);
         if(platform == "kick") message = KICK_replaceTwitchEmoticon(message, ext_args.emotes);
         if(platform == "naver") message = NAVER_replaceEmoticon(message, ext_args.emotes);
+        if(platform == "cime") message = CIME_replaceEmoticon(message);
 
         // marquee 태그 변환
         message = message.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[^\ ]*)?( scrolldelay=[^\ ]*)?\](.*)\[\/mq\]/gi, replaceMarquee);
@@ -661,6 +682,10 @@ function connect_chat() {
     if(typeof window.config.nvrChannel !== 'undefined' && !!window.config.nvrChannel) {
         connect_naver();
     }
+
+    if(typeof window.config.cimeChannel !== 'undefined' && !!window.config.cimeChannel) {
+        connect_cime();
+    }
 }
 
 function connect_yt() {
@@ -729,6 +754,84 @@ function complete_connect_kick() {
         } else {
             addChatMessage("error", "Kick 연결 오류", "존재하지 않는 kick 스트리머 아이디이거나 오류입니다.", true, false);
         }
+    }
+}
+
+function connect_cime() {
+    const cimeChannel = window.config.cimeChannel;
+
+    try {
+        // 1. chat-token 요청
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://ci.me/api/app/channels/${cimeChannel}/chat-token`, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+
+                    if (!response.data || !response.data.token) {
+                        addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
+                        return;
+                    }
+
+                    var token = response.data.token;
+
+                    // 2. 웹소켓 연결 (token을 sec-websocket-protocol로 전달)
+                    window.cimesocket.socket = new WebSocket("wss://edge.ivschat.ap-northeast-2.amazonaws.com/", token);
+
+                    window.cimesocket.socket.onopen = function(event) {
+                        addChatMessage("info", "ci.me 채팅 연결됨", cimeChannel + " 채널에 연결되었습니다.", true, false);
+                        window.cimesocket.isInited = true;
+                    };
+
+                    window.cimesocket.socket.onmessage = function(event) {
+                        try {
+                            var data = JSON.parse(event.data);
+
+                            // MESSAGE 타입만 처리
+                            if (data.Type !== "MESSAGE") return;
+                            if (!data.Sender || !data.Sender.Attributes || !data.Sender.Attributes.user) return;
+
+                            // 유저 정보 파싱
+                            var userInfo = JSON.parse(data.Sender.Attributes.user);
+                            var nickname = userInfo.ch.na;
+                            var userId = data.Sender.UserId;
+                            var content = data.Content;
+
+                            var ext_args = {};
+                            ext_args.isStreamer = false;
+                            ext_args.isMod = false;
+                            ext_args.rawprint = false;
+                            ext_args.emotes = void 0;
+                            ext_args.color = void 0;
+                            ext_args.subscriber = false;
+                            ext_args.id = userId;
+
+                            addChatMessage("cime", nickname.htmlEntities(), content.htmlEntities(), false, ext_args);
+                        } catch (error) {
+                            console.error("ci.me 메세지 파싱 오류: ", error);
+                        }
+                    };
+
+                    window.cimesocket.socket.onerror = function(error) {
+                        console.error("ci.me WebSocket 오류: ", error);
+                    };
+
+                    window.cimesocket.socket.onclose = function() {
+                        window.cimesocket.isInited = false;
+                    };
+                } else {
+                    addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
+                }
+            }
+        };
+
+        xhr.send();
+    } catch (error) {
+        console.error("ci.me 연결 오류: ", error);
+        addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 연결에 실패했습니다.", true, false);
     }
 }
 

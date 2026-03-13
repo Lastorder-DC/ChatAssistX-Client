@@ -273,8 +273,6 @@ function handleChatItem(session, item) {
                 (badge) => badge.tooltip === 'Owner' || badge.icon_type === 'OWNER'
             ) || false;
 
-            console.log(author);
-            
             broadcast(session, {
                 type: 'chat',
                 nickname: author?.name?.toString() || 'Unknown',
@@ -284,7 +282,8 @@ function handleChatItem(session, item) {
                 isMember: author?.badges?.some(
                     (badge) => badge.tooltip === 'Member' || badge.style === 'BADGE_STYLE_TYPE_MEMBER'
                 ) || false,
-                id: author?.id || ''
+                id: author?.id || '',
+                authorObj: author
             });
             break;
         }

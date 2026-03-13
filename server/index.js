@@ -282,8 +282,7 @@ function handleChatItem(session, item) {
                 isMember: author?.badges?.some(
                     (badge) => badge.tooltip === 'Member' || badge.style === 'BADGE_STYLE_TYPE_MEMBER'
                 ) || false,
-                id: author?.id || '',
-                authorObj: author
+                id: author?.id || ''
             });
             break;
         }

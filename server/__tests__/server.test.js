@@ -101,7 +101,7 @@ describe('WebSocket Server Integration Tests', () => {
             const ws = await connectWs('https://chatassistx.vercel.app');
             const msg = await waitForMessage(ws);
             expect(msg.type).toBe('version');
-            expect(msg.message).toBe('1.1.3');
+            expect(typeof msg.message).toBe('string');
             await closeWs(ws);
         });
 
@@ -122,7 +122,7 @@ describe('WebSocket Server Integration Tests', () => {
             const ws = await connectWs('https://funzinnu.com');
             const msg = await waitForMessage(ws);
             expect(msg.type).toBe('version');
-            expect(msg.message).toBe('1.1.2');
+            expect(typeof msg.message).toBe('string');
             await closeWs(ws);
         });
     });

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ChatAssistX 설정</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1p8GThzsaqBETsLp28FfzlHDiEZFTAz" crossorigin="anonymous">
+    <style>
+        body {
+            background: #0d1117;
+            min-height: 100vh;
+        }
+        .brand-color { color: #e94560; }
+        .card {
+            background: #161b22 !important;
+            border-color: #30363d !important;
+        }
+        .card-header {
+            background: #1c2333 !important;
+            border-color: #30363d !important;
+        }
+        .form-control, .form-select {
+            background: #0d1117 !important;
+            border-color: #30363d !important;
+            color: #c9d1d9 !important;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #e94560 !important;
+            box-shadow: 0 0 0 0.2rem rgba(233,69,96,0.25) !important;
+        }
+        .form-control::placeholder { color: #484f58 !important; }
+        .form-check-input {
+            background-color: #30363d;
+            border-color: #484f58;
+        }
+        .form-check-input:checked {
+            background-color: #e94560;
+            border-color: #e94560;
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.2rem rgba(233,69,96,0.25);
+        }
+        .result-card {
+            border-color: #e94560 !important;
+        }
+        .url-output {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            color: #58a6ff;
+            font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+            min-height: 44px;
+        }
+        .replace-row .form-control { font-size: 0.9rem; }
+        .section-icon { font-size: 1.1rem; }
+        .toast-copied {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="fw-bold brand-color">ChatAssistX 설정</h1>
+        <p class="text-secondary">채팅 위젯 URL을 간편하게 생성할 수 있습니다</p>
+    </div>
+
+    <!-- 플랫폼 설정 -->
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            <span class="section-icon">📺</span> 플랫폼 설정
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="twitch" class="form-label">Twitch 채널명</label>
+                    <input type="text" class="form-control cfg" id="twitch" placeholder="예: lastorder_dc">
+                    <div class="form-text">트위치 채널 아이디를 입력하세요</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="kick" class="form-label">Kick 스트리머 아이디</label>
+                    <input type="text" class="form-control cfg" id="kick" placeholder="예: streamerid">
+                    <div class="form-text">Kick 스트리머 아이디를 입력하세요</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="ytChannel" class="form-label">YouTube 채널 ID</label>
+                    <input type="text" class="form-control cfg" id="ytChannel" placeholder="예: @channelname 또는 UCxxxxxxxx">
+                    <div class="form-text">YouTube 채널 핸들(@) 또는 채널 ID</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="ytServer" class="form-label">YouTube 중계서버 주소</label>
+                    <input type="text" class="form-control cfg" id="ytServer" placeholder="비워두면 기본 서버 사용">
+                    <div class="form-text">YouTube 라이브 채팅 중계 서버 주소</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="nvrChannel" class="form-label">치지직(Chzzk) 채널 ID <span class="badge text-bg-warning">베타</span></label>
+                    <input type="text" class="form-control cfg" id="nvrChannel" placeholder="예: channelid">
+                    <div class="form-text">치지직 채널 ID를 입력하세요</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="cime" class="form-label">ci.me 채널 ID</label>
+                    <input type="text" class="form-control cfg" id="cime" placeholder="예: channelid">
+                    <div class="form-text">ci.me 스트리머 채널 ID를 입력하세요</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이모티콘 & 미디어 설정 -->
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            <span class="section-icon">😀</span> 이모티콘 &amp; 미디어 설정
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="list" class="form-label">이모티콘 목록 URL</label>
+                <input type="text" class="form-control cfg" id="list" placeholder="예: https://example.com/emoticons.js">
+                <div class="form-text">디시콘 등 이모티콘 목록 파일 주소 (JS 또는 JSON)</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check form-switch py-2">
+                        <input class="form-check-input cfg" type="checkbox" id="allowEmoticon" checked>
+                        <label class="form-check-label" for="allowEmoticon">
+                            이모티콘 사용
+                            <div class="form-text mt-0">디시콘 이모티콘 렌더링 활성화</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch py-2">
+                        <input class="form-check-input cfg" type="checkbox" id="ignoreMQEmoticon" checked>
+                        <label class="form-check-label" for="ignoreMQEmoticon">
+                            마퀴태그 + 이모티콘 무시
+                            <div class="form-text mt-0">마퀴태그와 이모티콘 동시 사용 방지</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch py-2">
+                        <input class="form-check-input cfg" type="checkbox" id="allowExternalSource">
+                        <label class="form-check-label" for="allowExternalSource">
+                            외부 이미지 허용
+                            <div class="form-text mt-0">[img 주소] 문법으로 외부 이미지 표시 허용</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch py-2">
+                        <input class="form-check-input cfg" type="checkbox" id="enableTwitchEmoticon" checked>
+                        <label class="form-check-label" for="enableTwitchEmoticon">
+                            트위치 이모티콘 사용
+                            <div class="form-text mt-0">트위치 이모티콘 렌더링 활성화</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="TwitchEmoticonsize" class="form-label">트위치 이모티콘 크기</label>
+                    <select class="form-select cfg" id="TwitchEmoticonsize">
+                        <option value="1.0" selected>1.0x (기본)</option>
+                        <option value="2.0">2.0x</option>
+                        <option value="3.0">3.0x</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="TwitchEmoticonMode" class="form-label">트위치 이모티콘 테마</label>
+                    <select class="form-select cfg" id="TwitchEmoticonMode">
+                        <option value="light" selected>라이트 (Light)</option>
+                        <option value="dark">다크 (Dark)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 채팅 필터링 설정 -->
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            <span class="section-icon">🔇</span> 채팅 필터링 설정
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="ignoreNickname" class="form-label">필터링할 닉네임</label>
+                <input type="text" class="form-control cfg" id="ignoreNickname" placeholder="nightbot,twipkr" value="nightbot,twipkr">
+                <div class="form-text">무시할 봇/사용자 닉네임 (쉼표로 구분)</div>
+            </div>
+            <div>
+                <label class="form-label">단어 치환 규칙</label>
+                <div class="form-text mb-2">특정 단어를 다른 단어로 치환합니다</div>
+                <div id="replaceRows"></div>
+                <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="addReplaceBtn">+ 치환 규칙 추가</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 익명화 설정 -->
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            <span class="section-icon">🎭</span> 익명화 설정
+        </div>
+        <div class="card-body">
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input cfg" type="checkbox" id="anon">
+                <label class="form-check-label" for="anon">
+                    닉네임 익명화
+                    <div class="form-text mt-0">방송에 표시되는 닉네임을 익명화합니다</div>
+                </label>
+            </div>
+            <div id="anonOptions" class="d-none">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="anon_nickname" class="form-label">익명 닉네임</label>
+                        <input type="text" class="form-control cfg" id="anon_nickname" placeholder="시청자">
+                        <div class="form-text">익명화시 사용할 기본 닉네임</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="anon_random" class="form-label">랜덤 접미사 유형</label>
+                        <select class="form-select cfg" id="anon_random">
+                            <option value="string" selected>랜덤 문자열 (string)</option>
+                            <option value="number">랜덤 숫자 (number)</option>
+                            <option value="false">사용 안함</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="random_length" class="form-label">랜덤 접미사 길이</label>
+                        <input type="number" class="form-control cfg" id="random_length" value="4" min="1" max="20">
+                        <div class="form-text">랜덤 문자/숫자의 길이 (기본: 4)</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch py-2 mt-md-4">
+                            <input class="form-check-input cfg" type="checkbox" id="fix_random_id">
+                            <label class="form-check-label" for="fix_random_id">
+                                랜덤 닉네임 고정
+                                <div class="form-text mt-0">같은 시청자에게 같은 랜덤 문자 배정 (새로고침시 초기화)</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 생성된 URL -->
+    <div class="card result-card mb-4 position-sticky" style="bottom:1rem; z-index:100;">
+        <div class="card-header fw-semibold">
+            <span class="section-icon">🔗</span> 생성된 URL
+        </div>
+        <div class="card-body">
+            <div class="url-output mb-3" id="generatedUrl"></div>
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <button class="btn btn-danger flex-fill" id="copyBtn">📋 URL 복사</button>
+                <button class="btn btn-outline-info flex-fill" id="openBtn">🔗 미리보기 열기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Copied toast -->
+<div class="toast-copied" id="copiedToast">
+    <div class="alert alert-success py-2 px-4 mb-0 shadow" role="alert">
+        ✅ 클립보드에 복사되었습니다!
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+(function() {
+    'use strict';
+
+    var BASE_URL = 'https://chatassistx.vercel.app/';
+
+    // Parameter definitions matching index.html logic
+    var PARAMS = [
+        // Platform
+        { id: 'twitch', type: 'text' },
+        { id: 'kick', type: 'text' },
+        { id: 'ytChannel', type: 'text' },
+        { id: 'ytServer', type: 'text' },
+        { id: 'nvrChannel', type: 'text' },
+        { id: 'cime', type: 'text' },
+        // Emoticon & Media
+        { id: 'list', type: 'text' },
+        { id: 'allowEmoticon', type: 'bool-default-true' },
+        { id: 'ignoreMQEmoticon', type: 'bool-default-true' },
+        { id: 'allowExternalSource', type: 'bool-default-false' },
+        { id: 'enableTwitchEmoticon', type: 'bool-default-true' },
+        { id: 'TwitchEmoticonsize', type: 'select', defaultVal: '1.0' },
+        { id: 'TwitchEmoticonMode', type: 'select', defaultVal: 'light' },
+        // Filtering
+        { id: 'ignoreNickname', type: 'text', defaultVal: 'nightbot,twipkr' },
+        // Anonymization
+        { id: 'anon', type: 'bool-default-false' },
+        { id: 'anon_nickname', type: 'text' },
+        { id: 'anon_random', type: 'select', defaultVal: 'string' },
+        { id: 'random_length', type: 'number', defaultVal: 4 },
+        { id: 'fix_random_id', type: 'bool-default-false' }
+    ];
+
+    function getEl(id) { return document.getElementById(id); }
+
+    // Collect replace rules from UI
+    function getReplaceString() {
+        var rows = document.querySelectorAll('#replaceRows .replace-row');
+        var parts = [];
+        for (var i = 0; i < rows.length; i++) {
+            var inputs = rows[i].querySelectorAll('input');
+            var from = inputs[0].value.trim();
+            var to = inputs[1].value.trim();
+            if (from) parts.push(from + '|' + to);
+        }
+        return parts.join(',');
+    }
+
+    // Generate the full URL with only non-default parameters
+    function generateUrl() {
+        var url = new URL(BASE_URL);
+
+        for (var i = 0; i < PARAMS.length; i++) {
+            var p = PARAMS[i];
+            var el = getEl(p.id);
+            if (!el) continue;
+
+            if (p.type === 'text') {
+                var val = el.value.trim();
+                if (val && val !== (p.defaultVal || '')) {
+                    url.searchParams.set(p.id, val);
+                }
+            } else if (p.type === 'number') {
+                var numVal = parseInt(el.value, 10);
+                if (!isNaN(numVal) && numVal !== (p.defaultVal || 0)) {
+                    url.searchParams.set(p.id, numVal.toString());
+                }
+            } else if (p.type === 'select') {
+                if (el.value !== p.defaultVal) {
+                    url.searchParams.set(p.id, el.value);
+                }
+            } else if (p.type === 'bool-default-true') {
+                if (!el.checked) url.searchParams.set(p.id, 'false');
+            } else if (p.type === 'bool-default-false') {
+                if (el.checked) url.searchParams.set(p.id, 'true');
+            }
+        }
+
+        var replaceStr = getReplaceString();
+        if (replaceStr) url.searchParams.set('replace', replaceStr);
+
+        return url.toString();
+    }
+
+    function updateUrl() {
+        getEl('generatedUrl').textContent = generateUrl();
+    }
+
+    // Replace row helpers
+    function escapeAttr(str) {
+        var el = document.createElement('span');
+        el.textContent = str;
+        return el.innerHTML.replace(/"/g, '&quot;');
+    }
+
+    function createReplaceRow(from, to) {
+        var row = document.createElement('div');
+        row.className = 'replace-row d-flex gap-2 align-items-center mb-2';
+        row.innerHTML =
+            '<input type="text" class="form-control form-control-sm" placeholder="원래 단어" value="' + escapeAttr(from || '') + '">' +
+            '<span class="text-danger fw-bold">→</span>' +
+            '<input type="text" class="form-control form-control-sm" placeholder="치환할 단어" value="' + escapeAttr(to || '') + '">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm flex-shrink-0" title="삭제">✕</button>';
+
+        row.querySelector('button').addEventListener('click', function() {
+            row.remove();
+            updateUrl();
+        });
+        var inputs = row.querySelectorAll('input');
+        for (var j = 0; j < inputs.length; j++) {
+            inputs[j].addEventListener('input', updateUrl);
+        }
+        return row;
+    }
+
+    function addReplaceRow(from, to) {
+        getEl('replaceRows').appendChild(createReplaceRow(from, to));
+    }
+
+    // Toggle anon options visibility
+    function toggleAnonOptions() {
+        var show = getEl('anon').checked;
+        getEl('anonOptions').classList.toggle('d-none', !show);
+    }
+
+    // Load existing settings from config.html's own URL params
+    function loadFromUrl() {
+        var cur = new URL(window.location.href);
+
+        for (var i = 0; i < PARAMS.length; i++) {
+            var p = PARAMS[i];
+            var val = cur.searchParams.get(p.id);
+            if (val === null) continue;
+
+            var el = getEl(p.id);
+            if (!el) continue;
+
+            if (p.type === 'text' || p.type === 'number' || p.type === 'select') {
+                el.value = val;
+            } else if (p.type === 'bool-default-true') {
+                el.checked = val !== 'false';
+            } else if (p.type === 'bool-default-false') {
+                el.checked = val === 'true';
+            }
+        }
+
+        var replaceVal = cur.searchParams.get('replace');
+        if (replaceVal) {
+            var pairs = replaceVal.split(',');
+            for (var j = 0; j < pairs.length; j++) {
+                var parts = pairs[j].split('|');
+                addReplaceRow(parts[0] || '', parts[1] || '');
+            }
+        }
+    }
+
+    // Initialization
+    function init() {
+        loadFromUrl();
+        toggleAnonOptions();
+
+        getEl('anon').addEventListener('change', function() {
+            toggleAnonOptions();
+            updateUrl();
+        });
+
+        // Bind all .cfg inputs to live URL update
+        var inputs = document.querySelectorAll('.cfg');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].addEventListener('input', updateUrl);
+            inputs[i].addEventListener('change', updateUrl);
+        }
+
+        getEl('addReplaceBtn').addEventListener('click', function() { addReplaceRow('', ''); });
+
+        // Copy URL button
+        getEl('copyBtn').addEventListener('click', function() {
+            var urlText = generateUrl();
+            navigator.clipboard.writeText(urlText).then(function() {
+                var toast = getEl('copiedToast');
+                toast.style.display = 'block';
+                setTimeout(function() { toast.style.display = 'none'; }, 2000);
+            });
+        });
+
+        // Open preview button
+        getEl('openBtn').addEventListener('click', function() {
+            window.open(generateUrl(), '_blank');
+        });
+
+        updateUrl();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+</body>
+</html>

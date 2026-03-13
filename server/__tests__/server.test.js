@@ -101,7 +101,7 @@ describe('WebSocket Server Integration Tests', () => {
             const ws = await connectWs('https://chatassistx.vercel.app');
             const msg = await waitForMessage(ws);
             expect(msg.type).toBe('version');
-            expect(msg.message).toBe('1.1.2');
+            expect(msg.message).toBe('1.1.3');
             await closeWs(ws);
         });
 

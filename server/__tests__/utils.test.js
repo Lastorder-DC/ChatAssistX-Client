@@ -1,8 +1,8 @@
 const { isAllowedOrigin, processMessageRuns, ALLOWED_ORIGINS, PROGRAM_VERSION } = require('../utils');
 
 describe('PROGRAM_VERSION', () => {
-    test('should be 1.1.2', () => {
-        expect(PROGRAM_VERSION).toBe('1.1.2');
+    test('should be 1.1.3', () => {
+        expect(PROGRAM_VERSION).toBe('1.1.3');
     });
 });
 

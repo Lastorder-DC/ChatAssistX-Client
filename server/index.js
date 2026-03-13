@@ -52,14 +52,14 @@ wss.on('connection', (ws) => {
         try {
             parsed = JSON.parse(data.toString());
         } catch (e) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
+            ws.send(JSON.stringify({ type: 'error', message: '잘못된 JSON' }));
             return;
         }
 
         if (parsed.type === 'connect') {
             const channel = parsed.channel;
             if (!channel) {
-                ws.send(JSON.stringify({ type: 'error', message: 'Channel identifier is required' }));
+                ws.send(JSON.stringify({ type: 'error', message: '채널 식별자가 필요합니다' }));
                 return;
             }
 
@@ -101,9 +101,9 @@ async function subscribeClient(ws, channel) {
     if (existingSession) {
         existingSession.clients.add(ws);
         if (existingSession.connecting) {
-            ws.send(JSON.stringify({ type: 'info', message: `Connecting to ${channel}...` }));
+            ws.send(JSON.stringify({ type: 'info', message: `채널 ${channel}에 연결중...` }));
         } else {
-            ws.send(JSON.stringify({ type: 'info', message: `Joined existing live chat session for ${channel}` }));
+            ws.send(JSON.stringify({ type: 'connected', message: `${channel}: 기존 채널 세션에 연결됨` }));
         }
         return;
     }
@@ -116,7 +116,7 @@ async function subscribeClient(ws, channel) {
         await startChannelSession(channel, session);
     } catch (err) {
         console.error('Error starting channel session:', err);
-        broadcast(session, { type: 'error', message: err.message || 'Failed to start live chat' });
+        broadcast(session, { type: 'error', message: err.message || '라이브 채팅 세션 시작 실패' });
         channelSessions.delete(channel);
     }
 }
@@ -128,7 +128,7 @@ async function subscribeClient(ws, channel) {
 async function startChannelSession(channel, session) {
     const yt = await Innertube.create();
 
-    broadcast(session, { type: 'info', message: `Resolving channel: ${channel}` });
+    broadcast(session, { type: 'info', message: `채널 확인중: ${channel}` });
 
     let videoId = null;
 
@@ -136,18 +136,18 @@ async function startChannelSession(channel, session) {
         videoId = await findLiveVideoId(yt, channel);
     } catch (err) {
         console.error('Error finding live video:', err);
-        broadcast(session, { type: 'not_found', message: `Could not find live stream: ${err.message}` });
+        broadcast(session, { type: 'not_found', message: `생방송을 찾을 수 없음: ${err.message}` });
         channelSessions.delete(channel);
         return;
     }
 
     if (!videoId) {
-        broadcast(session, { type: 'not_found', message: 'No active live stream found for this channel' });
+        broadcast(session, { type: 'not_found', message: '채널에 생방송이 진행중이지 않습니다' });
         channelSessions.delete(channel);
         return;
     }
 
-    broadcast(session, { type: 'info', message: `Found live stream: ${videoId}` });
+    broadcast(session, { type: 'info', message: `생방송 찾음: ${videoId}` });
 
     // Get video info and start live chat
     const info = await yt.getInfo(videoId);
@@ -157,8 +157,8 @@ async function startChannelSession(channel, session) {
 
     livechat.on('start', (initial_data) => {
         broadcast(session, {
-            type: 'info',
-            message: `Connected to live chat (${initial_data.viewer_name || 'Guest'})`
+            type: 'connected',
+            message: `${channel}: 생방송 채팅에 연결됨`
         });
     });
 

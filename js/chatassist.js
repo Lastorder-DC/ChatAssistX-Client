@@ -828,14 +828,13 @@ function connect_yt() {
         } else if(data.type === "info") {
             console.log("YouTube info:", data.message);
             addChatMessage("info", "YouTube", data.message, true, false);
-
-            // data.message에 Connected to live chat / Joined existing live chat session가 포함되어 있다면 window.chat.isInited를 true로 설정
-            if(data.message && (data.message.indexOf("Connected to live chat") !== -1 || data.message.indexOf("Joined existing live chat session") !== -1)) {
-                window.chat.isInited = true;
-            }
         } else if(data.type === "error") {
             console.error("YouTube error:", data.message);
             addChatMessage("error", "YouTube 오류", data.message, true, false);
+        } else if(data.type === "connected") {
+            console.log("YouTube info:", data.message);
+            addChatMessage("info", "YouTube", data.message, true, false);
+            window.chat.isInited = true;
         }
     };
 

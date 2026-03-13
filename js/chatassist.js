@@ -348,20 +348,51 @@ function NAVER_replaceEmoticon(message, emotes) {
   }
 
 /**
- * 씨미(ci.me) 이모티콘 변환 함수 (stub)
+ * 씨미(ci.me) 이모티콘 그룹 매핑
+ * 이모지 코드의 접두사에 따라 그룹(폴더)을 결정
+ * 긴 접두사를 먼저 배치하여 올바른 매칭을 보장
+ * 새 그룹 추가 시 { prefix: "접두사", group: "그룹명" } 형태로 추가
+ */
+var CIME_EMOJI_GROUPS = [
+    { prefix: "Pixel-cat", group: "Pixel" },
+    { prefix: "Pixel-item", group: "Pixel" },
+    { prefix: "be-tx", group: "Beam" },
+    { prefix: "vtm", group: "Vt" },
+    { prefix: "cartoon", group: "Cartoon" },
+    { prefix: "vt", group: "Vt" },
+    { prefix: "be", group: "Beam" },
+    { prefix: "wa", group: "Basic" },
+    { prefix: "sh", group: "Basic" },
+    { prefix: "emo", group: "Basic" }
+];
+
+/**
+ * 씨미(ci.me) 이모지 코드로부터 이미지 URL을 반환
+ * @param {String} code - 이모지 코드 (예: be-039, vt-01, 4E6L-yumeka)
+ * @returns {String} 이미지 URL
+ */
+function CIME_getEmojiUrl(code) {
+    for (var i = 0; i < CIME_EMOJI_GROUPS.length; i++) {
+        if (code.indexOf(CIME_EMOJI_GROUPS[i].prefix) === 0) {
+            return "https://streaming.cf.ci.me/public/assets/images/emoji/" + CIME_EMOJI_GROUPS[i].group + "/" + code + ".webp";
+        }
+    }
+    // 기본값: 구독 이모티콘 (channel-emojis)
+    return "https://streaming.cf.ci.me/channel-emojis/" + code + ".png";
+}
+
+/**
+ * 씨미(ci.me) 이모티콘 변환 함수
  * 이모티콘 형식: :emoticon-code: (예: :be-039:)
- * TODO: 추후 이모티콘 이미지 URL 매핑 구현
  * @param {String} message
  * @returns {String}
  */
 function CIME_replaceEmoticon(message) {
-    // stub: 추후 이모티콘 변환 기능 구현 예정
-    // 이모티콘 패턴은 :code: 형태 (예: :be-039:)
-    // var regex = /:([a-zA-Z0-9_-]+):/g;
-    // message = message.replace(regex, function(match, code) {
-    //     // TODO: 이모티콘 코드에 해당하는 이미지 URL로 변환
-    //     return match;
-    // });
+    var regex = /:([a-zA-Z0-9_-]+):/g;
+    message = message.replace(regex, function(match, code) {
+        var url = CIME_getEmojiUrl(code);
+        return '<img class="cime_emoticon" src="' + url + '" alt="' + code + '">';
+    });
     return message;
 }
 

@@ -806,11 +806,6 @@ function connect_yt() {
     window.ytsocket.socket.onopen = function() {
         console.log("YouTube relay server connected");
         clearYtRetryTimer();
-        // 채널 연결 요청
-        window.ytsocket.socket.send(JSON.stringify({
-            type: "connect",
-            channel: ytChannel
-        }));
     };
 
     window.ytsocket.socket.onmessage = function(event) {
@@ -822,7 +817,14 @@ function connect_yt() {
             return;
         }
 
-        if(data.type === "chat" || data.type === "superchat") {
+        if(data.type === "version") {
+            console.log("YouTube relay server version:", data.message);
+            // 버전 메시지를 받은 후 채널 연결 요청
+            window.ytsocket.socket.send(JSON.stringify({
+                type: "connect",
+                channel: ytChannel
+            }));
+        } else if(data.type === "chat" || data.type === "superchat") {
             var message = data.message || "";
             // 슈퍼챗인 경우 금액 표시
             if(data.type === "superchat" && data.amount) {
@@ -849,6 +851,9 @@ function connect_yt() {
             console.log("YouTube info:", data.message);
             addChatMessage("info", "YouTube", data.message, true, false);
             window.chat.isInited = true;
+        } else if(data.type === "disconnected") {
+            console.log("YouTube disconnected:", data.message);
+            addChatMessage("info", "YouTube", data.message || "서버 연결이 종료되었습니다", true, false);
         }
     };
 

@@ -1,9 +1,19 @@
 const { Innertube, YTNodes } = require('youtubei.js');
 const { WebSocketServer, WebSocket } = require('ws');
+const { PROGRAM_VERSION, isAllowedOrigin, processMessageRuns } = require('./utils');
 const PORT = process.env.PORT || 8090;
-const PROGRAM_VERSION = "1.1.1";
 
-const wss = new WebSocketServer({ port: PORT });
+const wss = new WebSocketServer({
+    port: PORT,
+    verifyClient: (info) => {
+        const origin = info.origin || info.req.headers.origin;
+        if (!isAllowedOrigin(origin)) {
+            console.log(`Connection rejected: origin ${origin} is not allowed`);
+            return false;
+        }
+        return true;
+    }
+});
 
 console.log(`YouTube Live Chat relay server ${PROGRAM_VERSION} started on port ${PORT}`);
 
@@ -261,30 +271,6 @@ async function findLiveVideoId(yt, channel) {
 }
 
 /**
- * 메시지 runs를 처리하여 이모지를 마커 형식으로 변환한다.
- * 이모지 runs는 [yt-emoji:이미지URL] 형식으로 변환된다.
- */
-function processMessageRuns(message) {
-    if (!message) {
-        return '';
-    }
-
-    if (!message.runs || message.runs.length === 0) {
-        return message.toString() || '';
-    }
-
-    return message.runs.map(run => {
-        if (run.emoji && run.emoji.image && run.emoji.image.length > 0) {
-            const url = run.emoji.image[0].url;
-            if (url) {
-                return `[yt-emoji:${url}]`;
-            }
-        }
-        return run.text || '';
-    }).join('');
-}
-
-/**
  * Handles a live chat item and broadcasts it to all subscribed clients.
  */
 function handleChatItem(session, item) {
@@ -363,28 +349,43 @@ function gracefulShutdown() {
                 console.error(`Error stopping livechat for ${channel}:`, e.message);
             }
         }
-        // 세션에 연결된 모든 클라이언트에게 종료 알림 후 연결 해제
+        // 세션에 연결된 모든 클라이언트에게 종료 알림 메시지 전송 후 연결 해제
         for (const client of session.clients) {
             try {
-                client.close(1001, 'Server shutting down');
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ type: 'disconnected', message: 'Server shutting down' }));
+                }
             } catch (e) {
                 // 이미 닫힌 연결은 무시
             }
         }
     }
-    channelSessions.clear();
 
-    // WebSocket 서버 종료
-    wss.close(() => {
-        console.log('Server stopped.');
-        process.exit(0);
-    });
-
-    // 5초 내에 종료되지 않으면 강제 종료
+    // 메시지 전송 후 잠시 대기하여 클라이언트가 메시지를 수신할 수 있도록 함
     setTimeout(() => {
-        console.error('Forced shutdown after timeout');
-        process.exit(1);
-    }, 5000);
+        for (const [channel, session] of channelSessions) {
+            for (const client of session.clients) {
+                try {
+                    client.close(1001, 'Server shutting down');
+                } catch (e) {
+                    // 이미 닫힌 연결은 무시
+                }
+            }
+        }
+        channelSessions.clear();
+
+        // WebSocket 서버 종료
+        wss.close(() => {
+            console.log('Server stopped.');
+            process.exit(0);
+        });
+
+        // 3초 내에 종료되지 않으면 강제 종료
+        setTimeout(() => {
+            console.error('Forced shutdown after timeout');
+            process.exit(1);
+        }, 3000);
+    }, 500);
 }
 
 process.on('SIGINT', gracefulShutdown);

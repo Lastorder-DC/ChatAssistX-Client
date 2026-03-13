@@ -3,12 +3,11 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.15.3
+ *                 V E R S I O N    1.15.4
  *       Last updated by Lastorder-DC on 2026-03-13.
  */
 // 변수 초기화
 window.chat = {};
-
 clientId = "6c4013c4-c290-433d-a772-070e02d63585";
 
 // 채팅 소켓
@@ -21,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.15.3";
+window.chat.version = "1.15.4";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -44,7 +43,7 @@ window.chat.def_config.platformIcon = true;
 window.chat.def_config.platform = "all";
 window.chat.def_config.animation = "fade";
 window.chat.def_config.chatFade = 30;
-window.chat.def_config.font = "Jeju Gothic";
+window.chat.def_config.font = "serif";
 window.chat.def_config.fontUsernameSize = 14;
 window.chat.def_config.fontUsernameColor = "255, 255, 255";
 window.chat.def_config.fontChatSize = 16;

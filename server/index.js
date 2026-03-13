@@ -53,9 +53,31 @@ function unsubscribeClient(ws, channel) {
     }
 }
 
+// 클라이언트 ping 모니터링을 위한 타임스탬프 관리
+const clientLastPing = new Map();
+
+// 60초 이상 ping이 없는 클라이언트 연결 해제
+const PING_TIMEOUT = 60000;
+// 클라이언트 ping 주기(30초)보다 짧게 체크하여 타이밍 이슈 방지
+const PING_CHECK_INTERVAL = 10000;
+
+const pingMonitorInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [client, lastPing] of clientLastPing) {
+        if (now - lastPing > PING_TIMEOUT) {
+            console.log('Client ping timeout, dropping connection');
+            client.close(1000, 'Ping timeout');
+            clientLastPing.delete(client);
+        }
+    }
+}, PING_CHECK_INTERVAL);
+
 wss.on('connection', (ws) => {
     console.log('Client connected');
     let subscribedChannel = null;
+
+    // ping 타임스탬프 초기화
+    clientLastPing.set(ws, Date.now());
 
     ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
     ws.on('message', async (data) => {
@@ -64,6 +86,14 @@ wss.on('connection', (ws) => {
             parsed = JSON.parse(data.toString());
         } catch (e) {
             ws.send(JSON.stringify({ type: 'error', message: '잘못된 JSON' }));
+            return;
+        }
+
+        if (parsed.type === 'ping') {
+            clientLastPing.set(ws, Date.now());
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'pong' }));
+            }
             return;
         }
 
@@ -87,6 +117,7 @@ wss.on('connection', (ws) => {
 
     ws.on('close', () => {
         console.log('Client disconnected');
+        clientLastPing.delete(ws);
         if (subscribedChannel) {
             unsubscribeClient(ws, subscribedChannel);
             subscribedChannel = null;
@@ -95,6 +126,7 @@ wss.on('connection', (ws) => {
 
     ws.on('error', (err) => {
         console.error('WebSocket error:', err);
+        clientLastPing.delete(ws);
         if (subscribedChannel) {
             unsubscribeClient(ws, subscribedChannel);
             subscribedChannel = null;
@@ -338,6 +370,10 @@ function handleChatItem(session, item) {
  */
 function gracefulShutdown() {
     console.log('\nShutting down server...');
+
+    // ping 모니터링 중지
+    clearInterval(pingMonitorInterval);
+    clientLastPing.clear();
 
     // 모든 채널 세션의 라이브 채팅 중지
     for (const [channel, session] of channelSessions) {

@@ -842,6 +842,12 @@ function connect_yt() {
     window.ytsocket.socket.onopen = function() {
         console.log("YouTube relay server connected");
         clearYtRetryTimer();
+        // 30초 간격으로 ping 전송
+        window.ytsocket.pingTimer = setInterval(function() {
+            if(window.ytsocket.socket && window.ytsocket.socket.readyState === WebSocket.OPEN) {
+                window.ytsocket.socket.send(JSON.stringify({ type: "ping" }));
+            }
+        }, 30000);
     };
 
     window.ytsocket.socket.onmessage = function(event) {
@@ -860,6 +866,8 @@ function connect_yt() {
                 type: "connect",
                 channel: ytChannel
             }));
+        } else if(data.type === "pong") {
+            // ping 응답 수신 - 별도 처리 불필요
         } else if(data.type === "chat" || data.type === "superchat") {
             var message = data.message || "";
             // 슈퍼챗인 경우 금액 표시
@@ -897,6 +905,11 @@ function connect_yt() {
         console.log("YouTube relay server disconnected");
         window.ytsocket.isInited = false;
         clearYtRetryTimer();
+        // ping 타이머 정리
+        if(window.ytsocket.pingTimer) {
+            clearInterval(window.ytsocket.pingTimer);
+            window.ytsocket.pingTimer = null;
+        }
         // 5초 후 WebSocket 재연결 시도
         setTimeout(function() {
             if(window.config.ytChannel && window.config.ytServer) {

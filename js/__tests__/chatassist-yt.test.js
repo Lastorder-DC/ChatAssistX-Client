@@ -77,6 +77,9 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
         if (window.ytsocket && window.ytsocket.retryTimer) {
             clearTimeout(window.ytsocket.retryTimer);
         }
+        if (window.ytsocket && window.ytsocket.pingTimer) {
+            clearInterval(window.ytsocket.pingTimer);
+        }
     });
 
     // Helper: minimal connect_yt implementation extracted from chatassist.js
@@ -126,6 +129,12 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
         window.ytsocket.socket.onopen = function () {
             console.log("YouTube relay server connected");
             clearYtRetryTimer();
+            // 30초 간격으로 ping 전송
+            window.ytsocket.pingTimer = setInterval(function() {
+                if(window.ytsocket.socket && window.ytsocket.socket.readyState === WebSocket.OPEN) {
+                    window.ytsocket.socket.send(JSON.stringify({ type: "ping" }));
+                }
+            }, 30000);
         };
 
         window.ytsocket.socket.onmessage = function (event) {
@@ -143,6 +152,8 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
                     type: "connect",
                     channel: ytChannel
                 }));
+            } else if (data.type === "pong") {
+                // ping 응답 수신 - 별도 처리 불필요
             } else if (data.type === "chat" || data.type === "superchat") {
                 var message = data.message || "";
                 if (data.type === "superchat" && data.amount) {
@@ -178,6 +189,11 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             console.log("YouTube relay server disconnected");
             window.ytsocket.isInited = false;
             clearYtRetryTimer();
+            // ping 타이머 정리
+            if(window.ytsocket.pingTimer) {
+                clearInterval(window.ytsocket.pingTimer);
+                window.ytsocket.pingTimer = null;
+            }
         };
 
         window.ytsocket.socket.onerror = function (err) {
@@ -339,11 +355,62 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             expect(window.ytsocket.isInited).toBe(false);
         });
 
+        test('should clear ping timer on close', () => {
+            jest.useFakeTimers();
+            connect_yt();
+            capturedOnOpen();
+            expect(window.ytsocket.pingTimer).not.toBeNull();
+            capturedOnClose();
+            expect(window.ytsocket.pingTimer).toBeNull();
+            jest.useRealTimers();
+        });
+
         test('should log error on WebSocket error', () => {
             connect_yt();
             const error = new Error('connection error');
             capturedOnError(error);
             expect(console.error).toHaveBeenCalledWith('YouTube WebSocket error:', error);
+        });
+    });
+
+    describe('Ping/Pong heartbeat', () => {
+        test('should start ping interval on connection open', () => {
+            jest.useFakeTimers();
+            connect_yt();
+            capturedOnOpen();
+            expect(window.ytsocket.pingTimer).not.toBeNull();
+            jest.useRealTimers();
+        });
+
+        test('should send ping message every 30 seconds', () => {
+            jest.useFakeTimers();
+            connect_yt();
+            capturedOnOpen();
+            sentMessages = []; // clear any messages
+
+            // Advance 30 seconds
+            jest.advanceTimersByTime(30000);
+            expect(sentMessages.length).toBe(1);
+            expect(sentMessages[0]).toEqual({ type: 'ping' });
+
+            // Advance another 30 seconds
+            jest.advanceTimersByTime(30000);
+            expect(sentMessages.length).toBe(2);
+            expect(sentMessages[1]).toEqual({ type: 'ping' });
+
+            jest.useRealTimers();
+        });
+
+        test('should handle pong response without side effects', () => {
+            connect_yt();
+            capturedOnOpen();
+            capturedOnMessage({ data: JSON.stringify({ type: 'version', message: '1.1.2' }) });
+            sentMessages = [];
+
+            capturedOnMessage({ data: JSON.stringify({ type: 'pong' }) });
+            // pong should not trigger addChatMessage or any other action
+            expect(window.addChatMessage).not.toHaveBeenCalled();
+            expect(sentMessages.length).toBe(0);
         });
     });
 });

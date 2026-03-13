@@ -796,6 +796,8 @@ function connect_cime() {
 
                             // 유저 정보 파싱
                             var userInfo = JSON.parse(data.Sender.Attributes.user);
+                            console.log("ci.me raw message: ", data);
+                            console.log("ci.me parsed user info: ", userInfo);
                             var nickname = userInfo.ch.na;
                             var userId = data.Sender.UserId;
                             var content = data.Content;

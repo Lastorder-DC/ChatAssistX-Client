@@ -1,0 +1,42 @@
+# ChatAssistX YouTube Live Chat Server - nginx 설정 예제
+# Ubuntu 24.04 기준
+#
+# 설치:
+#   sudo apt install nginx
+#
+# 설정 방법:
+#   1. 이 파일을 /etc/nginx/sites-available/chatassistx-youtube 에 복사
+#      sudo cp nginx.conf.example /etc/nginx/sites-available/chatassistx-youtube
+#
+#   2. your-domain.com 을 실제 도메인으로 변경
+#
+#   3. 심볼릭 링크 생성
+#      sudo ln -s /etc/nginx/sites-available/chatassistx-youtube /etc/nginx/sites-enabled/
+#
+#   4. 설정 테스트 후 적용
+#      sudo nginx -t && sudo systemctl reload nginx
+#
+# SSL 인증서 설치 (Let's Encrypt):
+#   sudo apt install certbot python3-certbot-nginx
+#   sudo certbot --nginx -d your-domain.com
+
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # WebSocket proxy for YouTube Live Chat relay server
+    location / {
+        proxy_pass http://127.0.0.1:8090;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket timeout settings
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+}

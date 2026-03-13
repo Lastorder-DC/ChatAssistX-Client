@@ -755,9 +755,9 @@ function connect_yt() {
     var ytChannel = window.config.ytChannel;
     var ytServerUrl = window.config.ytServer;
 
-    // WebSocket URL 설정
+    // WebSocket URL 설정 (기본: wss://)
     if(!ytServerUrl.startsWith("ws://") && !ytServerUrl.startsWith("wss://")) {
-        ytServerUrl = "ws://" + ytServerUrl;
+        ytServerUrl = "wss://" + ytServerUrl;
     }
 
     try {
@@ -767,8 +767,33 @@ function connect_yt() {
         return;
     }
 
+    // 라이브 스트림 재시도 타이머
+    window.ytsocket.retryTimer = null;
+
+    function clearYtRetryTimer() {
+        if(window.ytsocket.retryTimer) {
+            clearTimeout(window.ytsocket.retryTimer);
+            window.ytsocket.retryTimer = null;
+        }
+    }
+
+    function scheduleYtRetry() {
+        clearYtRetryTimer();
+        window.ytsocket.retryTimer = setTimeout(function() {
+            window.ytsocket.retryTimer = null;
+            if(window.ytsocket.socket && window.ytsocket.socket.readyState === WebSocket.OPEN) {
+                console.log("YouTube: Retrying channel connection...");
+                window.ytsocket.socket.send(JSON.stringify({
+                    type: "connect",
+                    channel: ytChannel
+                }));
+            }
+        }, 30000); // 30초 후 재시도
+    }
+
     window.ytsocket.socket.onopen = function() {
         console.log("YouTube relay server connected");
+        clearYtRetryTimer();
         // 채널 연결 요청
         window.ytsocket.socket.send(JSON.stringify({
             type: "connect",
@@ -797,6 +822,11 @@ function connect_yt() {
                 isMod: data.isMod || false,
                 id: data.id || ""
             });
+        } else if(data.type === "not_found" || data.type === "ended") {
+            // 라이브 스트림을 찾지 못했거나 종료됨 - 30초 후 재시도
+            console.log("YouTube:", data.message);
+            addChatMessage("info", "YouTube", data.message, true, false);
+            scheduleYtRetry();
         } else if(data.type === "info") {
             console.log("YouTube info:", data.message);
             addChatMessage("info", "YouTube", data.message, true, false);
@@ -809,7 +839,8 @@ function connect_yt() {
     window.ytsocket.socket.onclose = function() {
         console.log("YouTube relay server disconnected");
         window.ytsocket.isInited = false;
-        // 5초 후 재연결 시도
+        clearYtRetryTimer();
+        // 5초 후 WebSocket 재연결 시도
         setTimeout(function() {
             if(window.config.ytChannel && window.config.ytServer) {
                 console.log("YouTube relay server reconnecting...");

@@ -7,51 +7,45 @@ const wss = new WebSocketServer({ port: PORT });
 
 console.log(`YouTube Live Chat relay server started on port ${PORT}`);
 
-const RETRY_INTERVAL_MS = 30000; // 30초 간격으로 재시도
+// 채널별 공유 세션 관리
+// Map<channel, { livechat, clients: Set<ws>, connecting: boolean }>
+const channelSessions = new Map();
+
+/**
+ * 세션에 연결된 모든 클라이언트에게 메시지 전송
+ */
+function broadcast(session, data) {
+    const message = JSON.stringify(data);
+    for (const client of session.clients) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    }
+}
+
+/**
+ * 클라이언트를 채널에서 구독 해제
+ */
+function unsubscribeClient(ws, channel) {
+    const session = channelSessions.get(channel);
+    if (!session) return;
+
+    session.clients.delete(ws);
+    console.log(`Client unsubscribed from ${channel} (${session.clients.size} remaining)`);
+
+    // 더 이상 구독자가 없으면 세션 정리
+    if (session.clients.size === 0) {
+        console.log(`No more clients for ${channel}, stopping session`);
+        if (session.livechat) {
+            session.livechat.stop();
+        }
+        channelSessions.delete(channel);
+    }
+}
 
 wss.on('connection', (ws) => {
     console.log('Client connected');
-    let livechat = null;
-    let retryTimer = null;
-    let currentChannel = null;
-
-    function clearRetryTimer() {
-        if (retryTimer) {
-            clearTimeout(retryTimer);
-            retryTimer = null;
-        }
-    }
-
-    function cleanup() {
-        clearRetryTimer();
-        currentChannel = null;
-        if (livechat) {
-            livechat.stop();
-            livechat = null;
-        }
-    }
-
-    function scheduleRetry() {
-        clearRetryTimer();
-        if (!currentChannel || ws.readyState !== WebSocket.OPEN) return;
-
-        const channel = currentChannel;
-        retryTimer = setTimeout(async () => {
-            retryTimer = null;
-            if (!currentChannel || ws.readyState !== WebSocket.OPEN) return;
-
-            console.log(`Retrying live chat connection for channel: ${channel}`);
-            ws.send(JSON.stringify({ type: 'info', message: `Retrying connection for ${channel}...` }));
-
-            try {
-                await startLiveChat(ws, channel, (lc) => { livechat = lc; }, scheduleRetry);
-            } catch (err) {
-                console.error('Error during retry:', err);
-                ws.send(JSON.stringify({ type: 'error', message: err.message || 'Failed to start live chat' }));
-                scheduleRetry();
-            }
-        }, RETRY_INTERVAL_MS);
-    }
+    let subscribedChannel = null;
 
     ws.on('message', async (data) => {
         let parsed;
@@ -69,74 +63,103 @@ wss.on('connection', (ws) => {
                 return;
             }
 
-            // Stop any existing session and retry timer
-            cleanup();
-            currentChannel = channel;
-
-            try {
-                await startLiveChat(ws, channel, (lc) => { livechat = lc; }, scheduleRetry);
-            } catch (err) {
-                console.error('Error starting live chat:', err);
-                ws.send(JSON.stringify({ type: 'error', message: err.message || 'Failed to start live chat' }));
-                scheduleRetry();
+            // 이전 채널 구독 해제
+            if (subscribedChannel) {
+                unsubscribeClient(ws, subscribedChannel);
             }
+            subscribedChannel = channel;
+
+            // 채널 세션에 구독
+            await subscribeClient(ws, channel);
         }
     });
 
     ws.on('close', () => {
         console.log('Client disconnected');
-        cleanup();
+        if (subscribedChannel) {
+            unsubscribeClient(ws, subscribedChannel);
+            subscribedChannel = null;
+        }
     });
 
     ws.on('error', (err) => {
         console.error('WebSocket error:', err);
-        cleanup();
+        if (subscribedChannel) {
+            unsubscribeClient(ws, subscribedChannel);
+            subscribedChannel = null;
+        }
     });
 });
 
 /**
- * Resolves a channel identifier (handle or ID) to a live video ID
- * and starts the live chat relay.
- * @param {WebSocket} ws - WebSocket connection
- * @param {string} channel - Channel identifier
- * @param {Function} setLivechat - Callback to store livechat instance
- * @param {Function} scheduleRetry - Callback to schedule a retry on failure/end
+ * 클라이언트를 채널 세션에 구독.
+ * 이미 해당 채널에 활성 세션이 있으면 기존 세션에 합류한다.
  */
-async function startLiveChat(ws, channel, setLivechat, scheduleRetry) {
+async function subscribeClient(ws, channel) {
+    const existingSession = channelSessions.get(channel);
+
+    if (existingSession) {
+        existingSession.clients.add(ws);
+        if (existingSession.connecting) {
+            ws.send(JSON.stringify({ type: 'info', message: `Connecting to ${channel}...` }));
+        } else {
+            ws.send(JSON.stringify({ type: 'info', message: `Joined existing live chat session for ${channel}` }));
+        }
+        return;
+    }
+
+    // 새 세션 생성
+    const session = { livechat: null, clients: new Set([ws]), connecting: true };
+    channelSessions.set(channel, session);
+
+    try {
+        await startChannelSession(channel, session);
+    } catch (err) {
+        console.error('Error starting channel session:', err);
+        broadcast(session, { type: 'error', message: err.message || 'Failed to start live chat' });
+        channelSessions.delete(channel);
+    }
+}
+
+/**
+ * 채널의 라이브 스트림을 찾고 채팅 세션을 시작한다.
+ * 재시도 로직 없이 한 번만 시도하며, 실패/종료 시 클라이언트에게 알린다.
+ */
+async function startChannelSession(channel, session) {
     const yt = await Innertube.create();
 
-    ws.send(JSON.stringify({ type: 'info', message: `Resolving channel: ${channel}` }));
+    broadcast(session, { type: 'info', message: `Resolving channel: ${channel}` });
 
     let videoId = null;
 
-    // Try to find the live video from the channel
     try {
         videoId = await findLiveVideoId(yt, channel);
     } catch (err) {
         console.error('Error finding live video:', err);
-        ws.send(JSON.stringify({ type: 'error', message: `Could not find live stream: ${err.message}` }));
-        scheduleRetry();
+        broadcast(session, { type: 'not_found', message: `Could not find live stream: ${err.message}` });
+        channelSessions.delete(channel);
         return;
     }
 
     if (!videoId) {
-        ws.send(JSON.stringify({ type: 'info', message: 'No active live stream found. Will retry automatically...' }));
-        scheduleRetry();
+        broadcast(session, { type: 'not_found', message: 'No active live stream found for this channel' });
+        channelSessions.delete(channel);
         return;
     }
 
-    ws.send(JSON.stringify({ type: 'info', message: `Found live stream: ${videoId}` }));
+    broadcast(session, { type: 'info', message: `Found live stream: ${videoId}` });
 
     // Get video info and start live chat
     const info = await yt.getInfo(videoId);
     const livechat = info.getLiveChat();
-    setLivechat(livechat);
+    session.livechat = livechat;
+    session.connecting = false;
 
     livechat.on('start', (initial_data) => {
-        ws.send(JSON.stringify({
+        broadcast(session, {
             type: 'info',
             message: `Connected to live chat (${initial_data.viewer_name || 'Guest'})`
-        }));
+        });
     });
 
     livechat.on('chat-update', (action) => {
@@ -144,19 +167,18 @@ async function startLiveChat(ws, channel, setLivechat, scheduleRetry) {
             const item = action.as(YTNodes.AddChatItemAction).item;
             if (!item) return;
 
-            handleChatItem(ws, item);
+            handleChatItem(session, item);
         }
     });
 
     livechat.on('error', (err) => {
         console.error('Live chat error:', err);
-        ws.send(JSON.stringify({ type: 'error', message: `Live chat error: ${err.message}` }));
+        broadcast(session, { type: 'error', message: `Live chat error: ${err.message}` });
     });
 
     livechat.on('end', () => {
-        ws.send(JSON.stringify({ type: 'info', message: 'Live stream has ended. Will retry automatically...' }));
-        setLivechat(null);
-        scheduleRetry();
+        broadcast(session, { type: 'ended', message: 'Live stream has ended' });
+        channelSessions.delete(channel);
     });
 
     livechat.start();
@@ -238,11 +260,9 @@ async function findLiveVideoId(yt, channel) {
 }
 
 /**
- * Handles a live chat item and sends it to the WebSocket client.
+ * Handles a live chat item and broadcasts it to all subscribed clients.
  */
-function handleChatItem(ws, item) {
-    if (ws.readyState !== WebSocket.OPEN) return;
-
+function handleChatItem(session, item) {
     switch (item.type) {
         case 'LiveChatTextMessage': {
             const msg = item.as(YTNodes.LiveChatTextMessage);
@@ -253,7 +273,7 @@ function handleChatItem(ws, item) {
                 (badge) => badge.tooltip === 'Owner' || badge.icon_type === 'OWNER'
             ) || false;
 
-            ws.send(JSON.stringify({
+            broadcast(session, {
                 type: 'chat',
                 nickname: author?.name?.toString() || 'Unknown',
                 message: msg.message?.toString() || '',
@@ -263,14 +283,14 @@ function handleChatItem(ws, item) {
                     (badge) => badge.tooltip === 'Member' || badge.style === 'BADGE_STYLE_TYPE_MEMBER'
                 ) || false,
                 id: author?.id || ''
-            }));
+            });
             break;
         }
         case 'LiveChatPaidMessage': {
             const msg = item.as(YTNodes.LiveChatPaidMessage);
             const author = msg.author;
 
-            ws.send(JSON.stringify({
+            broadcast(session, {
                 type: 'superchat',
                 nickname: author?.name?.toString() || 'Unknown',
                 message: msg.message?.toString() || '',
@@ -278,14 +298,14 @@ function handleChatItem(ws, item) {
                 isOwner: false,
                 isMod: author?.is_moderator || false,
                 id: author?.id || ''
-            }));
+            });
             break;
         }
         case 'LiveChatPaidSticker': {
             const msg = item.as(YTNodes.LiveChatPaidSticker);
             const author = msg.author;
 
-            ws.send(JSON.stringify({
+            broadcast(session, {
                 type: 'superchat',
                 nickname: author?.name?.toString() || 'Unknown',
                 message: `[Sticker] ${msg.purchase_amount || ''}`,
@@ -293,7 +313,7 @@ function handleChatItem(ws, item) {
                 isOwner: false,
                 isMod: author?.is_moderator || false,
                 id: author?.id || ''
-            }));
+            });
             break;
         }
         default:

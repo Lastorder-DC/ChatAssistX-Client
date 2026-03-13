@@ -4,7 +4,8 @@
   "description": "YouTube Live Chat relay server for ChatAssistX using YouTube.js",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "jest"
   },
   "dependencies": {
     "ws": "^8.18.0",

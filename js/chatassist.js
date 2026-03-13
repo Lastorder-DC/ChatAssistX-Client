@@ -755,7 +755,10 @@ function connect_yt() {
     var ytChannel = window.config.ytChannel;
     var ytServerUrl = window.config.ytServer;
 
-    // WebSocket URL 설정 (기본: wss://)
+    if(!ytServerUrl) {
+        ytServerUrl = "wss://youtube-chat.chatassistx.cc";
+    }
+    
     if(!ytServerUrl.startsWith("ws://") && !ytServerUrl.startsWith("wss://")) {
         ytServerUrl = "wss://" + ytServerUrl;
     }

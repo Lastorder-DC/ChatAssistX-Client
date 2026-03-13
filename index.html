@@ -36,8 +36,11 @@
         // kick 스트리머 아이디 입력
         window.config.kickid = !url.searchParams.get("kick") ? "" : url.searchParams.get("kick");
 
-        // 유튜브 스트리머 아이디 입력(불안정함)
+        // 유튜브 채널 핸들 또는 채널 ID 입력 (예: @Funzinnu)
         window.config.ytChannel = !url.searchParams.get("ytChannel") ? "" : url.searchParams.get("ytChannel");
+
+        // 유튜브 Data API v3 키 입력 (https://console.cloud.google.com/apis/credentials 에서 발급)
+        window.config.ytApiKey = !url.searchParams.get("ytApiKey") ? "" : url.searchParams.get("ytApiKey");
 
         // 치지직 스트리머 채널 아이디 입력(베타)
         window.config.nvrChannel = !url.searchParams.get("nvrChannel") ? "" : url.searchParams.get("nvrChannel");

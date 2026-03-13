@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.16.4
+ *                 V E R S I O N    1.16.5
  *       Last updated by Lastorder-DC on 2026-03-13.
  */
 // 변수 초기화
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.16.4";
+window.chat.version = "1.16.5";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -760,6 +760,7 @@ function _markPlatformConnected(platform) {
     window.chat._pendingPlatforms.delete(platform);
     if (window.chat._pendingPlatforms.size === 0) {
         window.chat.isInited = true;
+        addChatMessage("info", "NOTITLE", "<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + window.chat.version + "[br]초 기 화    성 공</pre></span>", true, true);
     }
 }
 
@@ -1096,7 +1097,6 @@ function connect_twitch() {
             window.chat.socket.send("CAP REQ :twitch.tv/tags twitch.tv/membership");
             addChatMessage("info", "불러오는중", window.config.channelname + " 채널에 연결되었습니다.", true, false);
             _markPlatformConnected('twitch');
-            addChatMessage("info", "NOTITLE", "<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + window.chat.version + "[br]초 기 화    성 공</pre></span>", true, true);
         } else if(event.data.indexOf("PING :tmi.twitch.tv") !== -1) {
             window.chat.socket.send("PONG :tmi.twitch.tv");
         } else if(event.data.indexOf(";") !== -1) {

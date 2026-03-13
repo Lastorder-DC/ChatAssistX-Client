@@ -757,76 +757,77 @@ function connect_yt() {
 
     addChatMessage("info", "불러오는중", "YouTube 채널 정보를 불러오는중...", true, false);
 
-    try {
-        var channelId = ytChannel;
-
-        // 1. 핸들(@로 시작)인 경우 채널 ID로 변환
-        if (ytChannel.startsWith("@")) {
-            var xhr1 = new XMLHttpRequest();
-            xhr1.open('GET', 'https://www.googleapis.com/youtube/v3/channels?forHandle=' + encodeURIComponent(ytChannel) + '&part=id&key=' + ytApiKey, false);
-            xhr1.send();
-
-            if (xhr1.status === 200) {
-                var channelData = JSON.parse(xhr1.responseText);
-                if (channelData.items && channelData.items.length > 0) {
-                    channelId = channelData.items[0].id;
+    // 1. 핸들(@로 시작)인 경우 채널 ID로 변환, 아니면 바로 라이브 검색
+    if (ytChannel.startsWith("@")) {
+        var xhr1 = new XMLHttpRequest();
+        xhr1.open('GET', 'https://www.googleapis.com/youtube/v3/channels?forHandle=' + encodeURIComponent(ytChannel) + '&part=id&key=' + ytApiKey, true);
+        xhr1.onreadystatechange = function() {
+            if (xhr1.readyState === 4) {
+                if (xhr1.status === 200) {
+                    var channelData = JSON.parse(xhr1.responseText);
+                    if (channelData.items && channelData.items.length > 0) {
+                        yt_findLiveBroadcast(channelData.items[0].id, ytApiKey, ytChannel);
+                    } else {
+                        addChatMessage("error", "YouTube 연결 오류", "해당 핸들의 YouTube 채널을 찾을 수 없습니다.", true, false);
+                    }
                 } else {
-                    addChatMessage("error", "YouTube 연결 오류", "해당 핸들의 YouTube 채널을 찾을 수 없습니다.", true, false);
-                    return;
+                    addChatMessage("error", "YouTube 연결 오류", "YouTube 채널 정보를 불러올 수 없습니다. API 키를 확인해주세요.", true, false);
+                }
+            }
+        };
+        xhr1.send();
+    } else {
+        yt_findLiveBroadcast(ytChannel, ytApiKey, ytChannel);
+    }
+}
+
+function yt_findLiveBroadcast(channelId, apiKey, displayName) {
+    // 2. 채널에서 현재 진행중인 라이브 방송 검색
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', 'https://www.googleapis.com/youtube/v3/search?channelId=' + channelId + '&eventType=live&type=video&part=id&key=' + apiKey, true);
+    xhr2.onreadystatechange = function() {
+        if (xhr2.readyState === 4) {
+            if (xhr2.status === 200) {
+                var searchData = JSON.parse(xhr2.responseText);
+                if (searchData.items && searchData.items.length > 0) {
+                    yt_getLiveChatId(searchData.items[0].id.videoId, apiKey, displayName);
+                } else {
+                    addChatMessage("error", "YouTube 연결 오류", "현재 진행중인 라이브 방송이 없습니다.", true, false);
                 }
             } else {
-                addChatMessage("error", "YouTube 연결 오류", "YouTube 채널 정보를 불러올 수 없습니다. API 키를 확인해주세요.", true, false);
-                return;
+                addChatMessage("error", "YouTube 연결 오류", "YouTube 라이브 정보를 불러올 수 없습니다.", true, false);
             }
         }
+    };
+    xhr2.send();
+}
 
-        // 2. 채널에서 현재 진행중인 라이브 방송 검색
-        var xhr2 = new XMLHttpRequest();
-        xhr2.open('GET', 'https://www.googleapis.com/youtube/v3/search?channelId=' + channelId + '&eventType=live&type=video&part=id&key=' + ytApiKey, false);
-        xhr2.send();
+function yt_getLiveChatId(videoId, apiKey, displayName) {
+    // 3. 라이브 영상에서 liveChatId 가져오기
+    var xhr3 = new XMLHttpRequest();
+    xhr3.open('GET', 'https://www.googleapis.com/youtube/v3/videos?id=' + videoId + '&part=liveStreamingDetails&key=' + apiKey, true);
+    xhr3.onreadystatechange = function() {
+        if (xhr3.readyState === 4) {
+            if (xhr3.status === 200) {
+                var videoData = JSON.parse(xhr3.responseText);
+                if (videoData.items && videoData.items.length > 0 && videoData.items[0].liveStreamingDetails && videoData.items[0].liveStreamingDetails.activeLiveChatId) {
+                    var liveChatId = videoData.items[0].liveStreamingDetails.activeLiveChatId;
 
-        if (xhr2.status !== 200) {
-            addChatMessage("error", "YouTube 연결 오류", "YouTube 라이브 정보를 불러올 수 없습니다.", true, false);
-            return;
+                    addChatMessage("info", "YouTube 채팅 연결됨", displayName + " 채널의 라이브 채팅에 연결되었습니다.", true, false);
+                    window.ytsocket.isInited = true;
+                    window.chat.isInited = true;
+
+                    // 4. 채팅 메시지 폴링 시작
+                    yt_pollChat(liveChatId, apiKey, null);
+                } else {
+                    addChatMessage("error", "YouTube 연결 오류", "라이브 채팅을 사용할 수 없는 방송입니다.", true, false);
+                }
+            } else {
+                addChatMessage("error", "YouTube 연결 오류", "YouTube 라이브 채팅 정보를 불러올 수 없습니다.", true, false);
+            }
         }
-
-        var searchData = JSON.parse(xhr2.responseText);
-        if (!searchData.items || searchData.items.length === 0) {
-            addChatMessage("error", "YouTube 연결 오류", "현재 진행중인 라이브 방송이 없습니다.", true, false);
-            return;
-        }
-
-        var videoId = searchData.items[0].id.videoId;
-
-        // 3. 라이브 영상에서 liveChatId 가져오기
-        var xhr3 = new XMLHttpRequest();
-        xhr3.open('GET', 'https://www.googleapis.com/youtube/v3/videos?id=' + videoId + '&part=liveStreamingDetails&key=' + ytApiKey, false);
-        xhr3.send();
-
-        if (xhr3.status !== 200) {
-            addChatMessage("error", "YouTube 연결 오류", "YouTube 라이브 채팅 정보를 불러올 수 없습니다.", true, false);
-            return;
-        }
-
-        var videoData = JSON.parse(xhr3.responseText);
-        if (!videoData.items || videoData.items.length === 0 || !videoData.items[0].liveStreamingDetails || !videoData.items[0].liveStreamingDetails.activeLiveChatId) {
-            addChatMessage("error", "YouTube 연결 오류", "라이브 채팅을 사용할 수 없는 방송입니다.", true, false);
-            return;
-        }
-
-        var liveChatId = videoData.items[0].liveStreamingDetails.activeLiveChatId;
-
-        addChatMessage("info", "YouTube 채팅 연결됨", ytChannel + " 채널의 라이브 채팅에 연결되었습니다.", true, false);
-        window.ytsocket.isInited = true;
-        window.chat.isInited = true;
-
-        // 4. 채팅 메시지 폴링 시작
-        yt_pollChat(liveChatId, ytApiKey, null);
-
-    } catch (error) {
-        console.error("YouTube 연결 오류: ", error);
-        addChatMessage("error", "YouTube 연결 오류", "YouTube 채팅 연결에 실패했습니다.", true, false);
-    }
+    };
+    xhr3.send();
 }
 
 function yt_pollChat(liveChatId, apiKey, pageToken) {
@@ -872,7 +873,10 @@ function yt_pollChat(liveChatId, apiKey, pageToken) {
                     }
                 }
 
-                // 다음 폴링 예약
+                // 다음 폴링 예약 (기존 타이머 정리 후 새로 설정)
+                if (window.ytsocket.pollTimer) {
+                    clearTimeout(window.ytsocket.pollTimer);
+                }
                 window.ytsocket.pollTimer = setTimeout(function() {
                     yt_pollChat(liveChatId, apiKey, data.nextPageToken);
                 }, pollingInterval);
@@ -881,7 +885,10 @@ function yt_pollChat(liveChatId, apiKey, pageToken) {
                 addChatMessage("error", "YouTube 오류", "API 할당량이 초과되었거나 권한이 없습니다.", true, false);
             } else {
                 console.error("YouTube 채팅 폴링 오류: ", xhr.status);
-                // 오류 발생시 10초 후 재시도
+                // 오류 발생시 10초 후 재시도 (기존 타이머 정리 후 새로 설정)
+                if (window.ytsocket.pollTimer) {
+                    clearTimeout(window.ytsocket.pollTimer);
+                }
                 window.ytsocket.pollTimer = setTimeout(function() {
                     yt_pollChat(liveChatId, apiKey, pageToken);
                 }, 10000);

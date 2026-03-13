@@ -1,4 +1,4 @@
-const PROGRAM_VERSION = "1.1.3";
+const PROGRAM_VERSION = "1.1.4";
 
 // 허용된 Origin 도메인 목록
 const ALLOWED_ORIGINS = [

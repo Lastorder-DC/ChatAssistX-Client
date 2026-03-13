@@ -33,6 +33,16 @@ function broadcast(session, data) {
     }
 }
 
+// 클라이언트 ping 모니터링을 위한 타임스탬프 관리
+const clientLastPing = new Map();
+
+// 60초 이상 ping이 없는 클라이언트 연결 해제
+const PING_TIMEOUT = 60000;
+// 클라이언트 ping 주기(30초)보다 짧게 체크하여 타이밍 이슈 방지
+const PING_CHECK_INTERVAL = 10000;
+// 세션 정리 대기 시간 (새로고침 시 재연결 허용)
+const SESSION_CLEANUP_DELAY = 10000;
+
 /**
  * 클라이언트를 채널에서 구독 해제
  */
@@ -43,23 +53,21 @@ function unsubscribeClient(ws, channel) {
     session.clients.delete(ws);
     console.log(`Client unsubscribed from ${channel} (${session.clients.size} remaining)`);
 
-    // 더 이상 구독자가 없으면 세션 정리
+    // 더 이상 구독자가 없으면 일정 시간 대기 후 세션 정리 (새로고침 시 재연결 허용)
     if (session.clients.size === 0) {
-        console.log(`No more clients for ${channel}, stopping session`);
-        if (session.livechat) {
-            session.livechat.stop();
-        }
-        channelSessions.delete(channel);
+        console.log(`No more clients for ${channel}, waiting ${SESSION_CLEANUP_DELAY / 1000}s before stopping session`);
+        session.cleanupTimer = setTimeout(() => {
+            if (session.clients.size === 0) {
+                console.log(`No clients reconnected for ${channel}, stopping session`);
+                if (session.livechat) {
+                    session.livechat.stop();
+                }
+                channelSessions.delete(channel);
+            }
+        }, SESSION_CLEANUP_DELAY);
     }
 }
 
-// 클라이언트 ping 모니터링을 위한 타임스탬프 관리
-const clientLastPing = new Map();
-
-// 60초 이상 ping이 없는 클라이언트 연결 해제
-const PING_TIMEOUT = 60000;
-// 클라이언트 ping 주기(30초)보다 짧게 체크하여 타이밍 이슈 방지
-const PING_CHECK_INTERVAL = 10000;
 
 const pingMonitorInterval = setInterval(() => {
     const now = Date.now();
@@ -142,6 +150,12 @@ async function subscribeClient(ws, channel) {
     const existingSession = channelSessions.get(channel);
 
     if (existingSession) {
+        // 대기중인 세션 정리 타이머 취소 (새로고침 등으로 재연결 시)
+        if (existingSession.cleanupTimer) {
+            clearTimeout(existingSession.cleanupTimer);
+            existingSession.cleanupTimer = null;
+            console.log(`Cleanup timer cancelled for ${channel}, client reconnected`);
+        }
         existingSession.clients.add(ws);
         if (existingSession.connecting) {
             ws.send(JSON.stringify({ type: 'info', message: `채널 ${channel}에 연결중...` }));
@@ -378,6 +392,11 @@ function gracefulShutdown() {
     // 모든 채널 세션의 라이브 채팅 중지
     for (const [channel, session] of channelSessions) {
         console.log(`Stopping session for channel: ${channel}`);
+        // 대기중인 세션 정리 타이머 취소
+        if (session.cleanupTimer) {
+            clearTimeout(session.cleanupTimer);
+            session.cleanupTimer = null;
+        }
         if (session.livechat) {
             try {
                 session.livechat.stop();

@@ -797,6 +797,7 @@ function connect_yt() {
             type: "connect",
             channel: ytChannel
         }));
+        window.chat.isInited = true;
     };
 
     window.ytsocket.socket.onmessage = function(event) {

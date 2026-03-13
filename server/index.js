@@ -1,7 +1,7 @@
 const { Innertube, YTNodes } = require('youtubei.js');
 const { WebSocketServer, WebSocket } = require('ws');
 const PORT = process.env.PORT || 8090;
-const PROGRAM_VERSION = "1.1.0";
+const PROGRAM_VERSION = "1.1.1";
 
 const wss = new WebSocketServer({ port: PORT });
 
@@ -261,6 +261,30 @@ async function findLiveVideoId(yt, channel) {
 }
 
 /**
+ * 메시지 runs를 처리하여 이모지를 마커 형식으로 변환한다.
+ * 이모지 runs는 [yt-emoji:이미지URL] 형식으로 변환된다.
+ */
+function processMessageRuns(message) {
+    if (!message) {
+        return '';
+    }
+
+    if (!message.runs || message.runs.length === 0) {
+        return message.toString() || '';
+    }
+
+    return message.runs.map(run => {
+        if (run.emoji && run.emoji.image && run.emoji.image.length > 0) {
+            const url = run.emoji.image[0].url;
+            if (url) {
+                return `[yt-emoji:${url}]`;
+            }
+        }
+        return run.text || '';
+    }).join('');
+}
+
+/**
  * Handles a live chat item and broadcasts it to all subscribed clients.
  */
 function handleChatItem(session, item) {
@@ -278,7 +302,7 @@ function handleChatItem(session, item) {
             broadcast(session, {
                 type: 'chat',
                 nickname: author?.name?.toString()?.replace(/^@/, '') || 'Unknown',
-                message: msg.message?.toString() || '',
+                message: processMessageRuns(msg.message),
                 isOwner: isOwner,
                 isMod: author?.is_moderator || false,
                 isMember: author?.badges?.some(
@@ -295,7 +319,7 @@ function handleChatItem(session, item) {
             broadcast(session, {
                 type: 'superchat',
                 nickname: author?.name?.toString() || 'Unknown',
-                message: msg.message?.toString() || '',
+                message: processMessageRuns(msg.message),
                 amount: msg.purchase_amount || '',
                 isOwner: false,
                 isMod: author?.is_moderator || false,
@@ -322,3 +346,46 @@ function handleChatItem(session, item) {
             break;
     }
 }
+
+/**
+ * 서버 종료 시 모든 세션과 연결을 정리한다.
+ */
+function gracefulShutdown() {
+    console.log('\nShutting down server...');
+
+    // 모든 채널 세션의 라이브 채팅 중지
+    for (const [channel, session] of channelSessions) {
+        console.log(`Stopping session for channel: ${channel}`);
+        if (session.livechat) {
+            try {
+                session.livechat.stop();
+            } catch (e) {
+                console.error(`Error stopping livechat for ${channel}:`, e.message);
+            }
+        }
+        // 세션에 연결된 모든 클라이언트에게 종료 알림 후 연결 해제
+        for (const client of session.clients) {
+            try {
+                client.close(1001, 'Server shutting down');
+            } catch (e) {
+                // 이미 닫힌 연결은 무시
+            }
+        }
+    }
+    channelSessions.clear();
+
+    // WebSocket 서버 종료
+    wss.close(() => {
+        console.log('Server stopped.');
+        process.exit(0);
+    });
+
+    // 5초 내에 종료되지 않으면 강제 종료
+    setTimeout(() => {
+        console.error('Forced shutdown after timeout');
+        process.exit(1);
+    }, 5000);
+}
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);

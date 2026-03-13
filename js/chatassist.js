@@ -347,6 +347,19 @@ function NAVER_replaceEmoticon(message, emotes) {
   }
 
 /**
+ * 유튜브(YouTube) 이모티콘 변환 함수
+ * 서버에서 [yt-emoji:이미지URL] 형식으로 전달된 이모지를 <img> 태그로 변환
+ * @param {String} message
+ * @returns {String}
+ */
+function YT_replaceEmoticon(message) {
+    var regex = /\[yt-emoji:(https?:\/\/[^\]]+)\]/g;
+    return message.replace(regex, function(match, url) {
+        return '<img class="yt_emoticon" src="' + url + '" alt="YouTube emoji" style="vertical-align: middle; height: 1.5em; width: 1.5em;">';
+    });
+}
+
+/**
  * 씨미(ci.me) 이모티콘 그룹 매핑
  * 이모지 코드의 접두사에 따라 그룹(폴더)을 결정
  * 긴 접두사를 먼저 배치하여 올바른 매칭을 보장
@@ -559,6 +572,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         if(platform == "kick") message = KICK_replaceTwitchEmoticon(message, ext_args.emotes);
         if(platform == "naver") message = NAVER_replaceEmoticon(message, ext_args.emotes);
         if(platform == "cime") message = CIME_replaceEmoticon(message);
+        if(platform == "youtube") message = YT_replaceEmoticon(message);
 
         // marquee 태그 변환
         message = message.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[^\ ]*)?( scrolldelay=[^\ ]*)?\](.*)\[\/mq\]/gi, replaceMarquee);

@@ -141,4 +141,25 @@ describe('processMessageRuns', () => {
         };
         expect(processMessageRuns(message)).toBe('[yt-emoji:https://example.com/e1.png][yt-emoji:https://example.com/e2.png]');
     });
+
+    test('should preserve emoji URL containing -- pattern', () => {
+        const message = {
+            runs: [
+                { text: 'Hi ' },
+                { emoji: { image: [{ url: 'https://lh3.googleusercontent.com/--Md3eBq7B20--/photo.jpg' }] } },
+                { text: ' there' }
+            ]
+        };
+        expect(processMessageRuns(message)).toBe('Hi [yt-emoji:https://lh3.googleusercontent.com/--Md3eBq7B20--/photo.jpg] there');
+    });
+
+    test('should preserve emoji URL containing ~~ and __ patterns', () => {
+        const message = {
+            runs: [
+                { emoji: { image: [{ url: 'https://example.com/~~test~~/emoji.png' }] } },
+                { emoji: { image: [{ url: 'https://example.com/__test__/emoji.png' }] } }
+            ]
+        };
+        expect(processMessageRuns(message)).toBe('[yt-emoji:https://example.com/~~test~~/emoji.png][yt-emoji:https://example.com/__test__/emoji.png]');
+    });
 });

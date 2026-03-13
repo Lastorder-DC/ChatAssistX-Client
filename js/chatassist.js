@@ -559,8 +559,24 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
             platform = "none";
         }
 
+        // 유튜브 이모지 마커를 replaceStyle에서 보호하기 위해 임시 치환
+        // (이모지 URL에 -- 등 replaceStyle에서 변환하는 패턴이 포함될 수 있음)
+        var ytEmojiPlaceholders = [];
+        if(platform == "youtube") {
+            message = message.replace(/\[yt-emoji:(https?:\/\/[^\]]+)\]/g, function(match) {
+                var idx = ytEmojiPlaceholders.length;
+                ytEmojiPlaceholders.push(match);
+                return '\x00YTEMOJI' + idx + '\x00';
+            });
+        }
+
         //기본문법 변환
         message = replaceStyle(message);
+
+        // 유튜브 이모지 마커 복원
+        for(var i = 0; i < ytEmojiPlaceholders.length; i++) {
+            message = message.replace('\x00YTEMOJI' + i + '\x00', ytEmojiPlaceholders[i]);
+        }
 
         // 금지어 치환
         for(var key in window.config.replace) {

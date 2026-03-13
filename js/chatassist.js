@@ -596,7 +596,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
             // 방송 소유자 뱃지
             if(ext_args.isStreamer) {
                 message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="https://www.gstatic.com/youtube/img/watch/yt_favicon.png" alt="Owner" class="badge streamer">&nbsp;' + nickname;
+                nickname = '<img style="vertical-align: middle;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAA3klEQVQ4y2NgGLng+5P9/78/2f+fJA1/vz3vRhb7++1599N1jv+frnPEKodsAROM8evDLYZXe9NLfrw8A5d8f7an5P/vLwz/f39heH+utwQm/uPlmf+v9qaX/PpwC24wC9xEVl6Gv9+eM7w5kMnw4Xzvf1YBNYb3p5rgCn88Pcjw9f7m/78/3GJ4cyATrgfDIFYBNbjgl1srsHof2WB0PXCvMbHxMpAKkPXADWITVGck1SBkPUzIEoys3EQbgq4WxSBkPxMC6GpRDEKOBYLhg6YW1UWCJLhIkEYuGsYAABF9W/Yuoo7SAAAAAElFTkSuQmCC" alt="Owner" class="badge streamer">&nbsp;' + nickname;
             }
 
             // 모더레이터
@@ -797,7 +797,6 @@ function connect_yt() {
             type: "connect",
             channel: ytChannel
         }));
-        window.chat.isInited = true;
     };
 
     window.ytsocket.socket.onmessage = function(event) {
@@ -829,6 +828,11 @@ function connect_yt() {
         } else if(data.type === "info") {
             console.log("YouTube info:", data.message);
             addChatMessage("info", "YouTube", data.message, true, false);
+
+            // data.message에 Connected to live chat가 포함되어 있다면 window.chat.isInited를 true로 설정
+            if(data.message && data.message.indexOf("Connected to live chat") !== -1) {
+                window.chat.isInited = true;
+            }
         } else if(data.type === "error") {
             console.error("YouTube error:", data.message);
             addChatMessage("error", "YouTube 오류", data.message, true, false);

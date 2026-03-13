@@ -747,18 +747,13 @@ function connect_chat() {
 }
 
 function connect_yt() {
-    if(!window.config.ytServer) {
-        addChatMessage("error", "YouTube 연결 오류", "ytServer 파라미터가 설정되지 않았습니다.", true, false);
-        return;
-    }
-
     var ytChannel = window.config.ytChannel;
     var ytServerUrl = window.config.ytServer;
 
     if(!ytServerUrl) {
         ytServerUrl = "wss://youtube-chat.chatassistx.cc";
     }
-    
+
     if(!ytServerUrl.startsWith("ws://") && !ytServerUrl.startsWith("wss://")) {
         ytServerUrl = "wss://" + ytServerUrl;
     }

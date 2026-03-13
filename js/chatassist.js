@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.15.1
+ *                 V E R S I O N    1.15.2
  *       Last updated by Lastorder-DC on 2026-03-13.
  */
 // 변수 초기화
@@ -21,7 +21,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.15.1";
+window.chat.version = "1.15.2";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -735,6 +735,7 @@ function complete_connect_kick() {
                     window.kicksocket.socket.send(`{"event":"pusher:subscribe","data":{"auth":"","channel":"chatrooms.${kickData.chatroom.id}.v2"}}`);
                     addChatMessage("info", "Kick 채팅 연결됨", window.config.kickid + " 채널에 연결되었습니다.", true, false);
                     window.kicksocket.isInited = true;
+                    window.chat.isInited = true;
                 } else if(event.data.indexOf("ChatMessageEvent") !== -1) {
                     var rawMessage = JSON.parse(event.data)
                     var message = JSON.parse(rawMessage.data)
@@ -785,6 +786,7 @@ function connect_cime() {
                     window.cimesocket.socket.onopen = function(event) {
                         addChatMessage("info", "ci.me 채팅 연결됨", cimeChannel + " 채널에 연결되었습니다.", true, false);
                         window.cimesocket.isInited = true;
+                        window.chat.isInited = true;
                     };
 
                     window.cimesocket.socket.onmessage = function(event) {
@@ -967,6 +969,8 @@ function connect_naver() {
                                 socket.send(JSON.stringify({ "ver": "3", "cmd": 0 }));
                             }
                         }, 20000);
+
+                        window.chat.isInited = true;
                     };
 
                     socket.onmessage = function (event) {

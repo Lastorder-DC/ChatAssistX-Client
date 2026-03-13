@@ -819,7 +819,7 @@ function connect_yt() {
 
         if(data.type === "version") {
             console.log("YouTube relay server version:", data.message);
-            // 버전 메세지를 받은 후 채널 연결 요청
+            // 버전 메시지를 받은 후 채널 연결 요청
             window.ytsocket.socket.send(JSON.stringify({
                 type: "connect",
                 channel: ytChannel

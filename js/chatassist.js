@@ -549,6 +549,19 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
                 message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
                 nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/manager.png" alt="채팅 운영자" class="badge mod">&nbsp;' + nickname;
             }
+        } else if(platform == "cime") {
+            // 스트리머 뱃지
+            if(ext_args.isStreamer) {
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/STREAMER.webp" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
+            }
+
+            // 모더레이터
+            if(ext_args.isMod) {
+                nickname = "<b>" + nickname + "</b>";
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/CHAT_MANAGER.webp" alt="모더레이터" class="badge mod">&nbsp;' + nickname;
+            }
         } else {
             // 스트리머 뱃지
             if(ext_args.isStreamer) {
@@ -669,7 +682,9 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
 }
 
 function connect_chat() {
-    connect_twitch();
+    if(typeof window.config.channelname !== 'undefined' && !!window.config.channelname) {
+        connect_twitch();
+    }
     
     if(typeof window.config.kickid !== 'undefined' && !!window.config.kickid) {
         connect_kick();
@@ -689,21 +704,7 @@ function connect_chat() {
 }
 
 function connect_yt() {
-    // 업타임 보장 안하는 개발용 서버
-    window.ytsocket.socket = new WebSocket(`wss://yt-chat.lastorder.xyz/c/${window.config.ytChannel}`);
-    window.ytsocket.isInited = true;
-    window.ytsocket.socket.onmessage = function(event) {
-        var ext_args = {};
-        ext_args.isStreamer = event.data.indexOf('"badge":"OWNER"') !== -1;
-        ext_args.isMod = false;
-        ext_args.rawprint = false;
-        ext_args.emotes = void 0;
-        ext_args.color = void 0;
-        ext_args.subscriber = false;
-
-        message = JSON.parse(event.data);
-        addChatMessage("youtube", message.author.name.htmlEntities(), message.message, false, ext_args);
-    };
+    console.log("connect_yt is deprecated and removed");
 }
 
 function connect_kick() {
@@ -805,6 +806,13 @@ function connect_cime() {
                             var ext_args = {};
                             ext_args.isStreamer = false;
                             ext_args.isMod = false;
+
+                            //userInfo의 c가 RS이면 스트리머, RM이면 모더레이터, 둘다 아니면 일반 유저로 간주
+                            if (userInfo.c === "RS") {
+                                ext_args.isStreamer = true;
+                            } else if (userInfo.c === "RM") {
+                                ext_args.isMod = true;
+                            }
                             ext_args.rawprint = false;
                             ext_args.emotes = void 0;
                             ext_args.color = void 0;

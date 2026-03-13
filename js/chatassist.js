@@ -829,8 +829,8 @@ function connect_yt() {
             console.log("YouTube info:", data.message);
             addChatMessage("info", "YouTube", data.message, true, false);
 
-            // data.message에 Connected to live chat가 포함되어 있다면 window.chat.isInited를 true로 설정
-            if(data.message && data.message.indexOf("Connected to live chat") !== -1) {
+            // data.message에 Connected to live chat / Joined existing live chat session가 포함되어 있다면 window.chat.isInited를 true로 설정
+            if(data.message && (data.message.indexOf("Connected to live chat") !== -1 || data.message.indexOf("Joined existing live chat session") !== -1)) {
                 window.chat.isInited = true;
             }
         } else if(data.type === "error") {

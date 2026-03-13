@@ -273,6 +273,8 @@ function handleChatItem(session, item) {
                 (badge) => badge.tooltip === 'Owner' || badge.icon_type === 'OWNER'
             ) || false;
 
+            console.log(author);
+            
             broadcast(session, {
                 type: 'chat',
                 nickname: author?.name?.toString() || 'Unknown',

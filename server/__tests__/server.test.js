@@ -147,6 +147,98 @@ describe('WebSocket Server Integration Tests', () => {
         });
     });
 
+    describe('Ping/Pong heartbeat', () => {
+        test('should respond with pong when client sends ping', async () => {
+            const ws = await connectWs('https://funzinnu.com');
+            await waitForMessage(ws); // consume version message
+            ws.send(JSON.stringify({ type: 'ping' }));
+            const msg = await waitForMessage(ws);
+            expect(msg.type).toBe('pong');
+            await closeWs(ws);
+        });
+
+        test('should drop connection when no ping received within timeout', async () => {
+            // Start a separate server with short timeouts for testing
+            const pingPort = TEST_PORT + 2;
+            const proc = spawn('node', ['-e', `
+                const { WebSocketServer, WebSocket } = require('ws');
+                const { PROGRAM_VERSION, isAllowedOrigin } = require('./utils');
+                const PORT = ${pingPort};
+                const clientLastPing = new Map();
+                const PING_TIMEOUT = 2000; // 2 seconds for testing
+                const PING_CHECK_INTERVAL = 1000; // 1 second for testing
+                const wss = new WebSocketServer({
+                    port: PORT,
+                    verifyClient: (info) => {
+                        const origin = info.origin || info.req.headers.origin;
+                        return isAllowedOrigin(origin);
+                    }
+                });
+                console.log('started on port ' + PORT);
+                const pingMonitorInterval = setInterval(() => {
+                    const now = Date.now();
+                    for (const [client, lastPing] of clientLastPing) {
+                        if (now - lastPing > PING_TIMEOUT) {
+                            console.log('Client ping timeout');
+                            client.close(1000, 'Ping timeout');
+                            clientLastPing.delete(client);
+                        }
+                    }
+                }, PING_CHECK_INTERVAL);
+                wss.on('connection', (ws) => {
+                    clientLastPing.set(ws, Date.now());
+                    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
+                    ws.on('message', (data) => {
+                        const parsed = JSON.parse(data.toString());
+                        if (parsed.type === 'ping') {
+                            clientLastPing.set(ws, Date.now());
+                            ws.send(JSON.stringify({ type: 'pong' }));
+                        }
+                    });
+                    ws.on('close', () => {
+                        clientLastPing.delete(ws);
+                    });
+                });
+            `], {
+                cwd: path.join(__dirname, '..'),
+                env: { ...process.env },
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+
+            await new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('Ping test server start timeout')), 10000);
+                proc.stdout.on('data', (data) => {
+                    if (data.toString().includes('started on port')) {
+                        clearTimeout(timer);
+                        resolve();
+                    }
+                });
+            });
+
+            const ws = new WebSocket(`ws://localhost:${pingPort}`, { origin: 'https://funzinnu.com' });
+            await new Promise((resolve) => ws.on('open', resolve));
+            await waitForMessage(ws); // consume version message
+
+            // Don't send any ping - wait for connection to be dropped
+            const closePromise = new Promise((resolve) => {
+                ws.on('close', (code, reason) => {
+                    resolve({ code, reason: reason.toString() });
+                });
+            });
+
+            const result = await closePromise;
+            expect(result.code).toBe(1000);
+            expect(result.reason).toBe('Ping timeout');
+
+            // Clean up
+            proc.kill('SIGTERM');
+            await new Promise((resolve) => {
+                proc.on('exit', resolve);
+                setTimeout(resolve, 5000);
+            });
+        }, 30000);
+    });
+
     describe('Graceful shutdown', () => {
         test('should send disconnected message before closing on SIGTERM', async () => {
             // Start a separate server for this test

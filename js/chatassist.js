@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.16.0
+ *                 V E R S I O N    1.16.1
  *       Last updated by Lastorder-DC on 2026-03-13.
  */
 // 변수 초기화
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.16.0";
+window.chat.version = "1.16.1";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -761,12 +761,12 @@ function connect_chat() {
 }
 
 function connect_yt() {
+    if(!window.config.ytChannel) {
+        window.config.ytChannel = "wss://youtube-chat.chatassistx.cc";
+    }
+
     var ytChannel = window.config.ytChannel;
     var ytServerUrl = window.config.ytServer;
-
-    if(!ytServerUrl) {
-        ytServerUrl = "wss://youtube-chat.chatassistx.cc";
-    }
 
     if(!ytServerUrl.startsWith("ws://") && !ytServerUrl.startsWith("wss://")) {
         ytServerUrl = "wss://" + ytServerUrl;

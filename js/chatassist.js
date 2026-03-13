@@ -1207,6 +1207,7 @@ function connect_naver() {
                             }
                         }, 20000);
 
+                        addChatMessage("info", "치지직 채팅 연결됨", nvrChannel + " 채널에 연결되었습니다.", true, false);
                         _markPlatformConnected('naver');
                     };
 

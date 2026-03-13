@@ -57,6 +57,7 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
 
         // Mock _markPlatformConnected
         window._markPlatformConnected = function(platform) {
+            if (!window.chat._pendingPlatforms.has(platform)) return;
             window.chat._pendingPlatforms.delete(platform);
             if (window.chat._pendingPlatforms.size === 0) {
                 window.chat.isInited = true;

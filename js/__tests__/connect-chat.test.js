@@ -13,6 +13,7 @@ describe('_markPlatformConnected', () => {
 
         // Replicate the function from chatassist.js
         _markPlatformConnected = function(platform) {
+            if (!window.chat._pendingPlatforms.has(platform)) return;
             window.chat._pendingPlatforms.delete(platform);
             if (window.chat._pendingPlatforms.size === 0) {
                 window.chat.isInited = true;
@@ -26,6 +27,14 @@ describe('_markPlatformConnected', () => {
         expect(window.chat.isInited).toBe(false);
         _markPlatformConnected('youtube');
         expect(window.chat.isInited).toBe(true);
+    });
+
+    test('should ignore unregistered platforms', () => {
+        window.chat._pendingPlatforms = new Set(['youtube']);
+
+        _markPlatformConnected('twitch');
+        expect(window.chat.isInited).toBe(false);
+        expect(window.chat._pendingPlatforms.size).toBe(1);
     });
 
     test('should not set isInited when not all platforms are connected (youtube + naver + cime)', () => {

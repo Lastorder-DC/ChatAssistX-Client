@@ -740,6 +740,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
 }
 
 function _markPlatformConnected(platform) {
+    if (!window.chat._pendingPlatforms.has(platform)) return;
     window.chat._pendingPlatforms.delete(platform);
     if (window.chat._pendingPlatforms.size === 0) {
         window.chat.isInited = true;

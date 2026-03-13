@@ -1,11 +1,11 @@
 const { Innertube, YTNodes } = require('youtubei.js');
 const { WebSocketServer, WebSocket } = require('ws');
-
 const PORT = process.env.PORT || 8090;
+const PROGRAM_VERSION = "1.1.0";
 
 const wss = new WebSocketServer({ port: PORT });
 
-console.log(`YouTube Live Chat relay server started on port ${PORT}`);
+console.log(`YouTube Live Chat relay server ${PROGRAM_VERSION} started on port ${PORT}`);
 
 // 채널별 공유 세션 관리
 // Map<channel, { livechat, clients: Set<ws>, connecting: boolean }>
@@ -47,6 +47,7 @@ wss.on('connection', (ws) => {
     console.log('Client connected');
     let subscribedChannel = null;
 
+    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
     ws.on('message', async (data) => {
         let parsed;
         try {
@@ -273,9 +274,10 @@ function handleChatItem(session, item) {
                 (badge) => badge.tooltip === 'Owner' || badge.icon_type === 'OWNER'
             ) || false;
 
+            // nickname(author?.name?.toString()) 맨앞 @ 삭제
             broadcast(session, {
                 type: 'chat',
-                nickname: author?.name?.toString() || 'Unknown',
+                nickname: author?.name?.toString()?.replace(/^@/, '') || 'Unknown',
                 message: msg.message?.toString() || '',
                 isOwner: isOwner,
                 isMod: author?.is_moderator || false,

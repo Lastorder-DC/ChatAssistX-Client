@@ -239,6 +239,271 @@ describe('WebSocket Server Integration Tests', () => {
         }, 30000);
     });
 
+    describe('Session cleanup delay on disconnect', () => {
+        test('should delay session cleanup when last client disconnects and clean up after timeout', async () => {
+            const port = TEST_PORT + 3;
+            const proc = spawn('node', ['-e', `
+                const { WebSocketServer, WebSocket } = require('ws');
+                const { PROGRAM_VERSION, isAllowedOrigin } = require('./utils');
+                const PORT = ${port};
+                const channelSessions = new Map();
+                const SESSION_CLEANUP_DELAY = 2000; // 2 seconds for testing
+
+                function broadcast(session, data) {
+                    const message = JSON.stringify(data);
+                    for (const client of session.clients) {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(message);
+                        }
+                    }
+                }
+
+                function unsubscribeClient(ws, channel) {
+                    const session = channelSessions.get(channel);
+                    if (!session) return;
+                    session.clients.delete(ws);
+                    console.log('unsubscribe:' + channel + ':remaining:' + session.clients.size);
+                    if (session.clients.size === 0) {
+                        session.cleanupTimer = setTimeout(() => {
+                            if (session.clients.size === 0) {
+                                console.log('session_deleted:' + channel);
+                                channelSessions.delete(channel);
+                            }
+                        }, SESSION_CLEANUP_DELAY);
+                    }
+                }
+
+                const wss = new WebSocketServer({
+                    port: PORT,
+                    verifyClient: (info) => {
+                        const origin = info.origin || info.req.headers.origin;
+                        return isAllowedOrigin(origin);
+                    }
+                });
+                console.log('started on port ' + PORT);
+
+                wss.on('connection', (ws) => {
+                    let subscribedChannel = null;
+                    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
+                    ws.on('message', (data) => {
+                        const parsed = JSON.parse(data.toString());
+                        if (parsed.type === 'connect') {
+                            const channel = parsed.channel;
+                            if (subscribedChannel) {
+                                unsubscribeClient(ws, subscribedChannel);
+                            }
+                            subscribedChannel = channel;
+                            let session = channelSessions.get(channel);
+                            if (!session) {
+                                session = { livechat: null, clients: new Set(), connecting: false };
+                                channelSessions.set(channel, session);
+                            }
+                            session.clients.add(ws);
+                            ws.send(JSON.stringify({ type: 'connected', message: channel }));
+                        }
+                        if (parsed.type === 'check_session') {
+                            const exists = channelSessions.has(parsed.channel);
+                            ws.send(JSON.stringify({ type: 'session_status', exists }));
+                        }
+                    });
+                    ws.on('close', () => {
+                        if (subscribedChannel) {
+                            unsubscribeClient(ws, subscribedChannel);
+                            subscribedChannel = null;
+                        }
+                    });
+                });
+            `], {
+                cwd: path.join(__dirname, '..'),
+                env: { ...process.env },
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+
+            let serverOutput = '';
+            proc.stdout.on('data', (data) => { serverOutput += data.toString(); });
+
+            await new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('Server start timeout')), 10000);
+                proc.stdout.on('data', (data) => {
+                    if (data.toString().includes('started on port')) {
+                        clearTimeout(timer);
+                        resolve();
+                    }
+                });
+            });
+
+            // Connect client and subscribe to a channel
+            const ws1 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
+            await new Promise((resolve) => ws1.on('open', resolve));
+            await waitForMessage(ws1); // consume version message
+            ws1.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
+            await waitForMessage(ws1); // consume connected message
+
+            // Disconnect client - session should NOT be deleted immediately
+            await closeWs(ws1);
+            // Wait a short time to confirm session is still alive
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Use a new client to check session exists during the delay
+            const ws2 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
+            await new Promise((resolve) => ws2.on('open', resolve));
+            await waitForMessage(ws2); // consume version message
+            ws2.send(JSON.stringify({ type: 'check_session', channel: '@testch' }));
+            const statusDuringDelay = await waitForMessage(ws2);
+            expect(statusDuringDelay.type).toBe('session_status');
+            expect(statusDuringDelay.exists).toBe(true);
+
+            // Wait for cleanup delay to expire (2s + buffer)
+            await new Promise(resolve => setTimeout(resolve, 2500));
+
+            // Check session is now deleted
+            ws2.send(JSON.stringify({ type: 'check_session', channel: '@testch' }));
+            const statusAfterDelay = await waitForMessage(ws2);
+            expect(statusAfterDelay.type).toBe('session_status');
+            expect(statusAfterDelay.exists).toBe(false);
+
+            // Verify server logs show the expected flow
+            expect(serverOutput).toContain('unsubscribe:@testch:remaining:0');
+            expect(serverOutput).toContain('session_deleted:@testch');
+
+            await closeWs(ws2);
+            proc.kill('SIGTERM');
+            await new Promise((resolve) => {
+                proc.on('exit', resolve);
+                setTimeout(resolve, 5000);
+            });
+        }, 30000);
+
+        test('should cancel cleanup timer when a new client reconnects during grace period', async () => {
+            const port = TEST_PORT + 4;
+            const proc = spawn('node', ['-e', `
+                const { WebSocketServer, WebSocket } = require('ws');
+                const { PROGRAM_VERSION, isAllowedOrigin } = require('./utils');
+                const PORT = ${port};
+                const channelSessions = new Map();
+                const SESSION_CLEANUP_DELAY = 3000; // 3 seconds for testing
+
+                function unsubscribeClient(ws, channel) {
+                    const session = channelSessions.get(channel);
+                    if (!session) return;
+                    session.clients.delete(ws);
+                    console.log('unsubscribe:' + channel + ':remaining:' + session.clients.size);
+                    if (session.clients.size === 0) {
+                        session.cleanupTimer = setTimeout(() => {
+                            if (session.clients.size === 0) {
+                                console.log('session_deleted:' + channel);
+                                channelSessions.delete(channel);
+                            }
+                        }, SESSION_CLEANUP_DELAY);
+                    }
+                }
+
+                const wss = new WebSocketServer({
+                    port: PORT,
+                    verifyClient: (info) => {
+                        const origin = info.origin || info.req.headers.origin;
+                        return isAllowedOrigin(origin);
+                    }
+                });
+                console.log('started on port ' + PORT);
+
+                wss.on('connection', (ws) => {
+                    let subscribedChannel = null;
+                    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
+                    ws.on('message', (data) => {
+                        const parsed = JSON.parse(data.toString());
+                        if (parsed.type === 'connect') {
+                            const channel = parsed.channel;
+                            if (subscribedChannel) {
+                                unsubscribeClient(ws, subscribedChannel);
+                            }
+                            subscribedChannel = channel;
+                            let session = channelSessions.get(channel);
+                            if (session) {
+                                // Cancel pending cleanup timer on reconnect
+                                if (session.cleanupTimer) {
+                                    clearTimeout(session.cleanupTimer);
+                                    session.cleanupTimer = null;
+                                    console.log('cleanup_cancelled:' + channel);
+                                }
+                            } else {
+                                session = { livechat: null, clients: new Set(), connecting: false };
+                                channelSessions.set(channel, session);
+                            }
+                            session.clients.add(ws);
+                            ws.send(JSON.stringify({ type: 'connected', message: channel }));
+                        }
+                        if (parsed.type === 'check_session') {
+                            const exists = channelSessions.has(parsed.channel);
+                            ws.send(JSON.stringify({ type: 'session_status', exists }));
+                        }
+                    });
+                    ws.on('close', () => {
+                        if (subscribedChannel) {
+                            unsubscribeClient(ws, subscribedChannel);
+                            subscribedChannel = null;
+                        }
+                    });
+                });
+            `], {
+                cwd: path.join(__dirname, '..'),
+                env: { ...process.env },
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+
+            let serverOutput = '';
+            proc.stdout.on('data', (data) => { serverOutput += data.toString(); });
+
+            await new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('Server start timeout')), 10000);
+                proc.stdout.on('data', (data) => {
+                    if (data.toString().includes('started on port')) {
+                        clearTimeout(timer);
+                        resolve();
+                    }
+                });
+            });
+
+            // Connect first client and subscribe
+            const ws1 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
+            await new Promise((resolve) => ws1.on('open', resolve));
+            await waitForMessage(ws1); // version
+            ws1.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
+            await waitForMessage(ws1); // connected
+
+            // Disconnect first client - starts cleanup timer
+            await closeWs(ws1);
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Reconnect with a new client within the grace period
+            const ws2 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
+            await new Promise((resolve) => ws2.on('open', resolve));
+            await waitForMessage(ws2); // version
+            ws2.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
+            await waitForMessage(ws2); // connected
+
+            // Wait for the original cleanup delay to pass
+            await new Promise(resolve => setTimeout(resolve, 3500));
+
+            // Session should still exist because the timer was cancelled
+            ws2.send(JSON.stringify({ type: 'check_session', channel: '@testch' }));
+            const status = await waitForMessage(ws2);
+            expect(status.type).toBe('session_status');
+            expect(status.exists).toBe(true);
+
+            // Verify cleanup was cancelled
+            expect(serverOutput).toContain('cleanup_cancelled:@testch');
+            expect(serverOutput).not.toContain('session_deleted:@testch');
+
+            await closeWs(ws2);
+            proc.kill('SIGTERM');
+            await new Promise((resolve) => {
+                proc.on('exit', resolve);
+                setTimeout(resolve, 5000);
+            });
+        }, 30000);
+    });
+
     describe('Graceful shutdown', () => {
         test('should send disconnected message before closing on SIGTERM', async () => {
             // Start a separate server for this test

@@ -146,13 +146,13 @@ String.prototype.htmlEntities = function() {
  * @returns {Boolean}
  */
 function LoadEmoticon() {
-    if(window.emoticon.address === "") {
+    if(!window.emoticon.address) {
         connect_chat();
         return true;
     }
     
     // BridgeBBCC 호환 이모티콘 목록은 script 태그를 사용해서 불러옴
-    if(!!window.emoticon.address && window.emoticon.address.split('.').pop() != "php") {
+    if(window.emoticon.address.split('.').pop() != "php") {
         var emoticon_js = document.createElement("script");
         emoticon_js.type = "text/javascript";
         emoticon_js.src = window.emoticon.address + "?ts=" + new Date().getTime();
@@ -183,6 +183,10 @@ function LoadEmoticon() {
             }
         }
         
+        return true;
+    } else {
+        addChatMessage("error", "미지원 형식", "<span style='color:red;'>1.9.0.0 버전부터 예전 스타일 " + window.verb.emoticon + " 목록 지원이 중단되었습니다.</span>", true, false);
+
         return true;
     }
 }

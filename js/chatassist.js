@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.15.0
+ *                 V E R S I O N    1.15.1
  *       Last updated by Lastorder-DC on 2026-03-13.
  */
 // 변수 초기화
@@ -21,7 +21,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.15.0";
+window.chat.version = "1.15.1";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -797,8 +797,6 @@ function connect_cime() {
 
                             // 유저 정보 파싱
                             var userInfo = JSON.parse(data.Sender.Attributes.user);
-                            console.log("ci.me raw message: ", data);
-                            console.log("ci.me parsed user info: ", userInfo);
                             var nickname = userInfo.ch.na;
                             var userId = data.Sender.UserId;
                             var content = data.Content;

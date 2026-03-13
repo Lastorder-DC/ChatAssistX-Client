@@ -761,8 +761,8 @@ function connect_chat() {
 }
 
 function connect_yt() {
-    if(!window.config.ytServerUrl) {
-        window.config.ytServerUrl = "wss://youtube-chat.chatassistx.cc";
+    if(!window.config.ytServer) {
+        window.config.ytServer = "wss://youtube-chat.chatassistx.cc";
     }
 
     var ytChannel = window.config.ytChannel;

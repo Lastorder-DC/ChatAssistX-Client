@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test-client:
-    name: Client Tests
+    name: Client JS Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
         run: npx jest --verbose
 
   test-server:
-    name: Server Tests
+    name: Server JS Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -26,6 +26,7 @@ window.chat.version = "1.16.1";
 window.chat.template = null;
 window.chat.stickytemplate = null;
 window.chat.isInited = false;
+window.chat._pendingPlatforms = new Set();
 window.chat.failcount = 0;
 window.chat.count = 0;
 window.chat.cur_count = 0;
@@ -738,24 +739,59 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
     }
 }
 
+function _markPlatformConnected(platform) {
+    if (!window.chat._pendingPlatforms.has(platform)) return;
+    window.chat._pendingPlatforms.delete(platform);
+    if (window.chat._pendingPlatforms.size === 0) {
+        window.chat.isInited = true;
+    }
+}
+
 function connect_chat() {
+    window.chat._pendingPlatforms = new Set();
+
     if(typeof window.config.channelname !== 'undefined' && !!window.config.channelname) {
-        connect_twitch();
+        window.chat._pendingPlatforms.add('twitch');
     }
     
     if(typeof window.config.kickid !== 'undefined' && !!window.config.kickid) {
-        connect_kick();
+        window.chat._pendingPlatforms.add('kick');
     }
     
     if(typeof window.config.ytChannel !== 'undefined' && !!window.config.ytChannel) {
-        connect_yt();
+        window.chat._pendingPlatforms.add('youtube');
     }
 
     if(typeof window.config.nvrChannel !== 'undefined' && !!window.config.nvrChannel) {
-        connect_naver();
+        window.chat._pendingPlatforms.add('naver');
     }
 
     if(typeof window.config.cimeChannel !== 'undefined' && !!window.config.cimeChannel) {
+        window.chat._pendingPlatforms.add('cime');
+    }
+
+    if(window.chat._pendingPlatforms.size === 0) {
+        addChatMessage("info", "구성된 채널 없음", "연결할 채널이 하나 이상 구성되지 않았습니다.", true, false);
+        return;
+    }
+
+    if(window.chat._pendingPlatforms.has('twitch')) {
+        connect_twitch();
+    }
+
+    if(window.chat._pendingPlatforms.has('kick')) {
+        connect_kick();
+    }
+
+    if(window.chat._pendingPlatforms.has('youtube')) {
+        connect_yt();
+    }
+
+    if(window.chat._pendingPlatforms.has('naver')) {
+        connect_naver();
+    }
+
+    if(window.chat._pendingPlatforms.has('cime')) {
         connect_cime();
     }
 }
@@ -850,7 +886,7 @@ function connect_yt() {
         } else if(data.type === "connected") {
             console.log("YouTube info:", data.message);
             addChatMessage("info", "YouTube", data.message, true, false);
-            window.chat.isInited = true;
+            _markPlatformConnected('youtube');
         } else if(data.type === "disconnected") {
             console.log("YouTube disconnected:", data.message);
             addChatMessage("info", "YouTube", data.message || "서버 연결이 종료되었습니다", true, false);
@@ -905,7 +941,7 @@ function complete_connect_kick() {
                     window.kicksocket.socket.send(`{"event":"pusher:subscribe","data":{"auth":"","channel":"chatrooms.${kickData.chatroom.id}.v2"}}`);
                     addChatMessage("info", "Kick 채팅 연결됨", window.config.kickid + " 채널에 연결되었습니다.", true, false);
                     window.kicksocket.isInited = true;
-                    window.chat.isInited = true;
+                    _markPlatformConnected('kick');
                 } else if(event.data.indexOf("ChatMessageEvent") !== -1) {
                     var rawMessage = JSON.parse(event.data)
                     var message = JSON.parse(rawMessage.data)
@@ -956,7 +992,7 @@ function connect_cime() {
                     window.cimesocket.socket.onopen = function(event) {
                         addChatMessage("info", "ci.me 채팅 연결됨", cimeChannel + " 채널에 연결되었습니다.", true, false);
                         window.cimesocket.isInited = true;
-                        window.chat.isInited = true;
+                        _markPlatformConnected('cime');
                     };
 
                     window.cimesocket.socket.onmessage = function(event) {
@@ -1016,6 +1052,7 @@ function connect_cime() {
 }
 
 function connect_twitch() {
+    var twitchJoined = false;
     window.chat.socket = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
     window.chat.socket.onopen = function(event) {
@@ -1024,11 +1061,12 @@ function connect_twitch() {
     };
     window.chat.socket.onmessage = function(event) {
         // connect to channel and request tags/membership
-        if(!window.chat.isInited && event.data.indexOf("maze") !== -1) {
+        if(!twitchJoined && event.data.indexOf("maze") !== -1) {
+            twitchJoined = true;
             window.chat.socket.send("JOIN #" + window.config.channelname);
             window.chat.socket.send("CAP REQ :twitch.tv/tags twitch.tv/membership");
             addChatMessage("info", "불러오는중", window.config.channelname + " 채널에 연결되었습니다.", true, false);
-            window.chat.isInited = true;
+            _markPlatformConnected('twitch');
             addChatMessage("info", "NOTITLE", "<span class='logo'><pre>   ________          __  ___              _      __ _  __[br]  / ____/ /_  ____ _/ /_/   |  __________(_)____/ /| |/ /[br] / /   / __ <span class='backslash'>\\</span>/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   /[br]/ /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |[br]<span class='backslash'>\\</span>____/_/ /_/<span class='backslash'>\\</span>__,_/<span class='backslash'>\\</span>__/_/  |_/____/____/_/____/<span class='backslash'>\\</span>__/_/|_|</pre></span><span class='versionstring'><pre>[br]V E R S I O N      V. " + window.chat.version + "[br]초 기 화    성 공</pre></span>", true, true);
         } else if(event.data.indexOf("PING :tmi.twitch.tv") !== -1) {
             window.chat.socket.send("PONG :tmi.twitch.tv");
@@ -1140,7 +1178,7 @@ function connect_naver() {
                             }
                         }, 20000);
 
-                        window.chat.isInited = true;
+                        _markPlatformConnected('naver');
                     };
 
                     socket.onmessage = function (event) {

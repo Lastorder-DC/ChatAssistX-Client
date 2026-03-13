@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.16.5
+ *                 V E R S I O N    1.16.6
  *       Last updated by Lastorder-DC on 2026-03-13.
  */
 // 변수 초기화
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.16.5";
+window.chat.version = "1.16.6";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -945,13 +945,6 @@ function connect_yt() {
 
 function connect_kick() {
     httpRequest = new XMLHttpRequest();
-    if(!httpRequest) {
-        addChatMessage("error", "Kick 연결 오류", "XMLHTTPRequest를 초기화할수 없었습니다.", true, false);
-        return false;
-    }
-    
-    addChatMessage("info", "불러오는중", "Kick 스트리머 정보를 불러오는중...", true, false);
-    
     httpRequest.open('GET', `https://kick.com/api/v1/channels/${window.config.kickid}`);
     httpRequest.onreadystatechange = complete_connect_kick;
     httpRequest.send();
@@ -963,7 +956,7 @@ function complete_connect_kick() {
     if(httpRequest.readyState === 4) {
         if(httpRequest.status === 200) {
             const kickData = JSON.parse(httpRequest.responseText);
-            window.kicksocket.socket = new WebSocket("wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.6.0&flash=false");
+            window.kicksocket.socket = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0&flash=false");
             window.kicksocket.socket.onmessage = function(event) {
                 // connect to channel
                 if(!window.kicksocket.isInited && event.data.indexOf("connection_established") !== -1) {
@@ -1095,7 +1088,7 @@ function connect_twitch() {
             twitchJoined = true;
             window.chat.socket.send("JOIN #" + window.config.channelname);
             window.chat.socket.send("CAP REQ :twitch.tv/tags twitch.tv/membership");
-            addChatMessage("info", "불러오는중", window.config.channelname + " 채널에 연결되었습니다.", true, false);
+            addChatMessage("info", "트위치 채팅 연결됨", window.config.channelname + " 채널에 연결되었습니다.", true, false);
             _markPlatformConnected('twitch');
         } else if(event.data.indexOf("PING :tmi.twitch.tv") !== -1) {
             window.chat.socket.send("PONG :tmi.twitch.tv");

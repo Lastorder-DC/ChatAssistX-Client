@@ -592,6 +592,19 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
                 message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
                 nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/CHAT_MANAGER.webp" alt="모더레이터" class="badge mod">&nbsp;' + nickname;
             }
+        } else if(platform == "youtube") {
+            // 방송 소유자 뱃지
+            if(ext_args.isStreamer) {
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<img style="vertical-align: middle;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAA3klEQVQ4y2NgGLng+5P9/78/2f+fJA1/vz3vRhb7++1599N1jv+frnPEKodsAROM8evDLYZXe9NLfrw8A5d8f7an5P/vLwz/f39heH+utwQm/uPlmf+v9qaX/PpwC24wC9xEVl6Gv9+eM7w5kMnw4Xzvf1YBNYb3p5rgCn88Pcjw9f7m/78/3GJ4cyATrgfDIFYBNbjgl1srsHof2WB0PXCvMbHxMpAKkPXADWITVGck1SBkPUzIEoys3EQbgq4WxSBkPxMC6GpRDEKOBYLhg6YW1UWCJLhIkEYuGsYAABF9W/Yuoo7SAAAAAElFTkSuQmCC" alt="Owner" class="badge streamer">&nbsp;' + nickname;
+            }
+
+            // 모더레이터
+            if(ext_args.isMod) {
+                nickname = "<b>" + nickname + "</b>";
+                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+                nickname = '<svg style="vertical-align: middle; width: 18px; height: 18px;" viewBox="0 0 16 16" class="badge mod"><path fill="#5e84f1" d="M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.67485908,1 3.93000562,1.21498266 3.2874668,1.59379395 L5.09918785,3.40551499 L3.40551499,5.09918785 L1.59379395,3.2874668 C1.21498266,3.93000562 1,4.67485908 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722257,9.93617022 6.562372,9.83346524 7.05569719,9.64589146 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"></path></svg>&nbsp;' + nickname;
+            }
         } else {
             // 스트리머 뱃지
             if(ext_args.isStreamer) {
@@ -734,7 +747,116 @@ function connect_chat() {
 }
 
 function connect_yt() {
-    console.log("connect_yt is deprecated and removed");
+    var ytChannel = window.config.ytChannel;
+    var ytServerUrl = window.config.ytServer;
+
+    if(!ytServerUrl) {
+        ytServerUrl = "wss://youtube-chat.chatassistx.cc";
+    }
+
+    if(!ytServerUrl.startsWith("ws://") && !ytServerUrl.startsWith("wss://")) {
+        ytServerUrl = "wss://" + ytServerUrl;
+    }
+
+    try {
+        window.ytsocket.socket = new WebSocket(ytServerUrl);
+    } catch(e) {
+        addChatMessage("error", "YouTube 연결 오류", "WebSocket 연결에 실패했습니다: " + e.message, true, false);
+        return;
+    }
+
+    // 라이브 스트림 재시도 타이머
+    window.ytsocket.retryTimer = null;
+
+    function clearYtRetryTimer() {
+        if(window.ytsocket.retryTimer) {
+            clearTimeout(window.ytsocket.retryTimer);
+            window.ytsocket.retryTimer = null;
+        }
+    }
+
+    function scheduleYtRetry() {
+        clearYtRetryTimer();
+        window.ytsocket.retryTimer = setTimeout(function() {
+            window.ytsocket.retryTimer = null;
+            if(window.ytsocket.socket && window.ytsocket.socket.readyState === WebSocket.OPEN) {
+                console.log("YouTube: Retrying channel connection...");
+                window.ytsocket.socket.send(JSON.stringify({
+                    type: "connect",
+                    channel: ytChannel
+                }));
+            }
+        }, 30000); // 30초 후 재시도
+    }
+
+    window.ytsocket.socket.onopen = function() {
+        console.log("YouTube relay server connected");
+        clearYtRetryTimer();
+        // 채널 연결 요청
+        window.ytsocket.socket.send(JSON.stringify({
+            type: "connect",
+            channel: ytChannel
+        }));
+    };
+
+    window.ytsocket.socket.onmessage = function(event) {
+        var data;
+        try {
+            data = JSON.parse(event.data);
+        } catch(e) {
+            console.error("YouTube message parse error:", e);
+            return;
+        }
+
+        if(data.type === "chat" || data.type === "superchat") {
+            var message = data.message || "";
+            // 슈퍼챗인 경우 금액 표시
+            if(data.type === "superchat" && data.amount) {
+                message = "[" + data.amount + "] " + message;
+            }
+            addChatMessage("youtube", data.nickname || "Unknown", message, false, {
+                rawprint: false,
+                isStreamer: data.isOwner || false,
+                isMod: data.isMod || false,
+                id: data.id || ""
+            });
+        } else if(data.type === "not_found" || data.type === "ended") {
+            // 라이브 스트림을 찾지 못했거나 종료됨 - 30초 후 재시도
+            console.log("YouTube:", data.message);
+            addChatMessage("info", "YouTube", data.message, true, false);
+            scheduleYtRetry();
+        } else if(data.type === "info") {
+            console.log("YouTube info:", data.message);
+            addChatMessage("info", "YouTube", data.message, true, false);
+
+            // data.message에 Connected to live chat가 포함되어 있다면 window.chat.isInited를 true로 설정
+            if(data.message && data.message.indexOf("Connected to live chat") !== -1) {
+                window.chat.isInited = true;
+            }
+        } else if(data.type === "error") {
+            console.error("YouTube error:", data.message);
+            addChatMessage("error", "YouTube 오류", data.message, true, false);
+        }
+    };
+
+    window.ytsocket.socket.onclose = function() {
+        console.log("YouTube relay server disconnected");
+        window.ytsocket.isInited = false;
+        clearYtRetryTimer();
+        // 5초 후 WebSocket 재연결 시도
+        setTimeout(function() {
+            if(window.config.ytChannel && window.config.ytServer) {
+                console.log("YouTube relay server reconnecting...");
+                connect_yt();
+            }
+        }, 5000);
+    };
+
+    window.ytsocket.socket.onerror = function(err) {
+        console.error("YouTube WebSocket error:", err);
+    };
+
+    window.ytsocket.isInited = true;
 }
 
 function connect_kick() {

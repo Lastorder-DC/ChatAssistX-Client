@@ -770,6 +770,12 @@ function connect_cime() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
+
+                    if (!response.data || !response.data.token) {
+                        addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
+                        return;
+                    }
+
                     var token = response.data.token;
 
                     // 2. 웹소켓 연결 (token을 sec-websocket-protocol로 전달)
@@ -786,6 +792,7 @@ function connect_cime() {
 
                             // MESSAGE 타입만 처리
                             if (data.Type !== "MESSAGE") return;
+                            if (!data.Sender || !data.Sender.Attributes || !data.Sender.Attributes.user) return;
 
                             // 유저 정보 파싱
                             var userInfo = JSON.parse(data.Sender.Attributes.user);

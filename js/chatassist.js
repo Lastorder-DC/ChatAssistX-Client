@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.17.0
+ *                 V E R S I O N    1.17.1
  *       Last updated by Lastorder-DC on 2026-03-15.
  */
 // 변수 초기화
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.17.0";
+window.chat.version = "1.17.1";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -528,6 +528,17 @@ function updateStyle() {
 }
 
 /**
+ * 채팅 컨테이너를 맨 아래로 스크롤
+ * @returns void
+ */
+function scrollChatToBottom() {
+    var wrapper = document.querySelector('.chat_wrapper');
+    if (wrapper) {
+        wrapper.scrollTop = wrapper.scrollHeight;
+    }
+}
+
+/**
  * 봇 채팅 필터링 함수
  * 필터링 대상 닉네임이면 true 반환
  * @param {String} nickname
@@ -755,12 +766,17 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
     updateStyle();
     if(window.chat.config.animation == "none") {
         $chatElement.show();
+    } else if(window.chat.config.animation == "slide") {
+        $chatElement.hide().slideDown();
     } else {
-        $chatElement.show(window.chat.config.animation, {
-            easing: "easeOutQuint",
-            direction: "down"
-        });
+        $chatElement.hide().fadeIn();
     }
+
+    // 이미지 로드 후 스크롤 갱신
+    $chatElement.find('img').on('load', function() {
+        scrollChatToBottom();
+    });
+    scrollChatToBottom();
 
     if(sticky) window.chat.sticky = true;
 
@@ -775,8 +791,14 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
                 window.chat.count--;
                 window.chat.sticky = false;
             });
+        } else if(window.chat.config.animation == "slide") {
+            $chatElement.delay(fadeTime).slideUp(1000, function() {
+                $(this).remove();
+                window.chat.count--;
+                window.chat.sticky = false;
+            });
         } else {
-            $chatElement.delay(fadeTime).hide(window.chat.config.animation, 1000, function() {
+            $chatElement.delay(fadeTime).fadeOut(1000, function() {
                 $(this).remove();
                 window.chat.count--;
                 window.chat.sticky = false;

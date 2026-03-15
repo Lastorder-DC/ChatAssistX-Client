@@ -85,7 +85,10 @@ describe('replaceCommand - 테마 command', () => {
                         }
                     } else {
                         var themeName = message.replace(/[^a-zA-Z0-9_-]/g, "");
-                        if(!themeName) return match;
+                        if(!themeName) {
+                            addChatMessage("warning", "테마 변경 알림", "올바른 테마 이름을 입력해주세요.", true, false);
+                            break;
+                        }
                         $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="./themes/' + themeName + '/index.css">');
                         addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
                     }
@@ -159,5 +162,16 @@ describe('replaceCommand - 테마 command', () => {
     test('should return match if no theme name provided', () => {
         const result = replaceCommand("~테마", "테마", "~테마", 0);
         expect(result).toBe("~테마");
+    });
+
+    test('should show warning for theme name with only special characters', () => {
+        const result = replaceCommand("~테마 @@@", "테마", "~테마 @@@", 0);
+        expect(result).toBe("COMMAND_DO_NOT_PRINT");
+        expect(global.$.appendedHtml.length).toBe(0);
+        expect(global.addChatMessage).toHaveBeenCalledWith(
+            "warning", "테마 변경 알림",
+            expect.stringContaining("올바른 테마 이름"),
+            true, false
+        );
     });
 });

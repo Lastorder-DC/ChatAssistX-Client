@@ -1,0 +1,104 @@
+/*
+ * Grey-Round Theme by Gemini
+ */
+
+/* 1. 배경 및 기본 폰트 초기화 */
+html, body {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+/* 2. 기존 중앙 정렬 속성 무력화 및 하단 정렬 (왼쪽 치우침 해결) */
+.chat_wrapper {
+  position: absolute !important;
+  top: auto !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  transform: none !important; /* 왼쪽으로 절반 나가는 문제 해결 */
+  width: 100% !important; /* OBS 300px 너비에 꽉 차게 */
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important; /* 채팅이 아래에서 위로 쌓임 */
+  padding: 10px !important; /* 테두리 여백 */
+  box-sizing: border-box !important;
+}
+
+/* 3. 컨테이너 여백 및 정렬 설정 */
+.chat_container {
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important; /* 채팅 말풍선 간격 */
+}
+
+/* 4. 개별 채팅 박스 (유리 질감 모던 스타일) */
+.chat_div {
+  animation: slideUpFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+  background: rgba(30, 30, 35, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  max-height: none !important; /* 기존 높이 제한 해제 */
+}
+
+/* 5. 닉네임과 플랫폼 아이콘 영역 */
+.chat_text_nickname {
+  font-family: 'Spoqa Han Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #a8b2d1 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
+}
+
+/* 6. 메시지 내용 */
+.chat_text_message {
+  font-family: 'Spoqa Han Sans', sans-serif !important;
+  font-size: 14.5px !important;
+  color: #ffffff !important;
+  line-height: 1.4 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+  word-break: break-word !important; /* 긴 글씨가 300px을 넘지 않도록 줄바꿈 */
+  
+  /* 기존 인라인 스타일 찌꺼기 완벽 제거 */
+  background-color: transparent !important; 
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: none !important;
+  width: 100% !important;
+}
+
+/* 7. 플랫폼 아이콘 크기 및 정렬 */
+[class^="chat_platform_"] {
+  width: 14px !important;
+  height: 14px !important;
+  margin-right: 6px !important;
+  display: inline-block !important;
+}
+.chat_platform_none { display: none !important; } /* 아이콘 없을 때 공백 제거 */
+
+/* 8. 부드럽게 올라오는 애니메이션 */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

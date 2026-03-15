@@ -3,17 +3,22 @@ const PROGRAM_VERSION = "1.1.5";
 // 이모지 맵핑을 지원하는 최소 클라이언트 버전
 const EMOJI_MAP_MIN_VERSION = "1.16.7";
 
-// 허용된 Origin 도메인 목록
-const ALLOWED_ORIGINS = [
+// 정확히 일치해야 하는 도메인 (조회 속도 최적화를 위해 Set 사용)
+const EXACT_DOMAINS = new Set([
     'chatassistx.vercel.app',
     'lastorder.xyz',
     'chat.lastorder.xyz',
-    'funzinnu.com'  // funzinnu.com 및 하위 도메인 허용
+    'funzinnu.com'
+]);
+
+// 특정 문자열로 끝나야 하는 도메인 조건 (하위 도메인 및 Vercel 프리뷰)
+const ALLOWED_SUFFIXES = [
+    '.funzinnu.com', 
+    'lastorderdcs-projects.vercel.app' // 예: chatassistx-xxx-lastorderdcs-projects.vercel.app
 ];
 
 /**
  * Origin 헤더가 허용된 도메인인지 확인한다.
- * funzinnu.com의 경우 하위 도메인도 허용한다.
  */
 function isAllowedOrigin(origin) {
     if (!origin) return false;
@@ -25,12 +30,11 @@ function isAllowedOrigin(origin) {
         return false;
     }
 
-    for (const domain of ALLOWED_ORIGINS) {
-        if (hostname === domain) return true;
-        // funzinnu.com의 하위 도메인 허용
-        if (domain === 'funzinnu.com' && hostname.endsWith('.' + domain)) return true;
-    }
-    return false;
+    // 1. 정확히 일치하는 도메인이 있는지 확인 (O(1))
+    if (EXACT_DOMAINS.has(hostname)) return true;
+
+    // 2. 접미사(Suffix) 조건에 부합하는지 확인 (하나라도 일치하면 true 반환)
+    return ALLOWED_SUFFIXES.some(suffix => hostname.endsWith(suffix));
 }
 
 /**

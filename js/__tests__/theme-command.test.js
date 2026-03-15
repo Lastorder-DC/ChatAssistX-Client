@@ -2,176 +2,210 @@
  * @jest-environment jsdom
  */
 
-describe('replaceCommand - 테마 command', () => {
-    let replaceCommand;
+function setupJQueryMock() {
+    const removedIds = [];
+    const appendedAttrs = [];
+
+    const jqMock = jest.fn((selector, attrs) => {
+        // $('<link>', { id, rel, type, href }) constructor pattern
+        if (attrs && typeof attrs === 'object') {
+            var obj = { tag: selector, attrs: attrs };
+            return obj;
+        }
+        return {
+            html: jest.fn(),
+            remove: jest.fn(() => { removedIds.push(selector); }),
+            append: jest.fn((item) => { appendedAttrs.push(item); }),
+            css: jest.fn()
+        };
+    });
+    jqMock.removedIds = removedIds;
+    jqMock.appendedAttrs = appendedAttrs;
+    return jqMock;
+}
+
+function createApplyTheme() {
+    return function(themeValue, showMessage) {
+        if(!themeValue) return false;
+
+        $("#chatassistx-theme").remove();
+
+        if(themeValue === "\uCD08\uAE30\uD654" || themeValue === "\uC5C6\uC74C" || themeValue === "\uC81C\uAC70") {
+            if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uD14C\uB9C8\uAC00 \uCD08\uAE30\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", true, false);
+            return true;
+        } else if(themeValue.startsWith("http://") || themeValue.startsWith("https://")) {
+            var cssUrl = themeValue.split("?")[0].split("#")[0];
+            if(!cssUrl.toLowerCase().endsWith(".css")) {
+                if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "CSS \uD30C\uC77C\uB9CC \uBD88\uB7EC\uC62C \uC218 \uC788\uC2B5\uB2C8\uB2E4. (.css \uD655\uC7A5\uC790 \uD544\uC694)", true, false);
+                return false;
+            }
+            $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue }));
+            if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uC678\uBD80 \uD14C\uB9C8\uAC00 \uC801\uC6A9\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", true, false);
+            return true;
+        } else {
+            var themeName = themeValue.replace(/[^a-zA-Z0-9_-]/g, "");
+            if(!themeName) {
+                if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uC62C\uBC14\uB978 \uD14C\uB9C8 \uC774\uB984\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.", true, false);
+                return false;
+            }
+            $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' }));
+            if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uD14C\uB9C8 '" + themeName + "'\uC774(\uAC00) \uC801\uC6A9\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", true, false);
+            return true;
+        }
+    };
+}
+
+describe('applyTheme', () => {
+    let applyTheme;
 
     beforeEach(() => {
-        // Set up jQuery mock
-        const removedIds = [];
-        const appendedHtml = [];
-
-        global.$ = jest.fn((selector) => {
-            return {
-                html: jest.fn(),
-                remove: jest.fn(() => { removedIds.push(selector); }),
-                append: jest.fn((html) => { appendedHtml.push(html); }),
-                css: jest.fn()
-            };
-        });
-        global.$.removedIds = removedIds;
-        global.$.appendedHtml = appendedHtml;
-
-        // Set up window objects
-        window.config = { allowExternalSource: false, allowEmoticon: true, replace: {} };
-        window.chat = { config: {}, isInited: true, count: 0, cur_count: 0 };
-        window.verb = { emoticon: "이모티콘" };
-        window.emoticon = { isActive: false };
-        window.def_verb = { emoticon: "이모티콘" };
-
-        // Mock addChatMessage
+        global.$ = setupJQueryMock();
         global.addChatMessage = jest.fn();
-
-        // Define replaceCommand directly (mirrors the function in chatassist.js)
-        replaceCommand = function(match, command, commandarg, offset) {
-            var message = "";
-
-            switch (command) {
-                case "채팅초기화":
-                    $(".chat_container").html("");
-                    break;
-                case "이미지":
-                    message = commandarg.replace("~이미지", "");
-                    message = message.split(" ");
-                    if(typeof message[0] === 'undefined') return match;
-                    if(message[0] === "켜기" || message[0] === "활성화" || message[0] === "온") {
-                        window.config.allowExternalSource = true;
-                        message = "외부 이미지 문법이 켜졌습니다.";
-                    }
-                    if(message[0] === "끄기" || message[0] === "비활성화" || message[0] === "오프") {
-                        window.config.allowExternalSource = false;
-                        message = "외부 이미지 문법이 꺼졌습니다.";
-                    }
-                    addChatMessage("warning", "설정 변경 알림", message, true, false);
-                    break;
-                case window.verb.emoticon:
-                    message = commandarg.replace("~" + window.verb.emoticon, "");
-                    message = message.split(" ");
-                    if(typeof message[0] === 'undefined') return match;
-                    if(message[0] === "켜기" || message[0] === "활성화" || message[0] === "온") {
-                        window.config.allowEmoticon = true;
-                        message = window.verb.emoticon + "이 켜졌습니다.";
-                    }
-                    if(message[0] === "끄기" || message[0] === "비활성화" || message[0] === "오프") {
-                        window.config.allowEmoticon = false;
-                        message = window.verb.emoticon + "이 꺼졌습니다.";
-                    }
-                    addChatMessage("warning", "설정 변경 알림", message, true, false);
-                    break;
-                case "테마":
-                    message = commandarg.replace("~테마", "").trim();
-                    if(!message) return match;
-
-                    $("#chatassistx-theme").remove();
-
-                    if(message === "초기화" || message === "없음" || message === "제거") {
-                        addChatMessage("warning", "테마 변경 알림", "테마가 초기화되었습니다.", true, false);
-                    } else if(message.startsWith("http://") || message.startsWith("https://")) {
-                        var cssUrl = message.split("?")[0].split("#")[0];
-                        if(!cssUrl.toLowerCase().endsWith(".css")) {
-                            addChatMessage("warning", "테마 변경 알림", "CSS 파일만 불러올 수 있습니다. (.css 확장자 필요)", true, false);
-                        } else {
-                            $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="' + message + '">');
-                            addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
-                        }
-                    } else {
-                        var themeName = message.replace(/[^a-zA-Z0-9_-]/g, "");
-                        if(!themeName) {
-                            addChatMessage("warning", "테마 변경 알림", "올바른 테마 이름을 입력해주세요.", true, false);
-                            break;
-                        }
-                        $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="./themes/' + themeName + '/index.css">');
-                        addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
-                    }
-                    break;
-                default:
-                    return match;
-            }
-
-            return "COMMAND_DO_NOT_PRINT";
-        };
+        applyTheme = createApplyTheme();
     });
 
     test('should apply local theme', () => {
-        const result = replaceCommand("~테마 grey_round", "테마", "~테마 grey_round", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(1);
-        expect(global.$.appendedHtml[0]).toContain('./themes/grey_round/index.css');
-        expect(global.$.appendedHtml[0]).toContain('id="chatassistx-theme"');
+        const result = applyTheme("grey_round", true);
+        expect(result).toBe(true);
+        expect(global.$.appendedAttrs.length).toBe(1);
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('./themes/grey_round/index.css');
+        expect(global.$.appendedAttrs[0].attrs.id).toBe('chatassistx-theme');
     });
 
     test('should reject non-css external URL', () => {
-        const result = replaceCommand("~테마 https://evil.com/malware.js", "테마", "~테마 https://evil.com/malware.js", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(0);
+        const result = applyTheme("https://evil.com/malware.js", true);
+        expect(result).toBe(false);
+        expect(global.$.appendedAttrs.length).toBe(0);
         expect(global.addChatMessage).toHaveBeenCalledWith(
-            "warning", "테마 변경 알림",
-            expect.stringContaining("CSS 파일만"),
+            "warning", expect.any(String),
+            expect.stringContaining("CSS"),
             true, false
         );
     });
 
     test('should accept .css external URL', () => {
-        const result = replaceCommand("~테마 https://example.com/theme.css", "테마", "~테마 https://example.com/theme.css", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(1);
-        expect(global.$.appendedHtml[0]).toContain('https://example.com/theme.css');
+        const result = applyTheme("https://example.com/theme.css", true);
+        expect(result).toBe(true);
+        expect(global.$.appendedAttrs.length).toBe(1);
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('https://example.com/theme.css');
     });
 
     test('should reset theme', () => {
-        const result = replaceCommand("~테마 초기화", "테마", "~테마 초기화", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(0);
+        const result = applyTheme("\uCD08\uAE30\uD654", true);
+        expect(result).toBe(true);
+        expect(global.$.appendedAttrs.length).toBe(0);
         expect(global.addChatMessage).toHaveBeenCalledWith(
-            "warning", "테마 변경 알림",
-            expect.stringContaining("초기화"),
+            "warning", expect.any(String),
+            expect.stringContaining("\uCD08\uAE30\uD654"),
             true, false
         );
     });
 
     test('should sanitize theme name to prevent path traversal', () => {
-        const result = replaceCommand("~테마 ../../../etc/passwd", "테마", "~테마 ../../../etc/passwd", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        // The sanitized name should strip dots and slashes
-        expect(global.$.appendedHtml[0]).not.toContain('..');
-        expect(global.$.appendedHtml[0]).toContain('./themes/etcpasswd/index.css');
+        const result = applyTheme("../../../etc/passwd", true);
+        expect(result).toBe(true);
+        expect(global.$.appendedAttrs[0].attrs.href).not.toContain('..');
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('./themes/etcpasswd/index.css');
     });
 
     test('should reject .js external URL', () => {
-        const result = replaceCommand("~테마 https://example.com/script.js", "테마", "~테마 https://example.com/script.js", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(0);
+        const result = applyTheme("https://example.com/script.js", true);
+        expect(result).toBe(false);
+        expect(global.$.appendedAttrs.length).toBe(0);
     });
 
     test('should accept .css URL with query params', () => {
-        const result = replaceCommand("~테마 https://example.com/theme.css?v=2", "테마", "~테마 https://example.com/theme.css?v=2", 0);
-        expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(1);
-        expect(global.$.appendedHtml[0]).toContain('https://example.com/theme.css?v=2');
+        const result = applyTheme("https://example.com/theme.css?v=2", true);
+        expect(result).toBe(true);
+        expect(global.$.appendedAttrs.length).toBe(1);
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('https://example.com/theme.css?v=2');
     });
 
-    test('should return match if no theme name provided', () => {
-        const result = replaceCommand("~테마", "테마", "~테마", 0);
-        expect(result).toBe("~테마");
+    test('should return false if no theme value provided', () => {
+        const result = applyTheme("", false);
+        expect(result).toBe(false);
     });
 
     test('should show warning for theme name with only special characters', () => {
-        const result = replaceCommand("~테마 @@@", "테마", "~테마 @@@", 0);
+        const result = applyTheme("@@@", true);
+        expect(result).toBe(false);
+        expect(global.$.appendedAttrs.length).toBe(0);
+        expect(global.addChatMessage).toHaveBeenCalled();
+    });
+
+    test('should not show messages when showMessage is false', () => {
+        applyTheme("grey_round", false);
+        expect(global.addChatMessage).not.toHaveBeenCalled();
+        expect(global.$.appendedAttrs.length).toBe(1);
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('./themes/grey_round/index.css');
+    });
+
+    test('should not show error messages when showMessage is false', () => {
+        applyTheme("https://evil.com/malware.js", false);
+        expect(global.addChatMessage).not.toHaveBeenCalled();
+    });
+
+    test('should remove existing theme before applying new one', () => {
+        applyTheme("gaming", false);
+        expect(global.$.removedIds).toContain('#chatassistx-theme');
+    });
+});
+
+describe('replaceCommand - uses applyTheme', () => {
+    let replaceCommand, applyTheme;
+
+    beforeEach(() => {
+        global.$ = setupJQueryMock();
+
+        window.config = { allowExternalSource: false, allowEmoticon: true, replace: {} };
+        window.chat = { config: {}, isInited: true, count: 0, cur_count: 0 };
+        window.verb = { emoticon: "\uC774\uBAA8\uD2F0\uCF58" };
+        window.emoticon = { isActive: false };
+        window.def_verb = { emoticon: "\uC774\uBAA8\uD2F0\uCF58" };
+
+        global.addChatMessage = jest.fn();
+        applyTheme = createApplyTheme();
+
+        replaceCommand = function(match, command, commandarg, offset) {
+            var message = "";
+            switch (command) {
+                case "\uCC44\uD305\uCD08\uAE30\uD654":
+                    $(".chat_container").html("");
+                    break;
+                case "\uD14C\uB9C8":
+                    message = commandarg.replace("~\uD14C\uB9C8", "").trim();
+                    if(!message) return match;
+                    applyTheme(message, true);
+                    break;
+                default:
+                    return match;
+            }
+            return "COMMAND_DO_NOT_PRINT";
+        };
+    });
+
+    test('should apply local theme via command', () => {
+        const result = replaceCommand("~\uD14C\uB9C8 grey_round", "\uD14C\uB9C8", "~\uD14C\uB9C8 grey_round", 0);
         expect(result).toBe("COMMAND_DO_NOT_PRINT");
-        expect(global.$.appendedHtml.length).toBe(0);
-        expect(global.addChatMessage).toHaveBeenCalledWith(
-            "warning", "테마 변경 알림",
-            expect.stringContaining("올바른 테마 이름"),
-            true, false
-        );
+        expect(global.$.appendedAttrs.length).toBe(1);
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('./themes/grey_round/index.css');
+    });
+
+    test('should return match if no theme name provided', () => {
+        const result = replaceCommand("~\uD14C\uB9C8", "\uD14C\uB9C8", "~\uD14C\uB9C8", 0);
+        expect(result).toBe("~\uD14C\uB9C8");
+    });
+
+    test('should reset theme via command', () => {
+        const result = replaceCommand("~\uD14C\uB9C8 \uCD08\uAE30\uD654", "\uD14C\uB9C8", "~\uD14C\uB9C8 \uCD08\uAE30\uD654", 0);
+        expect(result).toBe("COMMAND_DO_NOT_PRINT");
+        expect(global.addChatMessage).toHaveBeenCalled();
+    });
+
+    test('should accept .css external URL via command', () => {
+        const result = replaceCommand("~\uD14C\uB9C8 https://example.com/theme.css", "\uD14C\uB9C8", "~\uD14C\uB9C8 https://example.com/theme.css", 0);
+        expect(result).toBe("COMMAND_DO_NOT_PRINT");
+        expect(global.$.appendedAttrs.length).toBe(1);
+        expect(global.$.appendedAttrs[0].attrs.href).toBe('https://example.com/theme.css');
     });
 });

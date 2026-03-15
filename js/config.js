@@ -59,11 +59,11 @@ window.config.chat = {};
 window.config.chat.platformIcon = url.searchParams.get("platformIcon") !== null ? url.searchParams.get("platformIcon") != "false" : true;
 window.config.chat.platform = url.searchParams.get("platform") !== null ? url.searchParams.get("platform").split(",") : ["all"];
 window.config.chat.animation = url.searchParams.get("animation") !== null ? url.searchParams.get("animation") : "fade";
-window.config.chat.chatFade = url.searchParams.get("chatFade") !== null ? parseInt(url.searchParams.get("chatFade")) : 30;
+window.config.chat.chatFade = url.searchParams.get("chatFade") !== null ? parseInt(url.searchParams.get("chatFade"), 10) : 30;
 window.config.chat.font = url.searchParams.get("font") !== null ? url.searchParams.get("font") : "sans-serif";
-window.config.chat.fontUsernameSize = url.searchParams.get("fontUsernameSize") !== null ? parseInt(url.searchParams.get("fontUsernameSize")) : 14;
+window.config.chat.fontUsernameSize = url.searchParams.get("fontUsernameSize") !== null ? parseInt(url.searchParams.get("fontUsernameSize"), 10) : 14;
 window.config.chat.fontUsernameColor = url.searchParams.get("fontUsernameColor") !== null ? url.searchParams.get("fontUsernameColor") : "255, 255, 255";
-window.config.chat.fontChatSize = url.searchParams.get("fontChatSize") !== null ? parseInt(url.searchParams.get("fontChatSize")) : 16;
+window.config.chat.fontChatSize = url.searchParams.get("fontChatSize") !== null ? parseInt(url.searchParams.get("fontChatSize"), 10) : 16;
 window.config.chat.fontChatColor = url.searchParams.get("fontChatColor") !== null ? url.searchParams.get("fontChatColor") : "255, 255, 255";
 window.config.chat.backgroundColor = url.searchParams.get("backgroundColor") !== null ? url.searchParams.get("backgroundColor") : "255, 255, 255";
 window.config.chat.backgroundAlpha = url.searchParams.get("backgroundAlpha") !== null ? parseFloat(url.searchParams.get("backgroundAlpha")) : 0;
@@ -76,5 +76,5 @@ window.config.chat.debug = url.searchParams.get("debug") !== null ? url.searchPa
 window.config.anon = url.searchParams.get("anon") == "true"; // 익명 사용시 true
 window.config.anon_nickname = url.searchParams.get("anon_nickname");
 window.config.anon_random = url.searchParams.get("anon_random") == "false" ? false : url.searchParams.get("anon_random"); // 랜덤 숫자를 붙이려면 "number" 랜덤 문자열을 붙이려면 "string"
-window.config.random_length = !url.searchParams.get("random_length") ? 4 : parseInt(url.searchParams.get("random_length")); // 랜덤 숫자/닉네임 길이 지정(위에서 number나 string 지정시)
+window.config.random_length = !url.searchParams.get("random_length") ? 4 : parseInt(url.searchParams.get("random_length"), 10); // 랜덤 숫자/닉네임 길이 지정(위에서 number나 string 지정시)
 window.config.fix_random_id = url.searchParams.get("fix_random_id") == "true"; // 랜덤 닉네임 고정(같은 시청자는 같은 랜덤 문자 배정) 활성화시 true - 새로고침시 초기화됨

@@ -37,29 +37,6 @@ window.chat.sticky = false;
 // 채팅 스타일 가져옴
 window.chat.config = (typeof window.config.chat !== 'undefined') ? window.config.chat : {};
 
-// 기본 채팅 스타일(JSAssist Default)
-// CSS로 오버라이드 가능
-window.chat.def_config = {};
-window.chat.def_config.platformIcon = true;
-window.chat.def_config.platform = "all";
-window.chat.def_config.animation = "fade";
-window.chat.def_config.chatFade = 30;
-window.chat.def_config.font = "sans-serif";
-window.chat.def_config.fontUsernameSize = 14;
-window.chat.def_config.fontUsernameColor = "255, 255, 255";
-window.chat.def_config.fontChatSize = 16;
-window.chat.def_config.fontChatColor = "255, 255, 255";
-window.chat.def_config.backgroundColor = "255, 255, 255";
-window.chat.def_config.backgroundAlpha = 0;
-window.chat.def_config.chatBackgroundColor = "255, 255, 255";
-window.chat.def_config.chatBackgroundAlpha = 0.25;
-window.chat.def_config.debug = false;
-
-// 가져온 채팅 스타일중 빠진 값은 기본값으로 지정
-for(var key in window.chat.def_config) {
-    if(typeof window.chat.config[key] === 'undefined') window.chat.config[key] = window.chat.def_config[key];
-}
-
 // 용어 설정 가져옴
 window.verb = (typeof window.verb !== 'undefined') ? window.verb : {};
 
@@ -553,6 +530,11 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         message = message.replace(/\[br\]/gi, "<br />");
     } else {
         if(filterNick(nickname)) return;
+
+        // 플랫폼 필터링
+        if(window.chat.config.platform && window.chat.config.platform.indexOf("all") === -1) {
+            if(window.chat.config.platform.indexOf(platform) === -1) return;
+        }
 
         // 플랫폼 아이콘 미사용시
         if(!window.chat.config.platformIcon) {

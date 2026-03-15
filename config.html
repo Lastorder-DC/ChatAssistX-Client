@@ -230,16 +230,28 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <label for="platform" class="form-label">플랫폼 필터</label>
-                    <select class="form-select cfg" id="platform">
-                        <option value="all" selected>전체 (all)</option>
-                        <option value="twitch">Twitch</option>
-                        <option value="kick">Kick</option>
-                        <option value="youtube">YouTube</option>
-                        <option value="naver">치지직 (Chzzk)</option>
-                        <option value="cime">ci.me</option>
-                    </select>
-                    <div class="form-text">표시할 플랫폼을 선택합니다</div>
+                    <label class="form-label">플랫폼 필터</label>
+                    <div class="form-text mb-2">표시할 플랫폼을 선택합니다 (모두 체크 = 전체)</div>
+                    <div class="form-check">
+                        <input class="form-check-input cfg platform-filter" type="checkbox" id="platform_twitch" value="twitch" checked>
+                        <label class="form-check-label" for="platform_twitch">Twitch</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input cfg platform-filter" type="checkbox" id="platform_kick" value="kick" checked>
+                        <label class="form-check-label" for="platform_kick">Kick</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input cfg platform-filter" type="checkbox" id="platform_youtube" value="youtube" checked>
+                        <label class="form-check-label" for="platform_youtube">YouTube</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input cfg platform-filter" type="checkbox" id="platform_naver" value="naver" checked>
+                        <label class="form-check-label" for="platform_naver">치지직 (Chzzk)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input cfg platform-filter" type="checkbox" id="platform_cime" value="cime" checked>
+                        <label class="form-check-label" for="platform_cime">ci.me</label>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <label for="animation" class="form-label">채팅 애니메이션</label>
@@ -402,7 +414,6 @@
         { id: 'ignoreNickname', type: 'text', defaultVal: 'nightbot,twipkr' },
         // Style
         { id: 'platformIcon', type: 'bool-default-true' },
-        { id: 'platform', type: 'select', defaultVal: 'all' },
         { id: 'animation', type: 'select', defaultVal: 'fade' },
         { id: 'chatFade', type: 'number', defaultVal: 30 },
         { id: 'font', type: 'text', defaultVal: 'sans-serif' },
@@ -424,6 +435,19 @@
     ];
 
     function getEl(id) { return document.getElementById(id); }
+
+    // Collect selected platforms from checkboxes
+    function getPlatformString() {
+        var ALL_PLATFORMS = ['twitch', 'kick', 'youtube', 'naver', 'cime'];
+        var checked = [];
+        for (var i = 0; i < ALL_PLATFORMS.length; i++) {
+            var cb = getEl('platform_' + ALL_PLATFORMS[i]);
+            if (cb && cb.checked) checked.push(ALL_PLATFORMS[i]);
+        }
+        // 모두 선택 = "all" (기본값이므로 URL에 포함하지 않음)
+        if (checked.length === ALL_PLATFORMS.length) return '';
+        return checked.join(',');
+    }
 
     // Collect replace rules from UI
     function getReplaceString() {
@@ -475,6 +499,9 @@
 
         var replaceStr = getReplaceString();
         if (replaceStr) url.searchParams.set('replace', replaceStr);
+
+        var platformStr = getPlatformString();
+        if (platformStr) url.searchParams.set('platform', platformStr);
 
         return url.toString();
     }
@@ -547,6 +574,16 @@
             for (var j = 0; j < pairs.length; j++) {
                 var parts = pairs[j].split('|');
                 addReplaceRow(parts[0] || '', parts[1] || '');
+            }
+        }
+
+        var platformVal = cur.searchParams.get('platform');
+        if (platformVal) {
+            var ALL_PLATFORMS = ['twitch', 'kick', 'youtube', 'naver', 'cime'];
+            var selected = platformVal.split(',');
+            for (var k = 0; k < ALL_PLATFORMS.length; k++) {
+                var cb = getEl('platform_' + ALL_PLATFORMS[k]);
+                if (cb) cb.checked = selected.indexOf(ALL_PLATFORMS[k]) !== -1;
             }
         }
     }

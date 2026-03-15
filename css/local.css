@@ -1,0 +1,17 @@
+.chat_text_message {
+    max-height: 112px;
+}
+.extimg {
+    max-width: 100px;
+    max-height: 100px;
+}
+.naver_emoticon, .cime_emoticon {
+    height: 2em;
+}
+.badge {
+    height: 18px;
+}
+div.fixed_chat > span {
+    margin-top: 5px;
+    margin-left: 5px;
+}

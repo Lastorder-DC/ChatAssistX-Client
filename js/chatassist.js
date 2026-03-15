@@ -3,12 +3,11 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.17.2
+ *                 V E R S I O N    1.18.0
  *       Last updated by Lastorder-DC on 2026-03-16.
  */
 // 변수 초기화
 window.chat = {};
-clientId = "6c4013c4-c290-433d-a772-070e02d63585";
 
 // 채팅 소켓
 window.chat.socket = null;
@@ -20,7 +19,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.17.2";
+window.chat.version = "1.18.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -302,7 +301,7 @@ function TAPIC_replaceTwitchEmoticon(message, emotes) {
     return message;
 }
 
-function KICK_replaceTwitchEmoticon(message) {
+function KICK_replaceEmoticon(message) {
     const regex = /\[emote:(\d+):([^\]]+)\]/g;
     const replacedMessage = message.replace(regex, (match, number, text) => {
     const imageUrl = `https://files.kick.com/emotes/${number}/fullsize`;
@@ -565,13 +564,106 @@ function filterNick(nickname) {
 }
 
 /**
- * 스트리머 닉네임 여부를 판단하는 함수
- * [DEPRECATED] this function always return false
- * @param {String} nickname
- * @returns {Boolean}
+ * 플랫폼별 스트리머/모더레이터 뱃지 적용 함수
+ * @param {String} platform - 플랫폼 이름
+ * @param {String} nickname - 닉네임
+ * @param {String} message - 메시지
+ * @param {Object} ext_args - 확장 인자 (isStreamer, isMod)
+ * @returns {Object} { nickname, message }
  */
-function isStreamer(platform, nickname) {
-    return false;
+function applyBadge(platform, nickname, message, ext_args) {
+    if(platform == "naver") {
+        if(ext_args.isStreamer) {
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/streamer.png" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
+        }
+        if(ext_args.isMod) {
+            nickname = "<b>" + nickname + "</b>";
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/manager.png" alt="채팅 운영자" class="badge mod">&nbsp;' + nickname;
+        }
+    } else if(platform == "cime") {
+        if(ext_args.isStreamer) {
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/STREAMER.webp" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
+        }
+        if(ext_args.isMod) {
+            nickname = "<b>" + nickname + "</b>";
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/CHAT_MANAGER.webp" alt="모더레이터" class="badge mod">&nbsp;' + nickname;
+        }
+    } else if(platform == "youtube") {
+        if(ext_args.isStreamer) {
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<img style="vertical-align: middle;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAA3klEQVQ4y2NgGLng+5P9/78/2f+fJA1/vz3vRhb7++1599N1jv+frnPEKodsAROM8evDLYZXe9NLfrw8A5d8f7an5P/vLwz/f39heH+utwQm/uPlmf+v9qaX/PpwC24wC9xEVl6Gv9+eM7w5kMnw4Xzvf1YBNYb3p5rgCn88Pcjw9f7m/78/3GJ4cyATrgfDIFYBNbjgl1srsHof2WB0PXCvMbHxMpAKkPXADWITVGck1SBkPUzIEoys3EQbgq4WxSBkPxMC6GpRDEKOBYLhg6YW1UWCJLhIkEYuGsYAABF9W/Yuoo7SAAAAAElFTkSuQmCC" alt="Owner" class="badge streamer">&nbsp;' + nickname;
+        }
+        if(ext_args.isMod) {
+            nickname = "<b>" + nickname + "</b>";
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<svg style="vertical-align: middle; width: 18px; height: 18px;" viewBox="0 0 16 16" class="badge mod"><path fill="#5e84f1" d="M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.67485908,1 3.93000562,1.21498266 3.2874668,1.59379395 L5.09918785,3.40551499 L3.40551499,5.09918785 L1.59379395,3.2874668 C1.21498266,3.93000562 1,4.67485908 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722257,9.93617022 6.562372,9.83346524 7.05569719,9.64589146 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"></path></svg>&nbsp;' + nickname;
+        }
+    } else {
+        if(ext_args.isStreamer) {
+            message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
+            nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge streamer">&nbsp;' + nickname;
+        }
+        if(ext_args.isMod) {
+            nickname = "<b>" + nickname + "</b>";
+            nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" alt="Moderator" class="badge mod">&nbsp;' + nickname;
+        }
+    }
+
+    return { nickname: nickname, message: message };
+}
+
+/**
+ * 시청자 익명화 처리 함수
+ * @param {String} nickname - 원본 닉네임
+ * @param {Object} ext_args - 확장 인자 (id 포함)
+ * @param {Boolean} sticky - 고정 메시지 여부
+ * @returns {String} 익명화된 닉네임
+ */
+function anonymizeNickname(nickname, ext_args, sticky) {
+    if(!window.config.anon || !window.chat.isInited || sticky) return nickname;
+
+    if(typeof window.config.anon_nickname === 'undefined') {
+        window.config.anon_nickname = "시청자";
+    }
+
+    nickname = window.config.anon_nickname;
+    if(window.config.anon_random !== false) {
+        if(typeof window.config.anon_random === 'undefined') {
+            window.config.anon_random = "string";
+        }
+        if(typeof window.config.random_length === 'undefined') {
+            window.config.random_length = 4;
+        }
+        if(typeof window.config.fix_random_id === 'undefined') {
+            window.config.fix_random_id = false;
+        }
+
+        var rand_id;
+        if(window.config.fix_random_id) {
+            if(typeof window.anon.nickdb[ext_args.id] === 'undefined') {
+                window.anon.nickdb[ext_args.id] = {};
+                window.anon.nickdb[ext_args.id].type = window.config.anon_random;
+                window.anon.nickdb[ext_args.id].length = window.config.random_length;
+                window.anon.nickdb[ext_args.id].rand_id = genID(window.config.anon_random, window.config.random_length);
+            }
+
+            if(window.anon.nickdb[ext_args.id].type != window.config.anon_random || window.anon.nickdb[ext_args.id].length != window.config.random_length) {
+                window.anon.nickdb[ext_args.id].rand_id = genID(window.config.anon_random, window.config.random_length);
+            }
+
+            rand_id = window.anon.nickdb[ext_args.id].rand_id;
+        } else {
+            rand_id = genID(window.config.anon_random, window.config.random_length);
+        }
+
+        nickname += " " + rand_id;
+    }
+
+    return nickname;
 }
 
 /**
@@ -642,7 +734,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         
         // 메세지 안 트위치 이모티콘 변환
         if(platform == "twitch") message = TAPIC_replaceTwitchEmoticon(message, ext_args.emotes);
-        if(platform == "kick") message = KICK_replaceTwitchEmoticon(message, ext_args.emotes);
+        if(platform == "kick") message = KICK_replaceEmoticon(message, ext_args.emotes);
         if(platform == "naver") message = NAVER_replaceEmoticon(message, ext_args.emotes);
         if(platform == "cime") message = CIME_replaceEmoticon(message);
         if(platform == "youtube") message = YT_replaceEmoticon(message);
@@ -653,97 +745,13 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         // 메세지 안 이모티콘 변환(시동어 ~ 입력후 등록한 이모티콘 이름 입력하면 됨)
         if(window.emoticon.isActive && window.config.allowEmoticon) message = message.replace(/~([^\ ~]*)/gi, replaceEmoticon);
 
-        if(platform == "naver") {
-            // 스트리머 뱃지
-            if(ext_args.isStreamer) {
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/streamer.png" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
-            }
+        // 스트리머/모더레이터 뱃지 적용
+        var badgeResult = applyBadge(platform, nickname, message, ext_args);
+        nickname = badgeResult.nickname;
+        message = badgeResult.message;
 
-            // 모더레이터
-            if(ext_args.isMod) {
-                nickname = "<b>" + nickname + "</b>";
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/manager.png" alt="채팅 운영자" class="badge mod">&nbsp;' + nickname;
-            }
-        } else if(platform == "cime") {
-            // 스트리머 뱃지
-            if(ext_args.isStreamer) {
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/STREAMER.webp" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
-            }
-
-            // 모더레이터
-            if(ext_args.isMod) {
-                nickname = "<b>" + nickname + "</b>";
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/CHAT_MANAGER.webp" alt="모더레이터" class="badge mod">&nbsp;' + nickname;
-            }
-        } else if(platform == "youtube") {
-            // 방송 소유자 뱃지
-            if(ext_args.isStreamer) {
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAA3klEQVQ4y2NgGLng+5P9/78/2f+fJA1/vz3vRhb7++1599N1jv+frnPEKodsAROM8evDLYZXe9NLfrw8A5d8f7an5P/vLwz/f39heH+utwQm/uPlmf+v9qaX/PpwC24wC9xEVl6Gv9+eM7w5kMnw4Xzvf1YBNYb3p5rgCn88Pcjw9f7m/78/3GJ4cyATrgfDIFYBNbjgl1srsHof2WB0PXCvMbHxMpAKkPXADWITVGck1SBkPUzIEoys3EQbgq4WxSBkPxMC6GpRDEKOBYLhg6YW1UWCJLhIkEYuGsYAABF9W/Yuoo7SAAAAAElFTkSuQmCC" alt="Owner" class="badge streamer">&nbsp;' + nickname;
-            }
-
-            // 모더레이터
-            if(ext_args.isMod) {
-                nickname = "<b>" + nickname + "</b>";
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<svg style="vertical-align: middle; width: 18px; height: 18px;" viewBox="0 0 16 16" class="badge mod"><path fill="#5e84f1" d="M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.67485908,1 3.93000562,1.21498266 3.2874668,1.59379395 L5.09918785,3.40551499 L3.40551499,5.09918785 L1.59379395,3.2874668 C1.21498266,3.93000562 1,4.67485908 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722257,9.93617022 6.562372,9.83346524 7.05569719,9.64589146 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"></path></svg>&nbsp;' + nickname;
-            }
-        } else {
-            // 스트리머 뱃지
-            if(ext_args.isStreamer) {
-                message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge streamer">&nbsp;' + nickname;
-            }
-
-            // 모더레이터는 굵게
-            if(ext_args.isMod) {
-                nickname = "<b>" + nickname + "</b>";
-                nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" alt="Moderator" class="badge mod">&nbsp;' + nickname;
-            }
-        }
-
-        if(window.config.anon && window.chat.isInited && !sticky) {
-            if(typeof window.config.anon_nickname === 'undefined') {
-                window.config.anon_nickname = "시청자";
-            }
-
-            nickname = window.config.anon_nickname;
-            if(window.config.anon_random !== false) {
-                if(typeof window.config.anon_random === 'undefined') {
-                    window.config.anon_random = "string";
-                }
-                if(typeof window.config.random_length === 'undefined') {
-                    window.config.random_length = 4;
-                }
-                if(typeof window.config.fix_random_id === 'undefined') {
-                    window.config.fix_random_id = false;
-                }
-
-                var rand_id;
-                if(window.config.fix_random_id) {
-                    if(typeof window.anon.nickdb[ext_args.id] === 'undefined') {
-                        window.anon.nickdb[ext_args.id] = {};
-                        window.anon.nickdb[ext_args.id].type = window.config.anon_random;
-                        window.anon.nickdb[ext_args.id].length = window.config.random_length;
-                        window.anon.nickdb[ext_args.id].rand_id = genID(window.config.anon_random, window.config.random_length);
-                    }
-
-                    if(window.anon.nickdb[ext_args.id].type != window.config.anon_random || window.anon.nickdb[ext_args.id].length != window.config.random_length) {
-                        window.anon.nickdb[ext_args.id].rand_id = genID(window.config.anon_random, window.config.random_length);
-                    }
-
-                    rand_id = window.anon.nickdb[ext_args.id].rand_id;
-                } else {
-                    rand_id = genID(window.config.anon_random, window.config.random_length);
-                }
-
-                nickname += " " + rand_id;
-            }
-        }
+        // 시청자 익명화
+        nickname = anonymizeNickname(nickname, ext_args, sticky);
 
         // 명령어 입력은 화면에 표시하지 않음
         if(message.indexOf("COMMAND_DO_NOT_PRINT") != -1) return;
@@ -1065,88 +1073,103 @@ function complete_connect_kick() {
 
 function connect_cime() {
     const cimeChannel = window.config.cimeChannel;
+    var isFirstConnect = true;
 
-    try {
-        // 1. chat-token 요청
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://ci.me/api/app/channels/${cimeChannel}/chat-token`, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
+    function requestTokenAndConnect() {
+        try {
+            // 1. chat-token 요청
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', `https://ci.me/api/app/channels/${cimeChannel}/chat-token`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
 
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    var response = JSON.parse(xhr.responseText);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
 
-                    if (!response.data || !response.data.token) {
-                        addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
-                        return;
-                    }
-
-                    var token = response.data.token;
-
-                    // 2. 웹소켓 연결 (token을 sec-websocket-protocol로 전달)
-                    window.cimesocket.socket = new WebSocket("wss://edge.ivschat.ap-northeast-2.amazonaws.com/", token);
-
-                    window.cimesocket.socket.onopen = function(event) {
-                        addChatMessage("info", "ci.me 채팅 연결됨", cimeChannel + " 채널에 연결되었습니다.", true, false);
-                        window.cimesocket.isInited = true;
-                        _markPlatformConnected('cime');
-                    };
-
-                    window.cimesocket.socket.onmessage = function(event) {
-                        try {
-                            var data = JSON.parse(event.data);
-
-                            // MESSAGE 타입만 처리
-                            if (data.Type !== "MESSAGE") return;
-                            if (!data.Sender || !data.Sender.Attributes || !data.Sender.Attributes.user) return;
-
-                            // 유저 정보 파싱
-                            var userInfo = JSON.parse(data.Sender.Attributes.user);
-                            var nickname = userInfo.ch.na;
-                            var userId = data.Sender.UserId;
-                            var content = data.Content;
-
-                            var ext_args = {};
-                            ext_args.isStreamer = false;
-                            ext_args.isMod = false;
-
-                            //userInfo의 c가 RS이면 스트리머, RM이면 모더레이터, 둘다 아니면 일반 유저로 간주
-                            if (userInfo.c === "RS") {
-                                ext_args.isStreamer = true;
-                            } else if (userInfo.c === "RM") {
-                                ext_args.isMod = true;
-                            }
-                            ext_args.rawprint = false;
-                            ext_args.emotes = void 0;
-                            ext_args.color = void 0;
-                            ext_args.subscriber = false;
-                            ext_args.id = userId;
-
-                            addChatMessage("cime", nickname.htmlEntities(), content.htmlEntities(), false, ext_args);
-                        } catch (error) {
-                            console.error("ci.me 메세지 파싱 오류: ", error);
+                        if (!response.data || !response.data.token) {
+                            addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
+                            return;
                         }
-                    };
 
-                    window.cimesocket.socket.onerror = function(error) {
-                        console.error("ci.me WebSocket 오류: ", error);
-                    };
+                        var token = response.data.token;
 
-                    window.cimesocket.socket.onclose = function() {
-                        window.cimesocket.isInited = false;
-                    };
-                } else {
-                    addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
+                        // 2. 웹소켓 연결 (token을 sec-websocket-protocol로 전달)
+                        window.cimesocket.socket = new WebSocket("wss://edge.ivschat.ap-northeast-2.amazonaws.com/", token);
+
+                        window.cimesocket.socket.onopen = function(event) {
+                            if(isFirstConnect) {
+                                addChatMessage("info", "ci.me 채팅 연결됨", cimeChannel + " 채널에 연결되었습니다.", true, false);
+                                isFirstConnect = false;
+                            }
+                            window.cimesocket.isInited = true;
+                            _markPlatformConnected('cime');
+                        };
+
+                        window.cimesocket.socket.onmessage = function(event) {
+                            try {
+                                var data = JSON.parse(event.data);
+
+                                // MESSAGE 타입만 처리
+                                if (data.Type !== "MESSAGE") return;
+                                if (!data.Sender || !data.Sender.Attributes || !data.Sender.Attributes.user) return;
+
+                                // 유저 정보 파싱
+                                var userInfo = JSON.parse(data.Sender.Attributes.user);
+                                var nickname = userInfo.ch.na;
+                                var userId = data.Sender.UserId;
+                                var content = data.Content;
+
+                                var ext_args = {};
+                                ext_args.isStreamer = false;
+                                ext_args.isMod = false;
+
+                                //userInfo의 c가 RS이면 스트리머, RM이면 모더레이터, 둘다 아니면 일반 유저로 간주
+                                if (userInfo.c === "RS") {
+                                    ext_args.isStreamer = true;
+                                } else if (userInfo.c === "RM") {
+                                    ext_args.isMod = true;
+                                }
+                                ext_args.rawprint = false;
+                                ext_args.emotes = void 0;
+                                ext_args.color = void 0;
+                                ext_args.subscriber = false;
+                                ext_args.id = userId;
+
+                                addChatMessage("cime", nickname.htmlEntities(), content.htmlEntities(), false, ext_args);
+                            } catch (error) {
+                                console.error("ci.me 메세지 파싱 오류: ", error);
+                            }
+                        };
+
+                        window.cimesocket.socket.onerror = function(error) {
+                            console.error("ci.me WebSocket 오류: ", error);
+                        };
+
+                        window.cimesocket.socket.onclose = function() {
+                            window.cimesocket.isInited = false;
+                            console.log("ci.me WebSocket 연결 종료, 새 토큰으로 재연결 시도...");
+                            // 세션 만료 또는 네트워크 문제로 연결이 끊어지면 새 토큰을 발급받아 재연결
+                            setTimeout(function() {
+                                if (window.config.cimeChannel) {
+                                    requestTokenAndConnect();
+                                }
+                            }, 5000);
+                        };
+                    } else {
+                        addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
+                    }
                 }
-            }
-        };
+            };
 
-        xhr.send();
-    } catch (error) {
-        console.error("ci.me 연결 오류: ", error);
-        addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 연결에 실패했습니다.", true, false);
+            xhr.send();
+        } catch (error) {
+            console.error("ci.me 연결 오류: ", error);
+            addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 연결에 실패했습니다.", true, false);
+        }
     }
+
+    requestTokenAndConnect();
 }
 
 function connect_twitch() {
@@ -1354,27 +1377,6 @@ function connect_naver() {
     } catch (error) {
         console.error(error);
     }
-}
-
-function generateState() {
-    const length = 20; // 상태 값의 길이
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const state = new Array(length).fill(null).map(() => 
-        chars[Math.floor(Math.random() * chars.length)]
-    ).join('');
-    return state;
-}
-
-function requestAuthorizationCode() {
-    const url = `https://chzzk.naver.com/account-interlock`;
-    
-    const params = new URLSearchParams({
-        clientId: clientId,
-        redirectUri: "https://chzzk.chatassistx.cc/v1/token/create",
-        state: generateState()
-    });
-    
-    window.location.href = `${url}?${params}`;
 }
 
 $(document).ready(function() {

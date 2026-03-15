@@ -1,4 +1,4 @@
-const { isAllowedOrigin, processMessageRuns, ALLOWED_ORIGINS, PROGRAM_VERSION, EMOJI_MAP_MIN_VERSION, supportsEmojiMap, resolveEmojiMap } = require('../utils');
+const { isAllowedOrigin, processMessageRuns, PROGRAM_VERSION, EMOJI_MAP_MIN_VERSION, supportsEmojiMap, resolveEmojiMap } = require('../utils');
 
 describe('PROGRAM_VERSION', () => {
     test('should be a non-empty version string', () => {
@@ -7,17 +7,12 @@ describe('PROGRAM_VERSION', () => {
     });
 });
 
-describe('ALLOWED_ORIGINS', () => {
-    test('should contain the required domains', () => {
-        expect(ALLOWED_ORIGINS).toContain('chatassistx.vercel.app');
-        expect(ALLOWED_ORIGINS).toContain('lastorder.xyz');
-        expect(ALLOWED_ORIGINS).toContain('chat.lastorder.xyz');
-        expect(ALLOWED_ORIGINS).toContain('funzinnu.com');
-    });
-});
-
 describe('isAllowedOrigin', () => {
-    // 허용된 도메인 테스트
+    // 정확히 일치하는 도메인 테스트 (EXACT_DOMAINS)
+    test('should allow chatassistx.cc', () => {
+        expect(isAllowedOrigin('https://chatassistx.cc')).toBe(true);
+    });
+
     test('should allow chatassistx.vercel.app', () => {
         expect(isAllowedOrigin('https://chatassistx.vercel.app')).toBe(true);
     });
@@ -34,11 +29,16 @@ describe('isAllowedOrigin', () => {
         expect(isAllowedOrigin('https://funzinnu.com')).toBe(true);
     });
 
-    // funzinnu.com 하위 도메인 테스트
+    // 접미사(Suffix) 조건 테스트 (ALLOWED_SUFFIXES)
     test('should allow subdomains of funzinnu.com', () => {
         expect(isAllowedOrigin('https://sub.funzinnu.com')).toBe(true);
         expect(isAllowedOrigin('https://deep.sub.funzinnu.com')).toBe(true);
         expect(isAllowedOrigin('https://chat.funzinnu.com')).toBe(true);
+    });
+
+    test('should allow Vercel preview domains under lastorderdcs-projects', () => {
+        expect(isAllowedOrigin('https://chatassistx-xxx-lastorderdcs-projects.vercel.app')).toBe(true);
+        expect(isAllowedOrigin('https://chatassistx-abc123-lastorderdcs-projects.vercel.app')).toBe(true);
     });
 
     // http 프로토콜도 허용

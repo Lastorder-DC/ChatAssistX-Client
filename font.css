@@ -1,3 +1,6 @@
+/* 나눔스퀘어 */
+@import url('https://cdn.rawgit.com/moonspam/NanumSquare/master/nanumsquare.css');
+
 /*
  * ChatAssistX Font Definitions
  * 테마 및 사용자 지정 폰트 정의
@@ -112,9 +115,6 @@
     font-weight: 900;
     font-display: swap;
 }
-
-/* 나눔스퀘어 */
-@import url('https://cdn.rawgit.com/moonspam/NanumSquare/master/nanumsquare.css');
 
 /* 땅스부대찌개 */
 @font-face {

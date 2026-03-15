@@ -23,9 +23,14 @@ html, body {
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-end !important; /* 채팅이 아래에서 위로 쌓임 */
   padding: 10px !important; /* 테두리 여백 */
   box-sizing: border-box !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.chat_wrapper::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* 3. 컨테이너 여백 및 정렬 설정 */
@@ -37,6 +42,8 @@ html, body {
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important; /* 채팅 말풍선 간격 */
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
 }
 
 /* 4. 개별 채팅 박스 (유리 질감 모던 스타일) */

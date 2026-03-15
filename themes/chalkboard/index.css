@@ -10,7 +10,7 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
-  background: #2a4d2a !important;
+  background: transparent !important;
 }
 
 /* 2. 기존 중앙 정렬 속성 무력화 및 하단 정렬 */
@@ -24,14 +24,15 @@ html, body {
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-end !important;
   padding: 10px !important;
   box-sizing: border-box !important;
-  background:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px) !important;
-  background-size: 30px 30px !important;
-  background-color: #2a4d2a !important;
+  background: transparent !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.chat_wrapper::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* 3. 컨테이너 여백 및 정렬 설정 */
@@ -43,19 +44,25 @@ html, body {
   display: flex !important;
   flex-direction: column !important;
   gap: 8px !important;
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
 }
 
 /* 4. 개별 채팅 박스 (칠판 분필 스타일) */
 .chat_div {
   animation: slideUpFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.15) !important;
-  border-radius: 0 !important;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+    #2a4d2a !important;
+  background-size: 30px 30px, 30px 30px, auto !important;
+  border: 2px solid rgba(139, 119, 101, 0.6) !important;
+  border-radius: 6px !important;
   padding: 8px 10px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   max-height: none !important;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* 5. 닉네임과 플랫폼 아이콘 영역 */

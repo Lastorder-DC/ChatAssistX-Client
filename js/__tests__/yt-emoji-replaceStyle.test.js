@@ -12,10 +12,7 @@ function replaceStyle(message) {
     if(window.config.allowExternalSource) {
         var image = message.match(/\[img ([^\]\"]*)\]/);
         if(image !== null && typeof image[1] !== 'undefined') {
-            var attr = {};
-            attr.class = "extimg";
-            // ReferrerKiller is not available in test
-            message = '<img class="extimg" src="' + image[1] + '">';
+            message = '<img class="extimg" src="https://proxy.chatassistx.cc/image/' + image[1] + '">';
         }
         message = message.replace(/\[img ([^\]\"]*)\]/gi, "");
         return message;

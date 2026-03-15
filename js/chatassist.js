@@ -417,7 +417,7 @@ function applyTheme(themeValue, showMessage) {
             return false;
         }
         $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue }));
-        if(showMessage) addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
+        if(showMessage) addChatMessage("info", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
     } else {
         // 로컬 테마 이름인 경우 themes 폴더에서 불러옴
         var themeName = themeValue.replace(/[^a-zA-Z0-9_-]/g, "");
@@ -426,10 +426,10 @@ function applyTheme(themeValue, showMessage) {
             return false;
         }
         $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' }));
-        if(showMessage) addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
+        if(showMessage) addChatMessage("info", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
     }
 
-    scrollChatToBottom();
+    if(showMessage) addChatMessage("info", "명령어 사용", "< 테마 변경 명령어 사용 >", false, false);
     return true;
 }
 

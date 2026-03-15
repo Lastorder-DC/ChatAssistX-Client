@@ -1,6 +1,6 @@
 const { Innertube, YTNodes } = require('youtubei.js');
 const { WebSocketServer, WebSocket } = require('ws');
-const { PROGRAM_VERSION, isAllowedOrigin, processMessageRuns } = require('./utils');
+const { PROGRAM_VERSION, isAllowedOrigin, processMessageRuns, supportsEmojiMap, resolveEmojiMap } = require('./utils');
 const PORT = process.env.PORT || 8090;
 
 const wss = new WebSocketServer({
@@ -111,6 +111,9 @@ wss.on('connection', (ws) => {
                 ws.send(JSON.stringify({ type: 'error', message: '채널 식별자가 필요합니다' }));
                 return;
             }
+
+            // 클라이언트 버전 저장
+            ws.clientVersion = parsed.version || null;
 
             // 이전 채널 구독 해제
             if (subscribedChannel) {
@@ -317,6 +320,29 @@ async function findLiveVideoId(yt, channel) {
 }
 
 /**
+ * 채팅 메시지를 클라이언트 버전에 따라 적절한 형식으로 전송한다.
+ * 이모지 맵핑을 지원하는 클라이언트에게는 키 기반 이모지 + emojiMap을,
+ * 지원하지 않는 클라이언트에게는 URL이 포함된 레거시 형식을 전송한다.
+ */
+function broadcastMessage(session, baseData, text, emojiMap) {
+    const hasEmoji = Object.keys(emojiMap).length > 0;
+    let legacyText = null;
+
+    for (const client of session.clients) {
+        if (client.readyState === WebSocket.OPEN) {
+            if (hasEmoji && supportsEmojiMap(client.clientVersion)) {
+                client.send(JSON.stringify({ ...baseData, message: text, emojiMap }));
+            } else {
+                if (legacyText === null) {
+                    legacyText = hasEmoji ? resolveEmojiMap(text, emojiMap) : text;
+                }
+                client.send(JSON.stringify({ ...baseData, message: legacyText }));
+            }
+        }
+    }
+}
+
+/**
  * Handles a live chat item and broadcasts it to all subscribed clients.
  */
 function handleChatItem(session, item) {
@@ -331,32 +357,32 @@ function handleChatItem(session, item) {
             ) || false;
 
             // nickname(author?.name?.toString()) 맨앞 @ 삭제
-            broadcast(session, {
+            const { text: chatText, emojiMap: chatEmojiMap } = processMessageRuns(msg.message);
+            broadcastMessage(session, {
                 type: 'chat',
                 nickname: author?.name?.toString()?.replace(/^@/, '') || 'Unknown',
-                message: processMessageRuns(msg.message),
                 isOwner: isOwner,
                 isMod: author?.is_moderator || false,
                 isMember: author?.badges?.some(
                     (badge) => badge.tooltip === 'Member' || badge.style === 'BADGE_STYLE_TYPE_MEMBER'
                 ) || false,
                 id: author?.id || ''
-            });
+            }, chatText, chatEmojiMap);
             break;
         }
         case 'LiveChatPaidMessage': {
             const msg = item.as(YTNodes.LiveChatPaidMessage);
             const author = msg.author;
 
-            broadcast(session, {
+            const { text: scText, emojiMap: scEmojiMap } = processMessageRuns(msg.message);
+            broadcastMessage(session, {
                 type: 'superchat',
                 nickname: author?.name?.toString() || 'Unknown',
-                message: processMessageRuns(msg.message),
                 amount: msg.purchase_amount || '',
                 isOwner: false,
                 isMod: author?.is_moderator || false,
                 id: author?.id || ''
-            });
+            }, scText, scEmojiMap);
             break;
         }
         case 'LiveChatPaidSticker': {

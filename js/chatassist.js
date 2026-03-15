@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.16.6
+ *                 V E R S I O N    1.16.7
  *       Last updated by Lastorder-DC on 2026-03-14.
  */
 // 변수 초기화
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.16.6";
+window.chat.version = "1.16.7";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -850,7 +850,8 @@ function connect_yt() {
                 console.log("YouTube: Retrying channel connection...");
                 window.ytsocket.socket.send(JSON.stringify({
                     type: "connect",
-                    channel: ytChannel
+                    channel: ytChannel,
+                    version: window.chat.version
                 }));
             }
         }, 30000); // 30초 후 재시도
@@ -881,12 +882,19 @@ function connect_yt() {
             // 버전 메시지를 받은 후 채널 연결 요청
             window.ytsocket.socket.send(JSON.stringify({
                 type: "connect",
-                channel: ytChannel
+                channel: ytChannel,
+                version: window.chat.version
             }));
         } else if(data.type === "pong") {
             // ping 응답 수신 - 별도 처리 불필요
         } else if(data.type === "chat" || data.type === "superchat") {
             var message = data.message || "";
+            // emojiMap이 있으면 이모지 키를 실제 URL로 치환
+            if(data.emojiMap) {
+                message = message.replace(/\[yt-emoji:([^\]]+)\]/g, function(match, key) {
+                    return data.emojiMap[key] ? '[yt-emoji:' + data.emojiMap[key] + ']' : match;
+                });
+            }
             // 슈퍼챗인 경우 금액 표시
             if(data.type === "superchat" && data.amount) {
                 message = "[" + data.amount + "] " + message;

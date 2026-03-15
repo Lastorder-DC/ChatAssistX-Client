@@ -1,6 +1,6 @@
 /*
- * Retro Terminal Theme
- * 고전 컴퓨터 터미널 스타일 테마
+ * Neon Sign Theme
+ * 배경이 투명한 네온사인 스타일 테마
  */
 
 /* 1. 배경 및 기본 폰트 초기화 */
@@ -37,46 +37,48 @@ html, body {
   width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 10px !important;
 }
 
-/* 4. 개별 채팅 박스 (터미널 스타일) */
+/* 4. 개별 채팅 박스 (네온사인 스타일) */
 .chat_div {
-  animation: slideUpFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-  background: rgba(0, 10, 0, 0.85) !important;
-  border: 1px solid rgba(0, 255, 0, 0.2) !important;
-  border-radius: 0 !important;
-  padding: 8px 10px !important;
+  animation: neonFadeIn 0.4s ease-out forwards !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 0, 255, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   max-height: none !important;
+  box-shadow:
+    0 0 5px rgba(255, 0, 255, 0.3),
+    0 0 10px rgba(255, 0, 255, 0.15),
+    inset 0 0 5px rgba(255, 0, 255, 0.1) !important;
 }
 
 /* 5. 닉네임과 플랫폼 아이콘 영역 */
 .chat_text_nickname {
-  font-family: 'RoundedFixedsys', monospace !important;
-  font-size: 14px !important;
-  font-weight: normal !important;
-  color: #00ff00 !important;
-  text-shadow: 0 0 4px rgba(0, 255, 0, 0.6) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ff66ff !important;
+  text-shadow:
+    0 0 5px rgba(255, 102, 255, 0.8),
+    0 0 10px rgba(255, 102, 255, 0.5),
+    0 0 20px rgba(255, 102, 255, 0.3) !important;
   display: flex !important;
   align-items: center !important;
-  margin-bottom: 2px !important;
-}
-
-/* 닉네임 앞 프롬프트 기호 */
-.chat_text_nickname::before {
-  content: '> ' !important;
-  color: #00ff00 !important;
+  margin-bottom: 4px !important;
 }
 
 /* 6. 메시지 내용 */
 .chat_text_message {
-  font-family: 'RoundedFixedsys', monospace !important;
-  font-size: 14px !important;
-  color: #00cc00 !important;
+  font-size: 14.5px !important;
+  color: #00ffff !important;
   line-height: 1.4 !important;
-  text-shadow: 0 0 3px rgba(0, 255, 0, 0.4) !important;
+  text-shadow:
+    0 0 5px rgba(0, 255, 255, 0.7),
+    0 0 10px rgba(0, 255, 255, 0.4),
+    0 0 20px rgba(0, 255, 255, 0.2) !important;
   word-break: break-word !important;
   background-color: transparent !important;
   padding: 0 !important;
@@ -94,14 +96,21 @@ html, body {
 }
 .chat_platform_none { display: none !important; }
 
-/* 8. 부드럽게 올라오는 애니메이션 */
-@keyframes slideUpFadeIn {
+/* 8. 네온 페이드인 애니메이션 */
+@keyframes neonFadeIn {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    text-shadow: none;
+    box-shadow: none;
+  }
+  50% {
+    opacity: 0.8;
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    box-shadow:
+      0 0 5px rgba(255, 0, 255, 0.3),
+      0 0 10px rgba(255, 0, 255, 0.15),
+      inset 0 0 5px rgba(255, 0, 255, 0.1);
   }
 }

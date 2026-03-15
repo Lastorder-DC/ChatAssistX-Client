@@ -1,6 +1,6 @@
 /*
- * Retro Terminal Theme
- * 고전 컴퓨터 터미널 스타일 테마
+ * Chalkboard Theme
+ * 학교 분필 칠판 스타일 테마
  */
 
 /* 1. 배경 및 기본 폰트 초기화 */
@@ -10,7 +10,7 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
-  background: transparent !important;
+  background: #2a4d2a !important;
 }
 
 /* 2. 기존 중앙 정렬 속성 무력화 및 하단 정렬 */
@@ -27,6 +27,11 @@ html, body {
   justify-content: flex-end !important;
   padding: 10px !important;
   box-sizing: border-box !important;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px) !important;
+  background-size: 30px 30px !important;
+  background-color: #2a4d2a !important;
 }
 
 /* 3. 컨테이너 여백 및 정렬 설정 */
@@ -37,14 +42,15 @@ html, body {
   width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 8px !important;
 }
 
-/* 4. 개별 채팅 박스 (터미널 스타일) */
+/* 4. 개별 채팅 박스 (칠판 분필 스타일) */
 .chat_div {
   animation: slideUpFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-  background: rgba(0, 10, 0, 0.85) !important;
-  border: 1px solid rgba(0, 255, 0, 0.2) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15) !important;
   border-radius: 0 !important;
   padding: 8px 10px !important;
   width: 100% !important;
@@ -54,29 +60,23 @@ html, body {
 
 /* 5. 닉네임과 플랫폼 아이콘 영역 */
 .chat_text_nickname {
-  font-family: 'RoundedFixedsys', monospace !important;
+  font-family: 'SchoolSafetyChalkboardEraser', sans-serif !important;
   font-size: 14px !important;
-  font-weight: normal !important;
-  color: #00ff00 !important;
-  text-shadow: 0 0 4px rgba(0, 255, 0, 0.6) !important;
+  font-weight: 700 !important;
+  color: #ffe066 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
   display: flex !important;
   align-items: center !important;
-  margin-bottom: 2px !important;
-}
-
-/* 닉네임 앞 프롬프트 기호 */
-.chat_text_nickname::before {
-  content: '> ' !important;
-  color: #00ff00 !important;
+  margin-bottom: 3px !important;
 }
 
 /* 6. 메시지 내용 */
 .chat_text_message {
-  font-family: 'RoundedFixedsys', monospace !important;
-  font-size: 14px !important;
-  color: #00cc00 !important;
-  line-height: 1.4 !important;
-  text-shadow: 0 0 3px rgba(0, 255, 0, 0.4) !important;
+  font-family: 'SchoolSafetyChalkboardEraser', sans-serif !important;
+  font-size: 15px !important;
+  color: #f0f0f0 !important;
+  line-height: 1.5 !important;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3) !important;
   word-break: break-word !important;
   background-color: transparent !important;
   padding: 0 !important;

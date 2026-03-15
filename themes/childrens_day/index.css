@@ -1,6 +1,6 @@
 /*
- * Retro Terminal Theme
- * 고전 컴퓨터 터미널 스타일 테마
+ * Children's Day Theme
+ * 어린이날 컨셉 손글씨 테마
  */
 
 /* 1. 배경 및 기본 폰트 초기화 */
@@ -37,46 +37,49 @@ html, body {
   width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 10px !important;
 }
 
-/* 4. 개별 채팅 박스 (터미널 스타일) */
+/* 4. 개별 채팅 박스 (어린이날 컨셉) */
 .chat_div {
-  animation: slideUpFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-  background: rgba(0, 10, 0, 0.85) !important;
-  border: 1px solid rgba(0, 255, 0, 0.2) !important;
-  border-radius: 0 !important;
-  padding: 8px 10px !important;
+  animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffe0b2 50%, #ffccbc 100%) !important;
+  border: 2px solid #ff8a65 !important;
+  border-radius: 16px !important;
+  padding: 10px 14px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   max-height: none !important;
+  box-shadow: 2px 3px 0 rgba(255, 138, 101, 0.4) !important;
+  position: relative !important;
+}
+
+/* 색종이 느낌 장식 */
+.chat_div::after {
+  content: '🎈' !important;
+  position: absolute !important;
+  top: -6px !important;
+  right: 8px !important;
+  font-size: 14px !important;
 }
 
 /* 5. 닉네임과 플랫폼 아이콘 영역 */
 .chat_text_nickname {
-  font-family: 'RoundedFixedsys', monospace !important;
+  font-family: 'KyoboHandwriting2019', sans-serif !important;
   font-size: 14px !important;
   font-weight: normal !important;
-  color: #00ff00 !important;
-  text-shadow: 0 0 4px rgba(0, 255, 0, 0.6) !important;
+  color: #e65100 !important;
   display: flex !important;
   align-items: center !important;
-  margin-bottom: 2px !important;
-}
-
-/* 닉네임 앞 프롬프트 기호 */
-.chat_text_nickname::before {
-  content: '> ' !important;
-  color: #00ff00 !important;
+  margin-bottom: 3px !important;
 }
 
 /* 6. 메시지 내용 */
 .chat_text_message {
-  font-family: 'RoundedFixedsys', monospace !important;
-  font-size: 14px !important;
-  color: #00cc00 !important;
-  line-height: 1.4 !important;
-  text-shadow: 0 0 3px rgba(0, 255, 0, 0.4) !important;
+  font-family: 'KyoboHandwriting2019', sans-serif !important;
+  font-size: 16px !important;
+  color: #4e342e !important;
+  line-height: 1.5 !important;
   word-break: break-word !important;
   background-color: transparent !important;
   padding: 0 !important;
@@ -94,14 +97,14 @@ html, body {
 }
 .chat_platform_none { display: none !important; }
 
-/* 8. 부드럽게 올라오는 애니메이션 */
-@keyframes slideUpFadeIn {
+/* 8. 톡톡 튀는 애니메이션 */
+@keyframes popIn {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    transform: scale(0.8) translateY(15px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
 }

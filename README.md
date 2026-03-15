@@ -80,3 +80,29 @@ URL 파라미터를 직접 입력하지 않고도 아래 설정 페이지에서 
 | `gaming` | 네온 글로우 게이밍 스타일 |
 | `memo` | 메모지 / 포스트잇 스타일 |
 | `retro_terminal` | 고전 컴퓨터 터미널 스타일 |
+| `chalkboard` | 학교 분필 칠판 스타일 |
+| `oneline` | 뱃지·닉네임·채팅 한 줄 표시 스타일 |
+| `kakaotalk` | 카카오톡 메신저 스타일 |
+| `childrens_day` | 어린이날 손글씨 스타일 |
+| `neon_sign` | 투명 배경 네온사인 스타일 |
+
+### 폰트 설정
+
+테마 기본 폰트를 유지하거나, `fontOverride` 파라미터를 사용해 다른 폰트로 변경할 수 있습니다.
+
+| 파라미터 | 설명 | 기본값 | 예시 |
+|---|---|---|---|
+| `fontOverride` | 테마 폰트를 덮어씌울 폰트 키 | _(없음 = 테마 기본)_ | `fontOverride=Pretendard` |
+
+#### 사용 가능한 폰트 목록
+
+| 폰트 키 | 표시 이름 |
+|---|---|
+| `default` | 테마 기본 |
+| `RoundedFixedsys` | 둥근모꼴+ Fixedsys |
+| `SchoolSafetyChalkboardEraser` | 학교안심 칠판지우개 |
+| `KyoboHandwriting2019` | 교보손글씨 2019 |
+| `GMarketSans` | G마켓 산스 |
+| `Pretendard` | 프리텐다드 |
+| `NanumSquare` | 나눔스퀘어 |
+| `TtangsBudaeJjigae` | 땅스부대찌개 |

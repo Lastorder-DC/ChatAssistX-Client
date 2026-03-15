@@ -385,6 +385,17 @@ function CIME_replaceEmoticon(message) {
 }
 
 /**
+ * 채팅 컨테이너를 맨 아래로 스크롤
+ * @returns void
+ */
+function scrollChatToBottom() {
+    var wrapper = document.querySelector('.chat_wrapper');
+    if (wrapper) {
+        wrapper.scrollTop = wrapper.scrollHeight;
+    }
+}
+
+/**
  * 테마 적용 함수
  * @param {String} themeValue - 테마 이름, 외부 CSS URL, 또는 초기화 키워드
  * @param {Boolean} showMessage - 채팅 메시지로 결과를 표시할지 여부
@@ -398,7 +409,6 @@ function applyTheme(themeValue, showMessage) {
 
     if(themeValue === "초기화" || themeValue === "없음" || themeValue === "제거") {
         if(showMessage) addChatMessage("warning", "테마 변경 알림", "테마가 초기화되었습니다.", true, false);
-        return true;
     } else if(themeValue.startsWith("http://") || themeValue.startsWith("https://")) {
         // 외부 CSS URL인 경우 .css 확장자만 허용
         var cssUrl = themeValue.split("?")[0].split("#")[0];
@@ -408,7 +418,6 @@ function applyTheme(themeValue, showMessage) {
         }
         $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue }));
         if(showMessage) addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
-        return true;
     } else {
         // 로컬 테마 이름인 경우 themes 폴더에서 불러옴
         var themeName = themeValue.replace(/[^a-zA-Z0-9_-]/g, "");
@@ -418,8 +427,10 @@ function applyTheme(themeValue, showMessage) {
         }
         $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' }));
         if(showMessage) addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
-        return true;
     }
+
+    scrollChatToBottom();
+    return true;
 }
 
 // 폰트 오버라이드에 사용 가능한 폰트 목록
@@ -528,17 +539,6 @@ function updateStyle() {
 }
 
 /**
- * 채팅 컨테이너를 맨 아래로 스크롤
- * @returns void
- */
-function scrollChatToBottom() {
-    var wrapper = document.querySelector('.chat_wrapper');
-    if (wrapper) {
-        wrapper.scrollTop = wrapper.scrollHeight;
-    }
-}
-
-/**
  * 봇 채팅 필터링 함수
  * 필터링 대상 닉네임이면 true 반환
  * @param {String} nickname
@@ -620,24 +620,8 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
             platform = "none";
         }
 
-        // 유튜브 이모지 마커를 replaceStyle에서 보호하기 위해 임시 치환
-        // (이모지 URL에 -- 등 replaceStyle에서 변환하는 패턴이 포함될 수 있음)
-        var ytEmojiPlaceholders = [];
-        if(platform == "youtube") {
-            message = message.replace(/\[yt-emoji:(https?:\/\/[^\]]+)\]/g, function(match) {
-                var idx = ytEmojiPlaceholders.length;
-                ytEmojiPlaceholders.push(match);
-                return '\x00YTEMOJI' + idx + '\x00';
-            });
-        }
-
         //기본문법 변환
         message = replaceStyle(message);
-
-        // 유튜브 이모지 마커 복원
-        for(var i = 0; i < ytEmojiPlaceholders.length; i++) {
-            message = message.replace('\x00YTEMOJI' + i + '\x00', ytEmojiPlaceholders[i]);
-        }
 
         // 금지어 치환
         for(var key in window.config.replace) {

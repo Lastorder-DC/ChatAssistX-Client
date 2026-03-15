@@ -158,9 +158,9 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
                 var message = data.message || "";
                 // emojiMap이 있으면 이모지 키를 실제 URL로 치환
                 if(data.emojiMap) {
-                    for(var key in data.emojiMap) {
-                        message = message.split('[yt-emoji:' + key + ']').join('[yt-emoji:' + data.emojiMap[key] + ']');
-                    }
+                    message = message.replace(/\[yt-emoji:([^\]]+)\]/g, function(match, key) {
+                        return data.emojiMap[key] ? '[yt-emoji:' + data.emojiMap[key] + ']' : match;
+                    });
                 }
                 if (data.type === "superchat" && data.amount) {
                     message = "[" + data.amount + "] " + message;

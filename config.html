@@ -204,6 +204,106 @@
         </div>
     </div>
 
+    <!-- 스타일 설정 -->
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            <span class="section-icon">🎨</span> 스타일 설정
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check form-switch py-2">
+                        <input class="form-check-input cfg" type="checkbox" id="platformIcon" checked>
+                        <label class="form-check-label" for="platformIcon">
+                            플랫폼 아이콘 표시
+                            <div class="form-text mt-0">채팅 메시지 옆에 플랫폼 아이콘을 표시합니다</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch py-2">
+                        <input class="form-check-input cfg" type="checkbox" id="debug">
+                        <label class="form-check-label" for="debug">
+                            디버그 모드
+                            <div class="form-text mt-0">디버그 정보를 출력합니다</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="platform" class="form-label">플랫폼 필터</label>
+                    <select class="form-select cfg" id="platform">
+                        <option value="all" selected>전체 (all)</option>
+                        <option value="twitch">Twitch</option>
+                        <option value="kick">Kick</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="naver">치지직 (Chzzk)</option>
+                        <option value="cime">ci.me</option>
+                    </select>
+                    <div class="form-text">표시할 플랫폼을 선택합니다</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="animation" class="form-label">채팅 애니메이션</label>
+                    <select class="form-select cfg" id="animation">
+                        <option value="fade" selected>페이드 (fade)</option>
+                        <option value="slide">슬라이드 (slide)</option>
+                        <option value="none">없음 (none)</option>
+                    </select>
+                    <div class="form-text">채팅 메시지 등장 애니메이션</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="chatFade" class="form-label">채팅 사라짐 시간 (초)</label>
+                    <input type="number" class="form-control cfg" id="chatFade" value="30" min="0">
+                    <div class="form-text">채팅이 사라지는 시간 (0 = 사라지지 않음, 기본: 30)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="font" class="form-label">폰트</label>
+                    <input type="text" class="form-control cfg" id="font" placeholder="sans-serif">
+                    <div class="form-text">채팅에 사용할 폰트 (기본: sans-serif)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="fontUsernameSize" class="form-label">닉네임 글자 크기 (px)</label>
+                    <input type="number" class="form-control cfg" id="fontUsernameSize" value="14" min="1">
+                    <div class="form-text">닉네임 글자 크기 (기본: 14)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="fontUsernameColor" class="form-label">닉네임 글자 색상 (R, G, B)</label>
+                    <input type="text" class="form-control cfg" id="fontUsernameColor" placeholder="255, 255, 255">
+                    <div class="form-text">닉네임 글자 색상 (기본: 255, 255, 255)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="fontChatSize" class="form-label">채팅 글자 크기 (px)</label>
+                    <input type="number" class="form-control cfg" id="fontChatSize" value="16" min="1">
+                    <div class="form-text">채팅 글자 크기 (기본: 16)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="fontChatColor" class="form-label">채팅 글자 색상 (R, G, B)</label>
+                    <input type="text" class="form-control cfg" id="fontChatColor" placeholder="255, 255, 255">
+                    <div class="form-text">채팅 글자 색상 (기본: 255, 255, 255)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="backgroundColor" class="form-label">배경 색상 (R, G, B)</label>
+                    <input type="text" class="form-control cfg" id="backgroundColor" placeholder="255, 255, 255">
+                    <div class="form-text">전체 배경 색상 (기본: 255, 255, 255)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="backgroundAlpha" class="form-label">배경 투명도</label>
+                    <input type="number" class="form-control cfg" id="backgroundAlpha" value="0" min="0" max="1" step="0.05">
+                    <div class="form-text">전체 배경 투명도 (0 = 투명, 1 = 불투명, 기본: 0)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="chatBackgroundColor" class="form-label">채팅 배경 색상 (R, G, B)</label>
+                    <input type="text" class="form-control cfg" id="chatBackgroundColor" placeholder="255, 255, 255">
+                    <div class="form-text">개별 채팅 배경 색상 (기본: 255, 255, 255)</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="chatBackgroundAlpha" class="form-label">채팅 배경 투명도</label>
+                    <input type="number" class="form-control cfg" id="chatBackgroundAlpha" value="0.25" min="0" max="1" step="0.05">
+                    <div class="form-text">개별 채팅 배경 투명도 (0 = 투명, 1 = 불투명, 기본: 0.25)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 익명화 설정 -->
     <div class="card mb-3">
         <div class="card-header fw-semibold">
@@ -300,6 +400,21 @@
         { id: 'TwitchEmoticonMode', type: 'select', defaultVal: 'light' },
         // Filtering
         { id: 'ignoreNickname', type: 'text', defaultVal: 'nightbot,twipkr' },
+        // Style
+        { id: 'platformIcon', type: 'bool-default-true' },
+        { id: 'platform', type: 'select', defaultVal: 'all' },
+        { id: 'animation', type: 'select', defaultVal: 'fade' },
+        { id: 'chatFade', type: 'number', defaultVal: 30 },
+        { id: 'font', type: 'text', defaultVal: 'sans-serif' },
+        { id: 'fontUsernameSize', type: 'number', defaultVal: 14 },
+        { id: 'fontUsernameColor', type: 'text', defaultVal: '255, 255, 255' },
+        { id: 'fontChatSize', type: 'number', defaultVal: 16 },
+        { id: 'fontChatColor', type: 'text', defaultVal: '255, 255, 255' },
+        { id: 'backgroundColor', type: 'text', defaultVal: '255, 255, 255' },
+        { id: 'backgroundAlpha', type: 'float', defaultVal: 0 },
+        { id: 'chatBackgroundColor', type: 'text', defaultVal: '255, 255, 255' },
+        { id: 'chatBackgroundAlpha', type: 'float', defaultVal: 0.25 },
+        { id: 'debug', type: 'bool-default-false' },
         // Anonymization
         { id: 'anon', type: 'bool-default-false' },
         { id: 'anon_nickname', type: 'text' },
@@ -341,6 +456,11 @@
                 var numVal = parseInt(el.value, 10);
                 if (!isNaN(numVal) && numVal !== (p.defaultVal || 0)) {
                     url.searchParams.set(p.id, numVal.toString());
+                }
+            } else if (p.type === 'float') {
+                var floatVal = parseFloat(el.value);
+                if (!isNaN(floatVal) && floatVal !== (p.defaultVal !== undefined ? p.defaultVal : 0)) {
+                    url.searchParams.set(p.id, floatVal.toString());
                 }
             } else if (p.type === 'select') {
                 if (el.value !== p.defaultVal) {
@@ -412,7 +532,7 @@
             var el = getEl(p.id);
             if (!el) continue;
 
-            if (p.type === 'text' || p.type === 'number' || p.type === 'select') {
+            if (p.type === 'text' || p.type === 'number' || p.type === 'float' || p.type === 'select') {
                 el.value = val;
             } else if (p.type === 'bool-default-true') {
                 el.checked = val !== 'false';

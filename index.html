@@ -59,6 +59,23 @@
         // 비울경우 {}로 대체
         window.config.replace = convertStringToObject(url.searchParams.get("replace")) // 입력예 금지표현1|바꿀표현1,금지표현2|바꿀표현ㅁㅁ,금지331|ㅁㄴㅇㄹ
         
+        // 스타일 설정 (def_config 오버라이드)
+        window.config.chat = {};
+        if(url.searchParams.get("platformIcon") !== null) window.config.chat.platformIcon = url.searchParams.get("platformIcon") != "false";
+        if(url.searchParams.get("platform") !== null) window.config.chat.platform = url.searchParams.get("platform");
+        if(url.searchParams.get("animation") !== null) window.config.chat.animation = url.searchParams.get("animation");
+        if(url.searchParams.get("chatFade") !== null) window.config.chat.chatFade = parseInt(url.searchParams.get("chatFade"));
+        if(url.searchParams.get("font") !== null) window.config.chat.font = url.searchParams.get("font");
+        if(url.searchParams.get("fontUsernameSize") !== null) window.config.chat.fontUsernameSize = parseInt(url.searchParams.get("fontUsernameSize"));
+        if(url.searchParams.get("fontUsernameColor") !== null) window.config.chat.fontUsernameColor = url.searchParams.get("fontUsernameColor");
+        if(url.searchParams.get("fontChatSize") !== null) window.config.chat.fontChatSize = parseInt(url.searchParams.get("fontChatSize"));
+        if(url.searchParams.get("fontChatColor") !== null) window.config.chat.fontChatColor = url.searchParams.get("fontChatColor");
+        if(url.searchParams.get("backgroundColor") !== null) window.config.chat.backgroundColor = url.searchParams.get("backgroundColor");
+        if(url.searchParams.get("backgroundAlpha") !== null) window.config.chat.backgroundAlpha = parseFloat(url.searchParams.get("backgroundAlpha"));
+        if(url.searchParams.get("chatBackgroundColor") !== null) window.config.chat.chatBackgroundColor = url.searchParams.get("chatBackgroundColor");
+        if(url.searchParams.get("chatBackgroundAlpha") !== null) window.config.chat.chatBackgroundAlpha = parseFloat(url.searchParams.get("chatBackgroundAlpha"));
+        if(url.searchParams.get("debug") !== null) window.config.chat.debug = url.searchParams.get("debug") == "true";
+
         // 익명화 설정
         // 방송에 표시되는 닉네임만 익명화할수 있습니다.
         window.config.anon = url.searchParams.get("anon") == "true"; // 익명 사용시 true
@@ -72,7 +89,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.2/jquery-ui.min.css">
     <script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.7/dist/handlebars.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/Lastorder-DC/referrer-killer@84a087203af378c45782a406a58ad2d588ae36c2/referrer-killer.js"></script>
-    <script src="./js/chatassist.js?ver=20260313"></script>
+    <script src="./js/chatassist.js?ver=20260315"></script>
 
     <!-- TODO : Replace below to local one -->
     <link rel="stylesheet" href="https://assets.chatassistx.cc/css/jsassist.css?ver=20260315" type="text/css"/>

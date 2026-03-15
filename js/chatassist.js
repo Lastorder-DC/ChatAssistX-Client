@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.16.7
- *       Last updated by Lastorder-DC on 2026-03-14.
+ *                 V E R S I O N    1.16.8
+ *       Last updated by Lastorder-DC on 2026-03-15.
  */
 // 변수 초기화
 window.chat = {};
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.16.7";
+window.chat.version = "1.16.8";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;

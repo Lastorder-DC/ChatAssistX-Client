@@ -39,7 +39,7 @@ ChatAssistX 클라이언트 URL에 다음 파라미터를 추가합니다:
 ### 예시
 
 ```
-https://chatassistx.vercel.app/?ytChannel=@YouTubeHandle&ytServer=your-domain.com
+https://chatassistx.cc/?ytChannel=@YouTubeHandle&ytServer=your-domain.com
 ```
 
 ### nginx 설정 (Ubuntu 24.04)

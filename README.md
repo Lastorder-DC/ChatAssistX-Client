@@ -4,7 +4,7 @@
 
 URL 파라미터를 직접 입력하지 않고도 아래 설정 페이지에서 간편하게 설정할 수 있습니다.
 
-**설정 페이지 주소 : https://chatassistx.vercel.app/config.html**
+**설정 페이지 주소 : https://chatassistx.cc/config.html**
 
 설정을 완료하면 생성된 URL을 복사하여 OBS 등의 브라우저 소스에 붙여넣으면 됩니다.
 

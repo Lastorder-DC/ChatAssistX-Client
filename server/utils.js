@@ -117,7 +117,6 @@ function resolveEmojiMap(text, emojiMap) {
 module.exports = {
     PROGRAM_VERSION,
     EMOJI_MAP_MIN_VERSION,
-    ALLOWED_ORIGINS,
     isAllowedOrigin,
     processMessageRuns,
     supportsEmojiMap,

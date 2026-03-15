@@ -71,6 +71,9 @@ window.config.chat.chatBackgroundColor = url.searchParams.get("chatBackgroundCol
 window.config.chat.chatBackgroundAlpha = url.searchParams.get("chatBackgroundAlpha") !== null ? parseFloat(url.searchParams.get("chatBackgroundAlpha")) : 0.25;
 window.config.chat.debug = url.searchParams.get("debug") !== null ? url.searchParams.get("debug") == "true" : false;
 
+// 테마 설정
+window.config.theme = url.searchParams.get("theme") !== null ? url.searchParams.get("theme") : "";
+
 // 익명화 설정
 // 방송에 표시되는 닉네임만 익명화할수 있습니다.
 window.config.anon = url.searchParams.get("anon") == "true"; // 익명 사용시 true

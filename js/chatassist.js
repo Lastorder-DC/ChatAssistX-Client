@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.16.8
+ *                 V E R S I O N    1.16.9
  *       Last updated by Lastorder-DC on 2026-03-15.
  */
 // 변수 초기화
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.16.8";
+window.chat.version = "1.16.9";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -387,6 +387,44 @@ function CIME_replaceEmoticon(message) {
 }
 
 /**
+ * 테마 적용 함수
+ * @param {String} themeValue - 테마 이름, 외부 CSS URL, 또는 초기화 키워드
+ * @param {Boolean} showMessage - 채팅 메시지로 결과를 표시할지 여부
+ * @returns {Boolean} 테마 적용 성공 여부
+ */
+function applyTheme(themeValue, showMessage) {
+    if(!themeValue) return false;
+
+    // 기존 테마 스타일시트 제거
+    $("#chatassistx-theme").remove();
+
+    if(themeValue === "초기화" || themeValue === "없음" || themeValue === "제거") {
+        if(showMessage) addChatMessage("warning", "테마 변경 알림", "테마가 초기화되었습니다.", true, false);
+        return true;
+    } else if(themeValue.startsWith("http://") || themeValue.startsWith("https://")) {
+        // 외부 CSS URL인 경우 .css 확장자만 허용
+        var cssUrl = themeValue.split("?")[0].split("#")[0];
+        if(!cssUrl.toLowerCase().endsWith(".css")) {
+            if(showMessage) addChatMessage("warning", "테마 변경 알림", "CSS 파일만 불러올 수 있습니다. (.css 확장자 필요)", true, false);
+            return false;
+        }
+        $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="' + themeValue + '">');
+        if(showMessage) addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
+        return true;
+    } else {
+        // 로컬 테마 이름인 경우 themes 폴더에서 불러옴
+        var themeName = themeValue.replace(/[^a-zA-Z0-9_-]/g, "");
+        if(!themeName) {
+            if(showMessage) addChatMessage("warning", "테마 변경 알림", "올바른 테마 이름을 입력해주세요.", true, false);
+            return false;
+        }
+        $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="./themes/' + themeName + '/index.css">');
+        if(showMessage) addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
+        return true;
+    }
+}
+
+/**
  * 명령어 변환 함수
  * @param {String} match
  * @param {String} command
@@ -436,31 +474,7 @@ function replaceCommand(match, command, commandarg, offset) {
         case "테마":
             message = commandarg.replace("~테마", "").trim();
             if(!message) return match;
-
-            // 기존 테마 스타일시트 제거
-            $("#chatassistx-theme").remove();
-
-            if(message === "초기화" || message === "없음" || message === "제거") {
-                addChatMessage("warning", "테마 변경 알림", "테마가 초기화되었습니다.", true, false);
-            } else if(message.startsWith("http://") || message.startsWith("https://")) {
-                // 외부 CSS URL인 경우 .css 확장자만 허용
-                var cssUrl = message.split("?")[0].split("#")[0];
-                if(!cssUrl.toLowerCase().endsWith(".css")) {
-                    addChatMessage("warning", "테마 변경 알림", "CSS 파일만 불러올 수 있습니다. (.css 확장자 필요)", true, false);
-                } else {
-                    $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="' + message + '">');
-                    addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
-                }
-            } else {
-                // 로컬 테마 이름인 경우 themes 폴더에서 불러옴
-                var themeName = message.replace(/[^a-zA-Z0-9_-]/g, "");
-                if(!themeName) {
-                    addChatMessage("warning", "테마 변경 알림", "올바른 테마 이름을 입력해주세요.", true, false);
-                    break;
-                }
-                $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="./themes/' + themeName + '/index.css">');
-                addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
-            }
+            applyTheme(message, true);
             break;
         default:
             return match;
@@ -1324,4 +1338,9 @@ function requestAuthorizationCode() {
 $(document).ready(function() {
     CompileChat();
     LoadEmoticon();
+
+    // searchParams에서 설정된 테마 적용
+    if(window.config.theme) {
+        applyTheme(window.config.theme, false);
+    }
 });

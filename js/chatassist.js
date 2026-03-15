@@ -408,7 +408,7 @@ function applyTheme(themeValue, showMessage) {
             if(showMessage) addChatMessage("warning", "테마 변경 알림", "CSS 파일만 불러올 수 있습니다. (.css 확장자 필요)", true, false);
             return false;
         }
-        $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="' + themeValue + '">');
+        $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue }));
         if(showMessage) addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
         return true;
     } else {
@@ -418,7 +418,7 @@ function applyTheme(themeValue, showMessage) {
             if(showMessage) addChatMessage("warning", "테마 변경 알림", "올바른 테마 이름을 입력해주세요.", true, false);
             return false;
         }
-        $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="./themes/' + themeName + '/index.css">');
+        $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' }));
         if(showMessage) addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
         return true;
     }

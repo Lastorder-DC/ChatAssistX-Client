@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.17.1
- *       Last updated by Lastorder-DC on 2026-03-15.
+ *                 V E R S I O N    1.17.2
+ *       Last updated by Lastorder-DC on 2026-03-16.
  */
 // 변수 초기화
 window.chat = {};
@@ -20,7 +20,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.17.1";
+window.chat.version = "1.17.2";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -416,7 +416,13 @@ function applyTheme(themeValue, showMessage) {
             if(showMessage) addChatMessage("warning", "테마 변경 알림", "CSS 파일만 불러올 수 있습니다. (.css 확장자 필요)", true, false);
             return false;
         }
-        $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue }));
+        
+        var $link = $('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue });
+        $link.on('load', function() {
+            scrollChatToBottom();
+        });
+        
+        $("head").append($link);
         if(showMessage) addChatMessage("info", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
     } else {
         // 로컬 테마 이름인 경우 themes 폴더에서 불러옴
@@ -425,11 +431,16 @@ function applyTheme(themeValue, showMessage) {
             if(showMessage) addChatMessage("warning", "테마 변경 알림", "올바른 테마 이름을 입력해주세요.", true, false);
             return false;
         }
-        $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' }));
+        
+        var $link = $('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' });
+        $link.on('load', function() {
+            scrollChatToBottom();
+        });
+        
+        $("head").append($link);
         if(showMessage) addChatMessage("info", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
     }
-
-    if(showMessage) addChatMessage("info", "명령어 사용", "< 테마 변경 명령어 사용 >", false, false);
+    
     return true;
 }
 

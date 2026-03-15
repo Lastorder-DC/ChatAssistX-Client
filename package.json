@@ -1,6 +1,6 @@
 {
   "name": "chatassistx-client",
-  "version": "1.16.6",
+  "version": "1.16.7",
   "private": true,
   "description": "ChatAssistX Client",
   "scripts": {
@@ -8,7 +8,9 @@
     "test:all": "npm test && cd server && npm test"
   },
   "jest": {
-    "roots": ["js/"]
+    "roots": [
+      "js/"
+    ]
   },
   "devDependencies": {
     "jest": "^29.7.0",

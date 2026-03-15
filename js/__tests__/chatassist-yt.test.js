@@ -52,7 +52,8 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
 
         window.chat = {
             isInited: false,
-            _pendingPlatforms: new Set(['youtube'])
+            _pendingPlatforms: new Set(['youtube']),
+            version: '1.16.7'
         };
 
         // Mock _markPlatformConnected
@@ -120,7 +121,8 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
                     console.log("YouTube: Retrying channel connection...");
                     window.ytsocket.socket.send(JSON.stringify({
                         type: "connect",
-                        channel: ytChannel
+                        channel: ytChannel,
+                        version: window.chat.version
                     }));
                 }
             }, 30000);
@@ -150,7 +152,8 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
                 console.log("YouTube relay server version:", data.message);
                 window.ytsocket.socket.send(JSON.stringify({
                     type: "connect",
-                    channel: ytChannel
+                    channel: ytChannel,
+                    version: window.chat.version
                 }));
             } else if (data.type === "pong") {
                 // ping 응답 수신 - 별도 처리 불필요
@@ -229,7 +232,8 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             expect(sentMessages.length).toBe(1);
             expect(sentMessages[0]).toEqual({
                 type: 'connect',
-                channel: '@testchannel'
+                channel: '@testchannel',
+                version: '1.16.7'
             });
         });
 

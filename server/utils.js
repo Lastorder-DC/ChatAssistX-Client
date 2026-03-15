@@ -1,4 +1,7 @@
-const PROGRAM_VERSION = "1.1.4";
+const PROGRAM_VERSION = "1.1.5";
+
+// 이모지 맵핑을 지원하는 최소 클라이언트 버전
+const EMOJI_MAP_MIN_VERSION = "1.16.7";
 
 // 허용된 Origin 도메인 목록
 const ALLOWED_ORIGINS = [
@@ -67,9 +70,52 @@ function processMessageRuns(message) {
     return { text, emojiMap };
 }
 
+/**
+ * 시맨틱 버전 문자열을 비교한다.
+ * v1 >= v2 이면 true, 아니면 false를 반환한다.
+ */
+function isVersionAtLeast(v1, v2) {
+    if (!v1 || !v2) return false;
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+    const len = Math.max(parts1.length, parts2.length);
+    for (let i = 0; i < len; i++) {
+        const a = parts1[i] || 0;
+        const b = parts2[i] || 0;
+        if (a > b) return true;
+        if (a < b) return false;
+    }
+    return true; // equal
+}
+
+/**
+ * 클라이언트 버전이 이모지 맵핑을 지원하는지 확인한다.
+ * @param {string|undefined} clientVersion
+ * @returns {boolean}
+ */
+function supportsEmojiMap(clientVersion) {
+    return isVersionAtLeast(clientVersion, EMOJI_MAP_MIN_VERSION);
+}
+
+/**
+ * 이모지 맵의 키를 실제 URL로 치환하여 레거시 형식의 텍스트를 반환한다.
+ * @param {string} text - [yt-emoji:key] 형식의 텍스트
+ * @param {Object<string, string>} emojiMap - 키-URL 매핑
+ * @returns {string} - [yt-emoji:URL] 형식의 텍스트
+ */
+function resolveEmojiMap(text, emojiMap) {
+    if (!emojiMap || Object.keys(emojiMap).length === 0) return text;
+    return text.replace(/\[yt-emoji:([^\]]+)\]/g, (match, key) => {
+        return emojiMap[key] ? `[yt-emoji:${emojiMap[key]}]` : match;
+    });
+}
+
 module.exports = {
     PROGRAM_VERSION,
+    EMOJI_MAP_MIN_VERSION,
     ALLOWED_ORIGINS,
     isAllowedOrigin,
-    processMessageRuns
+    processMessageRuns,
+    supportsEmojiMap,
+    resolveEmojiMap
 };

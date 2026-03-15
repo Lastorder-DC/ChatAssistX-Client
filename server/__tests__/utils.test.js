@@ -1,4 +1,4 @@
-const { isAllowedOrigin, processMessageRuns, ALLOWED_ORIGINS, PROGRAM_VERSION } = require('../utils');
+const { isAllowedOrigin, processMessageRuns, ALLOWED_ORIGINS, PROGRAM_VERSION, EMOJI_MAP_MIN_VERSION, supportsEmojiMap, resolveEmojiMap } = require('../utils');
 
 describe('PROGRAM_VERSION', () => {
     test('should be a non-empty version string', () => {
@@ -211,5 +211,80 @@ describe('processMessageRuns', () => {
             e0: 'https://example.com/~~test~~/emoji.png',
             e1: 'https://example.com/__test__/emoji.png'
         });
+    });
+});
+
+describe('supportsEmojiMap', () => {
+    test('should return false for null/undefined version', () => {
+        expect(supportsEmojiMap(null)).toBe(false);
+        expect(supportsEmojiMap(undefined)).toBe(false);
+    });
+
+    test('should return false for empty string version', () => {
+        expect(supportsEmojiMap('')).toBe(false);
+    });
+
+    test('should return false for version below minimum', () => {
+        expect(supportsEmojiMap('1.16.6')).toBe(false);
+        expect(supportsEmojiMap('1.15.0')).toBe(false);
+        expect(supportsEmojiMap('1.0.0')).toBe(false);
+        expect(supportsEmojiMap('0.99.99')).toBe(false);
+    });
+
+    test('should return true for exact minimum version', () => {
+        expect(supportsEmojiMap('1.16.7')).toBe(true);
+    });
+
+    test('should return true for versions above minimum', () => {
+        expect(supportsEmojiMap('1.16.8')).toBe(true);
+        expect(supportsEmojiMap('1.17.0')).toBe(true);
+        expect(supportsEmojiMap('2.0.0')).toBe(true);
+    });
+});
+
+describe('resolveEmojiMap', () => {
+    test('should return text unchanged when emojiMap is empty', () => {
+        expect(resolveEmojiMap('Hello world', {})).toBe('Hello world');
+    });
+
+    test('should return text unchanged when emojiMap is null', () => {
+        expect(resolveEmojiMap('Hello world', null)).toBe('Hello world');
+    });
+
+    test('should resolve emoji keys to full URLs', () => {
+        const text = 'Hi [yt-emoji:e0] there';
+        const emojiMap = { e0: 'https://example.com/emoji.png' };
+        expect(resolveEmojiMap(text, emojiMap)).toBe('Hi [yt-emoji:https://example.com/emoji.png] there');
+    });
+
+    test('should resolve duplicate emoji keys to same URL', () => {
+        const url = 'https://yt3.ggpht.com/emoji.png';
+        const text = '[yt-emoji:e0][yt-emoji:e0][yt-emoji:e0]';
+        const emojiMap = { e0: url };
+        expect(resolveEmojiMap(text, emojiMap)).toBe(
+            `[yt-emoji:${url}][yt-emoji:${url}][yt-emoji:${url}]`
+        );
+    });
+
+    test('should resolve multiple different keys', () => {
+        const text = '[yt-emoji:e0] text [yt-emoji:e1]';
+        const emojiMap = { e0: 'https://example.com/e1.png', e1: 'https://example.com/e2.png' };
+        expect(resolveEmojiMap(text, emojiMap)).toBe(
+            '[yt-emoji:https://example.com/e1.png] text [yt-emoji:https://example.com/e2.png]'
+        );
+    });
+
+    test('should leave unknown keys unchanged', () => {
+        const text = '[yt-emoji:e0] [yt-emoji:e99]';
+        const emojiMap = { e0: 'https://example.com/e1.png' };
+        expect(resolveEmojiMap(text, emojiMap)).toBe(
+            '[yt-emoji:https://example.com/e1.png] [yt-emoji:e99]'
+        );
+    });
+
+    test('should return text without emoji markers unchanged', () => {
+        const text = 'Hello world no emojis';
+        const emojiMap = { e0: 'https://example.com/emoji.png' };
+        expect(resolveEmojiMap(text, emojiMap)).toBe('Hello world no emojis');
     });
 });

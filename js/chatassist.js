@@ -433,6 +433,32 @@ function replaceCommand(match, command, commandarg, offset) {
             // 고정 메세지로 출력
             addChatMessage("warning", "설정 변경 알림", message, true, false);
             break;
+        case "테마":
+            message = commandarg.replace("~테마", "").trim();
+            if(!message) return match;
+
+            // 기존 테마 스타일시트 제거
+            $("#chatassistx-theme").remove();
+
+            if(message === "초기화" || message === "없음" || message === "제거") {
+                addChatMessage("warning", "테마 변경 알림", "테마가 초기화되었습니다.", true, false);
+            } else if(message.startsWith("http://") || message.startsWith("https://")) {
+                // 외부 CSS URL인 경우 .css 확장자만 허용
+                var cssUrl = message.split("?")[0].split("#")[0];
+                if(!cssUrl.toLowerCase().endsWith(".css")) {
+                    addChatMessage("warning", "테마 변경 알림", "CSS 파일만 불러올 수 있습니다. (.css 확장자 필요)", true, false);
+                } else {
+                    $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="' + message + '">');
+                    addChatMessage("warning", "테마 변경 알림", "외부 테마가 적용되었습니다.", true, false);
+                }
+            } else {
+                // 로컬 테마 이름인 경우 themes 폴더에서 불러옴
+                var themeName = message.replace(/[^a-zA-Z0-9_-]/g, "");
+                if(!themeName) return match;
+                $("head").append('<link id="chatassistx-theme" rel="stylesheet" type="text/css" href="./themes/' + themeName + '/index.css">');
+                addChatMessage("warning", "테마 변경 알림", "테마 '" + themeName + "'이(가) 적용되었습니다.", true, false);
+            }
+            break;
         default:
             return match;
     }

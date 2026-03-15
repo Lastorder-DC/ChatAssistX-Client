@@ -74,6 +74,9 @@ window.config.chat.debug = url.searchParams.get("debug") !== null ? url.searchPa
 // 테마 설정
 window.config.theme = url.searchParams.get("theme") !== null ? url.searchParams.get("theme") : "";
 
+// 폰트 오버라이드 설정 (테마 기본 폰트를 덮어씌움)
+window.config.fontOverride = url.searchParams.get("fontOverride") !== null ? url.searchParams.get("fontOverride") : "";
+
 // 익명화 설정
 // 방송에 표시되는 닉네임만 익명화할수 있습니다.
 window.config.anon = url.searchParams.get("anon") == "true"; // 익명 사용시 true

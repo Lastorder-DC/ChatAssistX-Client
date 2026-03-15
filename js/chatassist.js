@@ -424,6 +424,33 @@ function applyTheme(themeValue, showMessage) {
     }
 }
 
+// 폰트 오버라이드에 사용 가능한 폰트 목록
+var AVAILABLE_FONTS = {
+    "default": { family: "", label: "테마 기본" },
+    "RoundedFixedsys": { family: "'RoundedFixedsys', monospace", label: "둥근모꼴+ Fixedsys" },
+    "SchoolSafetyChalkboardEraser": { family: "'SchoolSafetyChalkboardEraser', sans-serif", label: "학교안심 칠판지우개" },
+    "KyoboHandwriting2019": { family: "'KyoboHandwriting2019', sans-serif", label: "교보손글씨 2019" },
+    "GMarketSans": { family: "'GMarketSans', sans-serif", label: "G마켓 산스" },
+    "Pretendard": { family: "'Pretendard', sans-serif", label: "프리텐다드" },
+    "NanumSquare": { family: "'NanumSquare', sans-serif", label: "나눔스퀘어" },
+    "TtangsBudaeJjigae": { family: "'TtangsBudaeJjigae', sans-serif", label: "땅스부대찌개" }
+};
+
+/**
+ * 폰트 오버라이드 적용 함수
+ * @param {String} fontKey - AVAILABLE_FONTS의 키
+ */
+function applyFontOverride(fontKey) {
+    $("#chatassistx-font-override").remove();
+    if(!fontKey || fontKey === "default") return;
+
+    var font = AVAILABLE_FONTS[fontKey];
+    if(!font || !font.family) return;
+
+    var css = ".chat_text_nickname, .chat_text_message { font-family: " + font.family + " !important; }";
+    $("head").append($('<style>', { id: 'chatassistx-font-override', text: css }));
+}
+
 /**
  * 명령어 변환 함수
  * @param {String} match
@@ -1342,5 +1369,10 @@ $(document).ready(function() {
     // searchParams에서 설정된 테마 적용
     if(window.config.theme) {
         applyTheme(window.config.theme, false);
+    }
+
+    // 폰트 오버라이드 적용
+    if(window.config.fontOverride) {
+        applyFontOverride(window.config.fontOverride);
     }
 });

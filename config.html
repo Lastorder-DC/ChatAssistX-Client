@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>ChatAssistX 설정</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="./font.css" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <style>
         body {
@@ -65,6 +66,71 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
+        }
+        /* Custom font dropdown */
+        .font-dropdown-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .font-dropdown-selected {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            color: #c9d1d9;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 38px;
+        }
+        .font-dropdown-selected:focus {
+            border-color: #e94560;
+            box-shadow: 0 0 0 0.2rem rgba(233,69,96,0.25);
+            outline: none;
+        }
+        .font-dropdown-arrow {
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-left: 8px;
+        }
+        .font-dropdown-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem;
+            max-height: 320px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .font-dropdown-list.show { display: block; }
+        .font-dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .font-dropdown-item:last-child { border-bottom: none; }
+        .font-dropdown-item:hover { background: #161b22; }
+        .font-dropdown-item.selected { background: #1c2333; }
+        .font-dropdown-item-label {
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+        .font-dropdown-item-preview {
+            font-size: 1.05rem;
+            color: #c9d1d9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -332,6 +398,11 @@
                         <option value="gaming">Gaming</option>
                         <option value="memo">Memo</option>
                         <option value="retro_terminal">Retro Terminal</option>
+                        <option value="chalkboard">Chalkboard (칠판)</option>
+                        <option value="oneline">Oneline (한줄)</option>
+                        <option value="kakaotalk">KakaoTalk (카카오톡)</option>
+                        <option value="childrens_day">Children's Day (어린이날)</option>
+                        <option value="neon_sign">Neon Sign (네온사인)</option>
                     </select>
                     <div class="form-text">내장 테마를 선택하세요</div>
                 </div>
@@ -339,6 +410,18 @@
                     <label for="themeUrl" class="form-label">외부 테마 CSS URL</label>
                     <input type="text" class="form-control cfg" id="themeUrl" placeholder="https://example.com/theme.css">
                     <div class="form-text">외부 CSS 파일 URL을 입력하면 내장 테마 대신 적용됩니다</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">폰트 오버라이드</label>
+                    <div class="form-text mb-2">테마 기본 폰트 대신 다른 폰트를 사용합니다</div>
+                    <div class="font-dropdown-wrapper" id="fontDropdownWrapper">
+                        <div class="font-dropdown-selected" id="fontDropdownSelected" tabindex="0">
+                            <span class="font-dropdown-label">테마 기본</span>
+                            <span class="font-dropdown-arrow">▾</span>
+                        </div>
+                        <div class="font-dropdown-list" id="fontDropdownList"></div>
+                        <input type="hidden" class="cfg" id="fontOverride" value="">
+                    </div>
                 </div>
             </div>
         </div>
@@ -459,7 +542,9 @@
         { id: 'anon_nickname', type: 'text' },
         { id: 'anon_random', type: 'select', defaultVal: 'string' },
         { id: 'random_length', type: 'number', defaultVal: 4 },
-        { id: 'fix_random_id', type: 'bool-default-false' }
+        { id: 'fix_random_id', type: 'bool-default-false' },
+        // Font override
+        { id: 'fontOverride', type: 'text' }
     ];
 
     function getEl(id) { return document.getElementById(id); }
@@ -636,9 +721,116 @@
         }
     }
 
+    // Custom font dropdown
+    var FONT_OPTIONS = [
+        { key: '', label: '테마 기본', family: '' },
+        { key: 'RoundedFixedsys', label: '둥근모꼴+ Fixedsys', family: "'RoundedFixedsys', monospace" },
+        { key: 'SchoolSafetyChalkboardEraser', label: '학교안심 칠판지우개', family: "'SchoolSafetyChalkboardEraser', sans-serif" },
+        { key: 'KyoboHandwriting2019', label: '교보손글씨 2019', family: "'KyoboHandwriting2019', sans-serif" },
+        { key: 'GMarketSans', label: 'G마켓 산스', family: "'GMarketSans', sans-serif" },
+        { key: 'Pretendard', label: '프리텐다드', family: "'Pretendard', sans-serif" },
+        { key: 'NanumSquare', label: '나눔스퀘어', family: "'NanumSquare', sans-serif" },
+        { key: 'TtangsBudaeJjigae', label: '땅스부대찌개', family: "'TtangsBudaeJjigae', sans-serif" }
+    ];
+
+    var PREVIEW_TEXT = '안녕하세요. 감사합니다! 1234567890 헣 헿 Hello! 你好. こんにちは.';
+
+    function initFontDropdown() {
+        var wrapper = getEl('fontDropdownWrapper');
+        var selected = getEl('fontDropdownSelected');
+        var list = getEl('fontDropdownList');
+        var hiddenInput = getEl('fontOverride');
+
+        // Build dropdown items
+        for (var i = 0; i < FONT_OPTIONS.length; i++) {
+            (function(opt) {
+                var item = document.createElement('div');
+                item.className = 'font-dropdown-item' + (opt.key === hiddenInput.value ? ' selected' : '');
+                item.setAttribute('data-value', opt.key);
+
+                var labelEl = document.createElement('div');
+                labelEl.className = 'font-dropdown-item-label';
+                labelEl.textContent = opt.label;
+
+                var previewEl = document.createElement('div');
+                previewEl.className = 'font-dropdown-item-preview';
+                previewEl.textContent = PREVIEW_TEXT;
+                if (opt.family) {
+                    previewEl.style.fontFamily = opt.family;
+                }
+
+                item.appendChild(labelEl);
+                item.appendChild(previewEl);
+
+                item.addEventListener('click', function() {
+                    selectFont(opt.key, opt.label, opt.family);
+                    list.classList.remove('show');
+                });
+
+                list.appendChild(item);
+            })(FONT_OPTIONS[i]);
+        }
+
+        // Toggle dropdown
+        selected.addEventListener('click', function(e) {
+            e.stopPropagation();
+            list.classList.toggle('show');
+        });
+        selected.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                list.classList.toggle('show');
+            }
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                list.classList.remove('show');
+            }
+        });
+    }
+
+    function selectFont(key, label, family) {
+        var hiddenInput = getEl('fontOverride');
+        var selectedLabel = getEl('fontDropdownSelected').querySelector('.font-dropdown-label');
+        var list = getEl('fontDropdownList');
+
+        hiddenInput.value = key;
+        selectedLabel.textContent = label;
+        if (family) {
+            selectedLabel.style.fontFamily = family;
+        } else {
+            selectedLabel.style.fontFamily = '';
+        }
+
+        // Update selected state
+        var items = list.querySelectorAll('.font-dropdown-item');
+        for (var i = 0; i < items.length; i++) {
+            items[i].classList.toggle('selected', items[i].getAttribute('data-value') === key);
+        }
+
+        updateUrl();
+    }
+
+    function loadFontFromUrl() {
+        var cur = new URL(window.location.href);
+        var fontVal = cur.searchParams.get('fontOverride');
+        if (fontVal) {
+            for (var i = 0; i < FONT_OPTIONS.length; i++) {
+                if (FONT_OPTIONS[i].key === fontVal) {
+                    selectFont(FONT_OPTIONS[i].key, FONT_OPTIONS[i].label, FONT_OPTIONS[i].family);
+                    break;
+                }
+            }
+        }
+    }
+
     // Initialization
     function init() {
         loadFromUrl();
+        initFontDropdown();
+        loadFontFromUrl();
         toggleAnonOptions();
 
         getEl('anon').addEventListener('change', function() {

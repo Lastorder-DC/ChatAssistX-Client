@@ -156,6 +156,12 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
                 // ping 응답 수신 - 별도 처리 불필요
             } else if (data.type === "chat" || data.type === "superchat") {
                 var message = data.message || "";
+                // emojiMap이 있으면 이모지 키를 실제 URL로 치환
+                if(data.emojiMap) {
+                    for(var key in data.emojiMap) {
+                        message = message.split('[yt-emoji:' + key + ']').join('[yt-emoji:' + data.emojiMap[key] + ']');
+                    }
+                }
                 if (data.type === "superchat" && data.amount) {
                     message = "[" + data.amount + "] " + message;
                 }
@@ -289,6 +295,94 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             expect(window.addChatMessage).toHaveBeenCalledWith(
                 'youtube', 'DonorUser', '[$50.00] Great stream!', false,
                 { rawprint: false, isStreamer: false, isMod: false, id: 'user456' }
+            );
+        });
+
+        test('should resolve emojiMap keys to full URLs in chat messages', () => {
+            const emojiUrl = 'https://yt3.ggpht.com/KOxdr_z3A5h1Gb7kqnxqOCnbZrBmxI2B_tRQ453BhTWUhYAlpg5ZP8IKEBkcvRoY8grY91Q=w48-h48-c-k-nd';
+            capturedOnMessage({
+                data: JSON.stringify({
+                    type: 'chat',
+                    nickname: 'EmojiUser',
+                    message: 'Hi [yt-emoji:e0][yt-emoji:e0][yt-emoji:e0]',
+                    emojiMap: { e0: emojiUrl },
+                    isOwner: false,
+                    isMod: false,
+                    id: 'user789'
+                })
+            });
+
+            expect(window.addChatMessage).toHaveBeenCalledWith(
+                'youtube', 'EmojiUser',
+                'Hi [yt-emoji:' + emojiUrl + '][yt-emoji:' + emojiUrl + '][yt-emoji:' + emojiUrl + ']',
+                false,
+                { rawprint: false, isStreamer: false, isMod: false, id: 'user789' }
+            );
+        });
+
+        test('should resolve multiple different emoji keys in emojiMap', () => {
+            const url1 = 'https://example.com/emoji1.png';
+            const url2 = 'https://example.com/emoji2.png';
+            capturedOnMessage({
+                data: JSON.stringify({
+                    type: 'chat',
+                    nickname: 'MultiUser',
+                    message: '[yt-emoji:e0] text [yt-emoji:e1][yt-emoji:e0]',
+                    emojiMap: { e0: url1, e1: url2 },
+                    isOwner: false,
+                    isMod: false,
+                    id: 'user999'
+                })
+            });
+
+            expect(window.addChatMessage).toHaveBeenCalledWith(
+                'youtube', 'MultiUser',
+                '[yt-emoji:' + url1 + '] text [yt-emoji:' + url2 + '][yt-emoji:' + url1 + ']',
+                false,
+                { rawprint: false, isStreamer: false, isMod: false, id: 'user999' }
+            );
+        });
+
+        test('should handle chat message without emojiMap (backward compatibility)', () => {
+            capturedOnMessage({
+                data: JSON.stringify({
+                    type: 'chat',
+                    nickname: 'OldUser',
+                    message: 'Hello [yt-emoji:https://example.com/emoji.png]',
+                    isOwner: false,
+                    isMod: false,
+                    id: 'user000'
+                })
+            });
+
+            expect(window.addChatMessage).toHaveBeenCalledWith(
+                'youtube', 'OldUser',
+                'Hello [yt-emoji:https://example.com/emoji.png]',
+                false,
+                { rawprint: false, isStreamer: false, isMod: false, id: 'user000' }
+            );
+        });
+
+        test('should resolve emojiMap keys in superchat messages', () => {
+            const emojiUrl = 'https://example.com/emoji.png';
+            capturedOnMessage({
+                data: JSON.stringify({
+                    type: 'superchat',
+                    nickname: 'Donor',
+                    message: 'Thanks [yt-emoji:e0]',
+                    emojiMap: { e0: emojiUrl },
+                    amount: '$10.00',
+                    isOwner: false,
+                    isMod: false,
+                    id: 'donor1'
+                })
+            });
+
+            expect(window.addChatMessage).toHaveBeenCalledWith(
+                'youtube', 'Donor',
+                '[$10.00] Thanks [yt-emoji:' + emojiUrl + ']',
+                false,
+                { rawprint: false, isStreamer: false, isMod: false, id: 'donor1' }
             );
         });
 

@@ -32,26 +32,39 @@ function isAllowedOrigin(origin) {
 
 /**
  * 메시지 runs를 처리하여 이모지를 마커 형식으로 변환한다.
- * 이모지 runs는 [yt-emoji:이미지URL] 형식으로 변환된다.
+ * 이모지 runs는 [yt-emoji:키] 형식으로 변환되며, 별도의 emojiMap에 키-URL 매핑을 저장한다.
+ * 같은 URL의 이모지가 여러 번 나올 경우 동일한 키를 재사용하여 중복을 제거한다.
+ * @returns {{ text: string, emojiMap: Object<string, string> }}
  */
 function processMessageRuns(message) {
     if (!message) {
-        return '';
+        return { text: '', emojiMap: {} };
     }
 
     if (!message.runs || message.runs.length === 0) {
-        return message.toString() || '';
+        return { text: message.toString() || '', emojiMap: {} };
     }
 
-    return message.runs.map(run => {
+    const emojiMap = {};
+    const urlToKey = {};
+    let emojiIndex = 0;
+
+    const text = message.runs.map(run => {
         if (run.emoji && run.emoji.image && run.emoji.image.length > 0) {
             const url = run.emoji.image[0].url;
             if (url) {
-                return `[yt-emoji:${url}]`;
+                if (!urlToKey[url]) {
+                    const key = 'e' + emojiIndex++;
+                    urlToKey[url] = key;
+                    emojiMap[key] = url;
+                }
+                return `[yt-emoji:${urlToKey[url]}]`;
             }
         }
         return run.text || '';
     }).join('');
+
+    return { text, emojiMap };
 }
 
 module.exports = {

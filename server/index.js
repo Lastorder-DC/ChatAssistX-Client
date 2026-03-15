@@ -331,10 +331,12 @@ function handleChatItem(session, item) {
             ) || false;
 
             // nickname(author?.name?.toString()) 맨앞 @ 삭제
+            const { text: chatText, emojiMap: chatEmojiMap } = processMessageRuns(msg.message);
             broadcast(session, {
                 type: 'chat',
                 nickname: author?.name?.toString()?.replace(/^@/, '') || 'Unknown',
-                message: processMessageRuns(msg.message),
+                message: chatText,
+                emojiMap: chatEmojiMap,
                 isOwner: isOwner,
                 isMod: author?.is_moderator || false,
                 isMember: author?.badges?.some(
@@ -348,10 +350,12 @@ function handleChatItem(session, item) {
             const msg = item.as(YTNodes.LiveChatPaidMessage);
             const author = msg.author;
 
+            const { text: scText, emojiMap: scEmojiMap } = processMessageRuns(msg.message);
             broadcast(session, {
                 type: 'superchat',
                 nickname: author?.name?.toString() || 'Unknown',
-                message: processMessageRuns(msg.message),
+                message: scText,
+                emojiMap: scEmojiMap,
                 amount: msg.purchase_amount || '',
                 isOwner: false,
                 isMod: author?.is_moderator || false,

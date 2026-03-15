@@ -887,6 +887,12 @@ function connect_yt() {
             // ping 응답 수신 - 별도 처리 불필요
         } else if(data.type === "chat" || data.type === "superchat") {
             var message = data.message || "";
+            // emojiMap이 있으면 이모지 키를 실제 URL로 치환
+            if(data.emojiMap) {
+                for(var key in data.emojiMap) {
+                    message = message.split('[yt-emoji:' + key + ']').join('[yt-emoji:' + data.emojiMap[key] + ']');
+                }
+            }
             // 슈퍼챗인 경우 금액 표시
             if(data.type === "superchat" && data.amount) {
                 message = "[" + data.amount + "] " + message;

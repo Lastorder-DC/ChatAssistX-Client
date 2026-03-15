@@ -24,9 +24,14 @@ html, body {
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-end !important;
   padding: 10px !important;
   box-sizing: border-box !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.chat_wrapper::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* 3. 컨테이너 여백 및 정렬 설정 */
@@ -38,6 +43,8 @@ html, body {
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
 }
 
 /* 4. 개별 채팅 박스 (터미널 스타일) */

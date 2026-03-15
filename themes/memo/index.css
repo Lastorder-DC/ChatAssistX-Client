@@ -24,9 +24,14 @@ html, body {
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-end !important;
   padding: 10px !important;
   box-sizing: border-box !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.chat_wrapper::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* 3. 컨테이너 여백 및 정렬 설정 */
@@ -38,6 +43,8 @@ html, body {
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important;
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
 }
 
 /* 4. 개별 채팅 박스 (메모지 스타일) */
@@ -73,6 +80,7 @@ html, body {
   font-size: 12px !important;
   font-weight: 700 !important;
   color: #6d4c41 !important;
+  text-shadow: none !important;
   display: flex !important;
   align-items: center !important;
   margin-bottom: 4px !important;
@@ -84,6 +92,7 @@ html, body {
   font-size: 14px !important;
   color: #3e2723 !important;
   line-height: 1.5 !important;
+  text-shadow: none !important;
   word-break: break-word !important;
   background-color: transparent !important;
   padding: 0 !important;

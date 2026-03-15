@@ -5,6 +5,7 @@ const EMOJI_MAP_MIN_VERSION = "1.16.7";
 
 // 정확히 일치해야 하는 도메인 (조회 속도 최적화를 위해 Set 사용)
 const EXACT_DOMAINS = new Set([
+    'chatassistx.cc',
     'chatassistx.vercel.app',
     'lastorder.xyz',
     'chat.lastorder.xyz',

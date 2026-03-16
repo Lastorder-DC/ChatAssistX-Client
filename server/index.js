@@ -2,10 +2,12 @@ const { Innertube, YTNodes } = require('youtubei.js');
 const { WebSocketServer, WebSocket } = require('ws');
 const { PROGRAM_VERSION, isAllowedOrigin, processMessageRuns, supportsEmojiMap, resolveEmojiMap } = require('./utils');
 const PORT = process.env.PORT || 8090;
+const DEV_MODE = process.argv.includes('--dev');
 
 const wss = new WebSocketServer({
     port: PORT,
     verifyClient: (info) => {
+        if (DEV_MODE) return true;
         const origin = info.origin || info.req.headers.origin;
         if (!isAllowedOrigin(origin)) {
             console.log(`Connection rejected: origin ${origin} is not allowed`);
@@ -15,7 +17,7 @@ const wss = new WebSocketServer({
     }
 });
 
-console.log(`YouTube Live Chat relay server ${PROGRAM_VERSION} started on port ${PORT}`);
+console.log(`YouTube Live Chat relay server ${PROGRAM_VERSION} started on port ${PORT}${DEV_MODE ? ' (dev mode - origin check disabled)' : ''}`);
 
 // 채널별 공유 세션 관리
 // Map<channel, { livechat, clients: Set<ws>, connecting: boolean }>

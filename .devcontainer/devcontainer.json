@@ -1,8 +1,8 @@
 {
   "name": "ChatAssistX Client",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
-  "postCreateCommand": "cd server && npm install",
-  "postStartCommand": "npx -y http-server -p 5500 -c-1 . & node server/index.js --dev &",
+  "postCreateCommand": "npm install -g pm2 && npm install && cd server && npm install",
+  "postStartCommand": "pm2 start ecosystem.config.js",
   "forwardPorts": [5500, 8090],
   "portsAttributes": {
     "5500": {

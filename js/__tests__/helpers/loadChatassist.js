@@ -1,5 +1,6 @@
 /**
  * chatassist.js를 글로벌 스코프에 로드하는 헬퍼
+ * (테스트 전용 - 프로덕션 코드에서 사용 금지)
  *
  * require()로 모듈을 로드하면 함수들이 모듈 스코프에 갇혀서
  * window.addChatMessage = jest.fn() 같은 mock이 내부 호출을 가로채지 못합니다.
@@ -7,6 +8,9 @@
  * 이 헬퍼는 indirect eval을 사용하여 chatassist.js의 모든 함수를
  * 글로벌(window) 스코프에 정의하므로, beforeEach에서 window.함수명 = jest.fn()으로
  * 내부 호출도 mock할 수 있습니다.
+ *
+ * indirect eval이 필요한 이유: (0, eval)(code)는 코드를 글로벌 스코프에서 실행하여
+ * function 선언이 전역 함수가 되므로, 테스트에서 window.함수명으로 mock 교체가 가능합니다.
  */
 const fs = require('fs');
 const path = require('path');
@@ -30,6 +34,7 @@ function loadChatassistGlobal() {
                 slideDown: function() { return this; },
                 slideUp: function() { return this; },
                 on: function() { return this; },
+                // ready는 콜백을 실행하지 않음 - CompileChat()이 Handlebars를 필요로 하기 때문
                 ready: function() { return this; }
             };
         };

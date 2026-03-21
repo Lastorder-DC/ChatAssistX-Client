@@ -505,6 +505,7 @@
     var BASE_URL = 'https://chatassistx.cc/';
 
     // 개발 환경에서는 현재 도메인 기반으로 BASE_URL 변경
+    // (config.html은 config.js를 로드하지 않으므로 isDevEnvironment를 인라인으로 구현)
     (function() {
         var hostname = window.location.hostname;
         if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev')) {
@@ -881,7 +882,8 @@
 })();
 </script>
 <script>
-// 개발 환경 감지 (localhost, 127.0.0.1, *.app.github.dev)
+// 개발 환경 감지 및 DEV MODE 뱃지 표시
+// (config.html은 config.js를 로드하지 않으므로 감지 로직을 인라인으로 구현)
 (function() {
     var hostname = window.location.hostname;
     var isDev = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));

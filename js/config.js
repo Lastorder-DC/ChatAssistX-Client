@@ -13,12 +13,12 @@ function convertStringToObject(str) {
 
 var url_string = window.location.href;
 var url = new URL(url_string);
-var chatAssistEnvironment = window.ChatAssistEnvironment && window.ChatAssistEnvironment.current
-    ? window.ChatAssistEnvironment.current
+var chatAssistEnvironmentApi = window.ChatAssistEnvironment || {};
+var chatAssistEnvironment = chatAssistEnvironmentApi.current
+    ? chatAssistEnvironmentApi.current
     : {
         isDev: false,
-        baseUrl: "https://chatassistx.cc/",
-        ytServerUrl: "wss://youtube-chat.chatassistx.cc"
+        ytServerUrl: chatAssistEnvironmentApi.PROD_YT_SERVER_URL || "wss://youtube-chat.chatassistx.cc"
     };
 // ChatAssist 설정 변수
 window.config = {};
@@ -43,7 +43,9 @@ window.config.kickid = !url.searchParams.get("kick") ? "" : url.searchParams.get
 window.config.ytChannel = !url.searchParams.get("ytChannel") ? "" : url.searchParams.get("ytChannel");
 
 // 유튜브 라이브 채팅 중계 서버 주소
-window.config.ytServer = !url.searchParams.get("ytServer") ? chatAssistEnvironment.ytServerUrl : url.searchParams.get("ytServer");
+window.config.ytServer = !url.searchParams.get("ytServer")
+    ? (chatAssistEnvironment.ytServerUrl || chatAssistEnvironmentApi.PROD_YT_SERVER_URL || "wss://youtube-chat.chatassistx.cc")
+    : url.searchParams.get("ytServer");
 
 // 치지직 스트리머 채널 아이디 입력(베타)
 window.config.nvrChannel = !url.searchParams.get("nvrChannel") ? "" : url.searchParams.get("nvrChannel");

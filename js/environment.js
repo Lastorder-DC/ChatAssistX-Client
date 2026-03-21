@@ -14,14 +14,16 @@
             ytServerUrl: PROD_YT_SERVER_URL
         };
 
-        if(hostname === 'localhost' || hostname === '127.0.0.1') {
+        if(hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]') {
             environment.isDev = true;
             environment.baseUrl = new URL('./', currentLocation.href).toString();
-            environment.ytServerUrl = 'ws://' + hostname + ':8090';
+            environment.ytServerUrl = hostname === '::1' || hostname === '[::1]'
+                ? 'ws://[::1]:8090'
+                : 'ws://' + hostname + ':8090';
             return environment;
         }
 
-        var githubDevMatch = hostname.match(/^(.*)-5500\.app\.github\.dev$/i);
+        var githubDevMatch = hostname.match(/^(.+)-\d+\.app\.github\.dev$/i);
         if(githubDevMatch) {
             environment.isDev = true;
             environment.baseUrl = new URL('./', currentLocation.href).toString();

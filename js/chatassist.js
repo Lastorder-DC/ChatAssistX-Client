@@ -890,10 +890,11 @@ function connect_chat() {
 
 function connect_yt() {
     if(!window.config.ytServer) {
-        var chatAssistEnvironment = window.ChatAssistEnvironment && window.ChatAssistEnvironment.current;
+        var chatAssistEnvironmentApi = window.ChatAssistEnvironment || {};
+        var chatAssistEnvironment = chatAssistEnvironmentApi.current;
         window.config.ytServer = chatAssistEnvironment && chatAssistEnvironment.ytServerUrl
             ? chatAssistEnvironment.ytServerUrl
-            : "wss://youtube-chat.chatassistx.cc";
+            : (chatAssistEnvironmentApi.PROD_YT_SERVER_URL || "wss://youtube-chat.chatassistx.cc");
     }
 
     var ytChannel = window.config.ytChannel;

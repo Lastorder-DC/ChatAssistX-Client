@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="./css/font.css" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="./js/dev-common.js?ver=20260321"></script>
     <style>
         body {
             background: #0d1117;
@@ -505,10 +506,8 @@
     var BASE_URL = 'https://chatassistx.cc/';
 
     // 개발 환경에서는 현재 도메인 기반으로 BASE_URL 변경
-    // (config.html은 config.js를 로드하지 않으므로 isDevEnvironment를 인라인으로 구현)
     (function() {
-        var hostname = window.location.hostname;
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev')) {
+        if (isDevEnvironment(window.location.hostname)) {
             BASE_URL = window.location.origin + '/';
         }
     })();
@@ -883,18 +882,9 @@
 </script>
 <script>
 // 개발 환경 감지 및 DEV MODE 뱃지 표시
-// (config.html은 config.js를 로드하지 않으므로 감지 로직을 인라인으로 구현)
 (function() {
     var hostname = window.location.hostname;
-    var isDev = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));
-    if (isDev) {
-        function appendDevBadge() {
-            var badge = document.createElement('div');
-            badge.id = 'dev-mode-badge';
-            badge.textContent = 'DEV MODE';
-            badge.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 12px;font-size:12px;font-weight:bold;z-index:99999;';
-            document.body.appendChild(badge);
-        }
+    if (isDevEnvironment(hostname)) {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', appendDevBadge);
         } else {

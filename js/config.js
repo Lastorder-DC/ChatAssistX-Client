@@ -85,23 +85,8 @@ window.config.anon_random = url.searchParams.get("anon_random") == "false" ? fal
 window.config.random_length = !url.searchParams.get("random_length") ? 4 : parseInt(url.searchParams.get("random_length"), 10); // 랜덤 숫자/닉네임 길이 지정(위에서 number나 string 지정시)
 window.config.fix_random_id = url.searchParams.get("fix_random_id") == "true"; // 랜덤 닉네임 고정(같은 시청자는 같은 랜덤 문자 배정) 활성화시 true - 새로고침시 초기화됨
 
-// 개발 환경 감지 함수
-function isDevEnvironment(hostname) {
-    return (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));
-}
-
-function getDevYtServer(hostname) {
-    if (hostname === 'localhost') {
-        return 'ws://localhost:8090';
-    } else if (hostname === '127.0.0.1') {
-        return 'ws://127.0.0.1:8090';
-    } else if (hostname.endsWith('.app.github.dev')) {
-        return 'wss://' + hostname.replace(/-\d+\.app\.github\.dev$/, '-8090.app.github.dev');
-    }
-    return '';
-}
-
 // 개발 환경 감지 (localhost, 127.0.0.1, *.app.github.dev)
+// isDevEnvironment, getDevYtServer, appendDevBadge는 js/dev-common.js에서 정의
 (function() {
     var hostname = window.location.hostname;
     var isDev = isDevEnvironment(hostname);
@@ -115,11 +100,7 @@ function getDevYtServer(hostname) {
     // DEV MODE 뱃지 표시
     if (isDev) {
         document.addEventListener('DOMContentLoaded', function() {
-            var badge = document.createElement('div');
-            badge.id = 'dev-mode-badge';
-            badge.textContent = 'DEV MODE';
-            badge.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 12px;font-size:12px;font-weight:bold;z-index:99999;';
-            document.body.appendChild(badge);
+            appendDevBadge();
         });
     }
 })();
@@ -127,8 +108,6 @@ function getDevYtServer(hostname) {
 // Node.js / Jest 환경에서 테스트를 위한 exports
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        convertStringToObject,
-        isDevEnvironment,
-        getDevYtServer
+        convertStringToObject
     };
 }

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-const { isDevEnvironment, getDevYtServer } = require('../config');
+const { isDevEnvironment, getDevYtServer, appendDevBadge } = require('../dev-common');
 
 describe('Dev environment detection', () => {
     test('should detect localhost as dev environment', () => {
@@ -62,12 +62,7 @@ describe('DEV MODE badge', () => {
     });
 
     test('should create badge element with correct properties', () => {
-        // Replicate badge creation logic from config.js
-        var badge = document.createElement('div');
-        badge.id = 'dev-mode-badge';
-        badge.textContent = 'DEV MODE';
-        badge.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 12px;font-size:12px;font-weight:bold;z-index:99999;';
-        document.body.appendChild(badge);
+        appendDevBadge();
 
         var el = document.getElementById('dev-mode-badge');
         expect(el).not.toBeNull();
@@ -84,9 +79,7 @@ describe('DEV MODE badge', () => {
         var isDev = isDevEnvironment('chatassistx.cc');
 
         if (isDev) {
-            var badge = document.createElement('div');
-            badge.id = 'dev-mode-badge';
-            document.body.appendChild(badge);
+            appendDevBadge();
         }
 
         var el = document.getElementById('dev-mode-badge');

@@ -498,11 +498,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="./js/environment.js?ver=20260321"></script>
 <script>
 (function() {
     'use strict';
 
-    var BASE_URL = 'https://chatassistx.cc/';
+    var BASE_URL = window.ChatAssistEnvironment && window.ChatAssistEnvironment.current
+        ? window.ChatAssistEnvironment.current.baseUrl
+        : 'https://chatassistx.cc/';
 
     // Parameter definitions matching index.html logic
     var PARAMS = [

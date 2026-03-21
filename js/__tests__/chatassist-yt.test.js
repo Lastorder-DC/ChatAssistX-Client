@@ -44,6 +44,10 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             ytServer: 'ws://localhost:8090'
         };
 
+        window.ChatAssistEnvironment = {
+            current: null
+        };
+
         window.ytsocket = {
             socket: null,
             isInited: false,
@@ -86,12 +90,15 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
     // Helper: minimal connect_yt implementation extracted from chatassist.js
     // This simulates the core logic we're testing
     function connect_yt() {
+        if (!window.config.ytServer) {
+            var chatAssistEnvironment = window.ChatAssistEnvironment && window.ChatAssistEnvironment.current;
+            window.config.ytServer = chatAssistEnvironment && chatAssistEnvironment.ytServerUrl
+                ? chatAssistEnvironment.ytServerUrl
+                : "wss://youtube-chat.chatassistx.cc";
+        }
+
         var ytChannel = window.config.ytChannel;
         var ytServerUrl = window.config.ytServer;
-
-        if (!ytServerUrl) {
-            ytServerUrl = "wss://youtube-chat.chatassistx.cc";
-        }
 
         if (!ytServerUrl.startsWith("ws://") && !ytServerUrl.startsWith("wss://")) {
             ytServerUrl = "wss://" + ytServerUrl;
@@ -237,10 +244,28 @@ describe('YouTube WebSocket Client (connect_yt)', () => {
             });
         });
 
-        test('should use default server URL when ytServer is not configured', () => {
+        test('should use production default server URL when ytServer is not configured', () => {
             window.config.ytServer = null;
             connect_yt();
             expect(MockWebSocketClass).toHaveBeenCalledWith('wss://youtube-chat.chatassistx.cc');
+        });
+
+        test('should use localhost dev server URL when environment is localhost', () => {
+            window.config.ytServer = null;
+            window.ChatAssistEnvironment.current = {
+                ytServerUrl: 'ws://localhost:8090'
+            };
+            connect_yt();
+            expect(MockWebSocketClass).toHaveBeenCalledWith('ws://localhost:8090');
+        });
+
+        test('should use github.dev dev server URL when environment is github.dev', () => {
+            window.config.ytServer = null;
+            window.ChatAssistEnvironment.current = {
+                ytServerUrl: 'wss://opulent-winner-97g5jq5wxp52p96r-8090.app.github.dev/'
+            };
+            connect_yt();
+            expect(MockWebSocketClass).toHaveBeenCalledWith('wss://opulent-winner-97g5jq5wxp52p96r-8090.app.github.dev/');
         });
 
         test('should add wss:// prefix when protocol is missing', () => {

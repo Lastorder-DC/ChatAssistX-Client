@@ -890,7 +890,10 @@ function connect_chat() {
 
 function connect_yt() {
     if(!window.config.ytServer) {
-        window.config.ytServer = "wss://youtube-chat.chatassistx.cc";
+        var chatAssistEnvironment = window.ChatAssistEnvironment && window.ChatAssistEnvironment.current;
+        window.config.ytServer = chatAssistEnvironment && chatAssistEnvironment.ytServerUrl
+            ? chatAssistEnvironment.ytServerUrl
+            : "wss://youtube-chat.chatassistx.cc";
     }
 
     var ytChannel = window.config.ytChannel;

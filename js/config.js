@@ -13,8 +13,16 @@ function convertStringToObject(str) {
 
 var url_string = window.location.href;
 var url = new URL(url_string);
+var chatAssistEnvironment = window.ChatAssistEnvironment && window.ChatAssistEnvironment.current
+    ? window.ChatAssistEnvironment.current
+    : {
+        isDev: false,
+        baseUrl: "https://chatassistx.cc/",
+        ytServerUrl: "wss://youtube-chat.chatassistx.cc"
+    };
 // ChatAssist 설정 변수
 window.config = {};
+window.config.isDevMode = chatAssistEnvironment.isDev;
 
 window.config.allowExternalSource = url.searchParams.get("allowExternalSource") == "true"; // 외부이미지([img 주소] 문법) 허용하려면 true로 변경
 window.config.allowEmoticon = url.searchParams.get("allowEmoticon") != "false"; // 디시콘 사용가능유무 사용금지로 바꾸려면 false로 변경
@@ -35,7 +43,7 @@ window.config.kickid = !url.searchParams.get("kick") ? "" : url.searchParams.get
 window.config.ytChannel = !url.searchParams.get("ytChannel") ? "" : url.searchParams.get("ytChannel");
 
 // 유튜브 라이브 채팅 중계 서버 주소
-window.config.ytServer = !url.searchParams.get("ytServer") ? "" : url.searchParams.get("ytServer");
+window.config.ytServer = !url.searchParams.get("ytServer") ? chatAssistEnvironment.ytServerUrl : url.searchParams.get("ytServer");
 
 // 치지직 스트리머 채널 아이디 입력(베타)
 window.config.nvrChannel = !url.searchParams.get("nvrChannel") ? "" : url.searchParams.get("nvrChannel");

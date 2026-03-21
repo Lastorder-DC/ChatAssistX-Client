@@ -2,68 +2,19 @@
  * @jest-environment jsdom
  */
 
+// chatassist.js 로드 시 필요한 전역 변수 설정
+window.config = { allowExternalSource: false, allowEmoticon: true, replace: {} };
+window.emoticon = { isActive: false, list: {} };
+
+const { applyBadge, anonymizeNickname, genID, KICK_replaceEmoticon } = require('../chatassist');
+
 describe('applyBadge', () => {
-    let applyBadge;
-    let replaceCommandCalls;
-
     beforeEach(() => {
-        replaceCommandCalls = [];
-
-        // Mock replaceCommand to track calls
-        window.replaceCommand = function(match, command, commandarg) {
-            replaceCommandCalls.push({ match, command, commandarg });
-            return "COMMAND_DO_NOT_PRINT";
-        };
-
-        // Replicate applyBadge from chatassist.js
-        applyBadge = function(platform, nickname, message, ext_args) {
-            function replaceCommand(match, p1, p2) {
-                return window.replaceCommand(match, p1, p2);
-            }
-
-            if(platform == "naver") {
-                if(ext_args.isStreamer) {
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/streamer.png" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
-                }
-                if(ext_args.isMod) {
-                    nickname = "<b>" + nickname + "</b>";
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<img style="vertical-align: middle;" src="https://ssl.pstatic.net/static/nng/glive/icon/manager.png" alt="채팅 운영자" class="badge mod">&nbsp;' + nickname;
-                }
-            } else if(platform == "cime") {
-                if(ext_args.isStreamer) {
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/STREAMER.webp" alt="스트리머" class="badge streamer">&nbsp;' + nickname;
-                }
-                if(ext_args.isMod) {
-                    nickname = "<b>" + nickname + "</b>";
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<img style="vertical-align: middle;" src="https://streaming.cf.ci.me/public/assets/images/badge/CHAT_MANAGER.webp" alt="모더레이터" class="badge mod">&nbsp;' + nickname;
-                }
-            } else if(platform == "youtube") {
-                if(ext_args.isStreamer) {
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<img style="vertical-align: middle;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAA3klEQVQ4y2NgGLng+5P9/78/2f+fJA1/vz3vRhb7++1599N1jv+frnPEKodsAROM8evDLYZXe9NLfrw8A5d8f7an5P/vLwz/f39heH+utwQm/uPlmf+v9qaX/PpwC24wC9xEVl6Gv9+eM7w5kMnw4Xzvf1YBNYb3p5rgCn88Pcjw9f7m/78/3GJ4cyATrgfDIFYBNbjgl1srsHof2WB0PXCvMbHxMpAKkPXADWITVGck1SBkPUzIEoys3EQbgq4WxSBkPxMC6GpRDEKOBYLhg6YW1UWCJLhIkEYuGsYAABF9W/Yuoo7SAAAAAElFTkSuQmCC" alt="Owner" class="badge streamer">&nbsp;' + nickname;
-                }
-                if(ext_args.isMod) {
-                    nickname = "<b>" + nickname + "</b>";
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<svg style="vertical-align: middle; width: 18px; height: 18px;" viewBox="0 0 16 16" class="badge mod"><path fill="#5e84f1" d="M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.67485908,1 3.93000562,1.21498266 3.2874668,1.59379395 L5.09918785,3.40551499 L3.40551499,5.09918785 L1.59379395,3.2874668 C1.21498266,3.93000562 1,4.67485908 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722257,9.93617022 6.562372,9.83346524 7.05569719,9.64589146 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"></path></svg>&nbsp;' + nickname;
-                }
-            } else {
-                if(ext_args.isStreamer) {
-                    message = message.replace(/~([^ ]+)+(?: )*(.+)*/gi, replaceCommand);
-                    nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/1" alt="Broadcaster" class="badge streamer">&nbsp;' + nickname;
-                }
-                if(ext_args.isMod) {
-                    nickname = "<b>" + nickname + "</b>";
-                    nickname = '<img style="vertical-align: middle;" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" alt="Moderator" class="badge mod">&nbsp;' + nickname;
-                }
-            }
-
-            return { nickname: nickname, message: message };
-        };
+        // Mock replaceCommand: applyBadge가 내부적으로 호출하는 replaceCommand 함수는
+        // chatassist.js에서 이미 정의되어 있으므로 별도 설정 불필요
+        // 다만 replaceCommand가 사용하는 전역변수 설정
+        window.verb = { emoticon: "이모티콘" };
+        window.def_verb = { emoticon: "이모티콘" };
     });
 
     describe('Naver (Chzzk) badges', () => {
@@ -139,9 +90,6 @@ describe('applyBadge', () => {
 });
 
 describe('anonymizeNickname', () => {
-    let anonymizeNickname;
-    let genID;
-
     beforeEach(() => {
         window.config = {
             anon: false
@@ -153,65 +101,6 @@ describe('anonymizeNickname', () => {
 
         window.anon = {
             nickdb: {}
-        };
-
-        genID = function(type, length) {
-            var result = '';
-            var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            if(type == "string") {
-                for(var i = 0; i < length; i++) {
-                    result += characters.charAt(Math.floor(Math.random() * characters.length));
-                }
-            } else {
-                for(var i = 0; i < length; i++) {
-                    result += (Math.floor(Math.random() * 9) + 1).toString();
-                }
-            }
-            return result;
-        };
-
-        // Replicate anonymizeNickname from chatassist.js
-        anonymizeNickname = function(nickname, ext_args, sticky) {
-            if(!window.config.anon || !window.chat.isInited || sticky) return nickname;
-
-            if(typeof window.config.anon_nickname === 'undefined') {
-                window.config.anon_nickname = "시청자";
-            }
-
-            nickname = window.config.anon_nickname;
-            if(window.config.anon_random !== false) {
-                if(typeof window.config.anon_random === 'undefined') {
-                    window.config.anon_random = "string";
-                }
-                if(typeof window.config.random_length === 'undefined') {
-                    window.config.random_length = 4;
-                }
-                if(typeof window.config.fix_random_id === 'undefined') {
-                    window.config.fix_random_id = false;
-                }
-
-                var rand_id;
-                if(window.config.fix_random_id) {
-                    if(typeof window.anon.nickdb[ext_args.id] === 'undefined') {
-                        window.anon.nickdb[ext_args.id] = {};
-                        window.anon.nickdb[ext_args.id].type = window.config.anon_random;
-                        window.anon.nickdb[ext_args.id].length = window.config.random_length;
-                        window.anon.nickdb[ext_args.id].rand_id = genID(window.config.anon_random, window.config.random_length);
-                    }
-
-                    if(window.anon.nickdb[ext_args.id].type != window.config.anon_random || window.anon.nickdb[ext_args.id].length != window.config.random_length) {
-                        window.anon.nickdb[ext_args.id].rand_id = genID(window.config.anon_random, window.config.random_length);
-                    }
-
-                    rand_id = window.anon.nickdb[ext_args.id].rand_id;
-                } else {
-                    rand_id = genID(window.config.anon_random, window.config.random_length);
-                }
-
-                nickname += " " + rand_id;
-            }
-
-            return nickname;
         };
     });
 
@@ -289,19 +178,6 @@ describe('anonymizeNickname', () => {
 });
 
 describe('KICK_replaceEmoticon', () => {
-    let KICK_replaceEmoticon;
-
-    beforeEach(() => {
-        // Replicate KICK_replaceEmoticon (renamed from KICK_replaceTwitchEmoticon)
-        KICK_replaceEmoticon = function(message) {
-            const regex = /\[emote:(\d+):([^\]]+)\]/g;
-            const replacedMessage = message.replace(regex, (match, number, text) => {
-                const imageUrl = `https://files.kick.com/emotes/${number}/fullsize`;
-                return `<img class="kick_emoticon" src="${imageUrl}" alt="${text}">`;
-            });
-            return replacedMessage;
-        };
-    });
 
     test('should replace single emote', () => {
         var result = KICK_replaceEmoticon('[emote:123:KickEmote]');

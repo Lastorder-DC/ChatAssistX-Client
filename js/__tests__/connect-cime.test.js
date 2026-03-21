@@ -2,6 +2,13 @@
  * @jest-environment jsdom
  */
 
+// chatassist.js를 글로벌 스코프에 로드
+window.config = { allowExternalSource: false, allowEmoticon: true, replace: {}, ignoreNickname: 'nightbot,twipkr' };
+window.emoticon = { isActive: false, list: {} };
+
+const { loadChatassistGlobal } = require('./helpers/loadChatassist');
+loadChatassistGlobal();
+
 describe('ci.me WebSocket Client (connect_cime)', () => {
     let mockWebSocket;
     let MockWebSocketClass;
@@ -54,7 +61,8 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
         global.WebSocket = MockWebSocketClass;
 
         window.config = {
-            cimeChannel: 'testchannel'
+            cimeChannel: 'testchannel',
+            ignoreNickname: 'nightbot,twipkr'
         };
 
         window.cimesocket = {
@@ -78,10 +86,6 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
 
         window.addChatMessage = jest.fn();
 
-        String.prototype.htmlEntities = function() {
-            return String(this).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        };
-
         jest.spyOn(console, 'log').mockImplementation(() => {});
         jest.spyOn(console, 'error').mockImplementation(() => {});
     });
@@ -90,101 +94,6 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
         jest.restoreAllMocks();
         jest.useRealTimers();
     });
-
-    // Replicated connect_cime logic for testing
-    function connect_cime() {
-        const cimeChannel = window.config.cimeChannel;
-        var isFirstConnect = true;
-
-        function requestTokenAndConnect() {
-            try {
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', `https://ci.me/api/app/channels/${cimeChannel}/chat-token`, true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            var response = JSON.parse(xhr.responseText);
-
-                            if (!response.data || !response.data.token) {
-                                window.addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
-                                return;
-                            }
-
-                            var token = response.data.token;
-
-                            window.cimesocket.socket = new WebSocket("wss://edge.ivschat.ap-northeast-2.amazonaws.com/", token);
-
-                            window.cimesocket.socket.onopen = function(event) {
-                                if(isFirstConnect) {
-                                    window.addChatMessage("info", "ci.me 채팅 연결됨", cimeChannel + " 채널에 연결되었습니다.", true, false);
-                                    isFirstConnect = false;
-                                }
-                                window.cimesocket.isInited = true;
-                                window._markPlatformConnected('cime');
-                            };
-
-                            window.cimesocket.socket.onmessage = function(event) {
-                                try {
-                                    var data = JSON.parse(event.data);
-                                    if (data.Type !== "MESSAGE") return;
-                                    if (!data.Sender || !data.Sender.Attributes || !data.Sender.Attributes.user) return;
-
-                                    var userInfo = JSON.parse(data.Sender.Attributes.user);
-                                    var nickname = userInfo.ch.na;
-                                    var userId = data.Sender.UserId;
-                                    var content = data.Content;
-
-                                    var ext_args = {};
-                                    ext_args.isStreamer = false;
-                                    ext_args.isMod = false;
-
-                                    if (userInfo.c === "RS") {
-                                        ext_args.isStreamer = true;
-                                    } else if (userInfo.c === "RM") {
-                                        ext_args.isMod = true;
-                                    }
-                                    ext_args.rawprint = false;
-                                    ext_args.emotes = void 0;
-                                    ext_args.color = void 0;
-                                    ext_args.subscriber = false;
-                                    ext_args.id = userId;
-
-                                    window.addChatMessage("cime", nickname.htmlEntities(), content.htmlEntities(), false, ext_args);
-                                } catch (error) {
-                                    console.error("ci.me 메세지 파싱 오류: ", error);
-                                }
-                            };
-
-                            window.cimesocket.socket.onerror = function(error) {
-                                console.error("ci.me WebSocket 오류: ", error);
-                            };
-
-                            window.cimesocket.socket.onclose = function() {
-                                window.cimesocket.isInited = false;
-                                console.log("ci.me WebSocket 연결 종료, 새 토큰으로 재연결 시도...");
-                                setTimeout(function() {
-                                    if (window.config.cimeChannel) {
-                                        requestTokenAndConnect();
-                                    }
-                                }, 5000);
-                            };
-                        } else {
-                            window.addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 토큰을 가져올 수 없습니다.", true, false);
-                        }
-                    }
-                };
-
-                xhr.send();
-            } catch (error) {
-                console.error("ci.me 연결 오류: ", error);
-                window.addChatMessage("error", "ci.me 연결 오류", "ci.me 채팅 연결에 실패했습니다.", true, false);
-            }
-        }
-
-        requestTokenAndConnect();
-    }
 
     describe('Initial connection', () => {
         beforeEach(() => {
@@ -356,19 +265,14 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
             connect_cime();
             capturedOnOpen();
 
-            // First connection uses one XHR + one WebSocket
             expect(global.XMLHttpRequest).toHaveBeenCalledTimes(1);
             expect(MockWebSocketClass).toHaveBeenCalledTimes(1);
 
-            // Simulate close
             capturedOnClose();
 
-            // Advance by 5 seconds
             jest.advanceTimersByTime(5000);
 
-            // Should have requested a new token (second XHR call)
             expect(global.XMLHttpRequest).toHaveBeenCalledTimes(2);
-            // Should have created a new WebSocket
             expect(MockWebSocketClass).toHaveBeenCalledTimes(2);
         });
 
@@ -376,20 +280,16 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
             connect_cime();
             capturedOnOpen();
 
-            // First connection shows message
             expect(window.addChatMessage).toHaveBeenCalledWith(
                 'info', 'ci.me 채팅 연결됨', 'testchannel 채널에 연결되었습니다.', true, false
             );
             window.addChatMessage.mockClear();
 
-            // Simulate close + reconnect
             capturedOnClose();
             jest.advanceTimersByTime(5000);
 
-            // Trigger onopen for the reconnected socket
             capturedOnOpen();
 
-            // Should NOT show the connection message again
             expect(window.addChatMessage).not.toHaveBeenCalledWith(
                 'info', 'ci.me 채팅 연결됨', expect.any(String), true, false
             );
@@ -404,7 +304,6 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
 
             jest.advanceTimersByTime(5000);
 
-            // Should only have 1 XHR and 1 WebSocket (no reconnect)
             expect(global.XMLHttpRequest).toHaveBeenCalledTimes(1);
             expect(MockWebSocketClass).toHaveBeenCalledTimes(1);
         });

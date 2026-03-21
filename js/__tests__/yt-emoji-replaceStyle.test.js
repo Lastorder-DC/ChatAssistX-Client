@@ -7,45 +7,14 @@
  * 포함되었을 때 올바르게 처리되는지 테스트
  */
 
-// chatassist.js에서 replaceStyle 함수 복제
-function replaceStyle(message) {
-    if(window.config.allowExternalSource) {
-        var image = message.match(/\[img ([^\]\"]*)\]/);
-        if(image !== null && typeof image[1] !== 'undefined') {
-            message = '<img class="extimg" src="https://proxy.chatassistx.cc/image/' + image[1] + '">';
-        }
-        message = message.replace(/\[img ([^\]\"]*)\]/gi, "");
-        return message;
-    }
+// chatassist.js에서 함수 로드
+window.config = { allowExternalSource: false, allowEmoticon: true, replace: {} };
+window.emoticon = { isActive: false, list: {} };
 
-    message = message.replace(/\[b\](.*)\[\/b\]/gi, "<b>$1</b>");
-    message = message.replace(/\[i\](.*)\[\/i\]/gi, "<i>$1</i>");
-    message = message.replace(/\[s\](.*)\[\/s\]/gi, "<strike>$1</strike>");
-
-    message = message.replace(/'''(.*)'''/gi, "<b>$1</b>");
-    message = message.replace(/''(.*)''/gi, "<i>$1</i>");
-    message = message.replace(/~~(.*)~~/gi, "<strike>$1</strike>");
-    message = message.replace(/--(.*)--/gi, "<strike>$1</strike>");
-    message = message.replace(/__(.*)__/gi, "<u>$1</u>");
-
-    message = message.replace(/\[b\](.*)/gi, "<b>$1</b>");
-    message = message.replace(/\[i\](.*)/gi, "<i>$1</i>");
-    message = message.replace(/\[s\](.*)/gi, "<strike>$1</strike>");
-
-    message = message.replace(/\[br\]/gi, "<br />");
-
-    return message;
-}
-
-// chatassist.js에서 YT_replaceEmoticon 함수 복제
-function YT_replaceEmoticon(message) {
-    var regex = /\[yt-emoji:(https?:\/\/[^\]]+)\]/g;
-    return message.replace(regex, function(match, url) {
-        return '<img class="yt_emoticon" src="' + url + '" alt="YouTube emoji" style="vertical-align: middle; height: 1.5em; width: 1.5em;">';
-    });
-}
+const { replaceStyle, YT_replaceEmoticon } = require('../chatassist');
 
 // addChatMessage에서 사용하는 유튜브 이모지 보호 로직 복제
+// 이 로직은 addChatMessage 함수 내부에 인라인으로 존재하므로 별도 export 불가
 function processYouTubeMessage(message) {
     var ytEmojiPlaceholders = [];
     message = message.replace(/\[yt-emoji:(https?:\/\/[^\]]+)\]/g, function(match) {

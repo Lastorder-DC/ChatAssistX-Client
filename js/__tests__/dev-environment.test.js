@@ -2,54 +2,31 @@
  * @jest-environment jsdom
  */
 
+const { isDevEnvironment, getDevYtServer } = require('../config');
+
 describe('Dev environment detection', () => {
-    let detectDevEnvironment;
-
-    beforeEach(() => {
-        // Replicate dev environment detection logic from config.js
-        detectDevEnvironment = function(hostname) {
-            return (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));
-        };
-    });
-
     test('should detect localhost as dev environment', () => {
-        expect(detectDevEnvironment('localhost')).toBe(true);
+        expect(isDevEnvironment('localhost')).toBe(true);
     });
 
     test('should detect 127.0.0.1 as dev environment', () => {
-        expect(detectDevEnvironment('127.0.0.1')).toBe(true);
+        expect(isDevEnvironment('127.0.0.1')).toBe(true);
     });
 
     test('should detect GitHub Codespaces domain as dev environment', () => {
-        expect(detectDevEnvironment('opulent-winner-97g5jq5wxp52p96r-5500.app.github.dev')).toBe(true);
+        expect(isDevEnvironment('opulent-winner-97g5jq5wxp52p96r-5500.app.github.dev')).toBe(true);
     });
 
     test('should not detect production domain as dev environment', () => {
-        expect(detectDevEnvironment('chatassistx.cc')).toBe(false);
+        expect(isDevEnvironment('chatassistx.cc')).toBe(false);
     });
 
     test('should not detect arbitrary domain as dev environment', () => {
-        expect(detectDevEnvironment('example.com')).toBe(false);
+        expect(isDevEnvironment('example.com')).toBe(false);
     });
 });
 
 describe('Dev environment ytServer auto-configuration', () => {
-    let getDevYtServer;
-
-    beforeEach(() => {
-        // Replicate ytServer auto-configuration logic from config.js
-        getDevYtServer = function(hostname) {
-            if (hostname === 'localhost') {
-                return 'ws://localhost:8090';
-            } else if (hostname === '127.0.0.1') {
-                return 'ws://127.0.0.1:8090';
-            } else if (hostname.endsWith('.app.github.dev')) {
-                return 'wss://' + hostname.replace(/-\d+\.app\.github\.dev$/, '-8090.app.github.dev');
-            }
-            return '';
-        };
-    });
-
     test('should return ws://localhost:8090 for localhost', () => {
         expect(getDevYtServer('localhost')).toBe('ws://localhost:8090');
     });
@@ -104,9 +81,7 @@ describe('DEV MODE badge', () => {
     });
 
     test('should not create badge for non-dev environment', () => {
-        // Replicate the conditional logic - badge should NOT be created for production
-        var hostname = 'chatassistx.cc';
-        var isDev = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));
+        var isDev = isDevEnvironment('chatassistx.cc');
 
         if (isDev) {
             var badge = document.createElement('div');

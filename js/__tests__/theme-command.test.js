@@ -2,6 +2,13 @@
  * @jest-environment jsdom
  */
 
+// chatassist.js를 글로벌 스코프에 로드
+window.config = { allowExternalSource: false, allowEmoticon: true, replace: {}, ignoreNickname: 'nightbot,twipkr' };
+window.emoticon = { isActive: false, list: {} };
+
+const { loadChatassistGlobal } = require('./helpers/loadChatassist');
+loadChatassistGlobal();
+
 function setupJQueryMock() {
     const removedIds = [];
     const appendedAttrs = [];
@@ -10,6 +17,7 @@ function setupJQueryMock() {
         // $('<link>', { id, rel, type, href }) constructor pattern
         if (attrs && typeof attrs === 'object') {
             var obj = { tag: selector, attrs: attrs };
+            obj.on = jest.fn().mockReturnValue(obj);
             return obj;
         }
         return {
@@ -24,44 +32,10 @@ function setupJQueryMock() {
     return jqMock;
 }
 
-function createApplyTheme() {
-    return function(themeValue, showMessage) {
-        if(!themeValue) return false;
-
-        $("#chatassistx-theme").remove();
-
-        if(themeValue === "\uCD08\uAE30\uD654" || themeValue === "\uC5C6\uC74C" || themeValue === "\uC81C\uAC70") {
-            if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uD14C\uB9C8\uAC00 \uCD08\uAE30\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", true, false);
-            return true;
-        } else if(themeValue.startsWith("http://") || themeValue.startsWith("https://")) {
-            var cssUrl = themeValue.split("?")[0].split("#")[0];
-            if(!cssUrl.toLowerCase().endsWith(".css")) {
-                if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "CSS \uD30C\uC77C\uB9CC \uBD88\uB7EC\uC62C \uC218 \uC788\uC2B5\uB2C8\uB2E4. (.css \uD655\uC7A5\uC790 \uD544\uC694)", true, false);
-                return false;
-            }
-            $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: themeValue }));
-            if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uC678\uBD80 \uD14C\uB9C8\uAC00 \uC801\uC6A9\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", true, false);
-            return true;
-        } else {
-            var themeName = themeValue.replace(/[^a-zA-Z0-9_-]/g, "");
-            if(!themeName) {
-                if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uC62C\uBC14\uB978 \uD14C\uB9C8 \uC774\uB984\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.", true, false);
-                return false;
-            }
-            $("head").append($('<link>', { id: 'chatassistx-theme', rel: 'stylesheet', type: 'text/css', href: './themes/' + themeName + '/index.css' }));
-            if(showMessage) addChatMessage("warning", "\uD14C\uB9C8 \uBCC0\uACBD \uC54C\uB9BC", "\uD14C\uB9C8 '" + themeName + "'\uC774(\uAC00) \uC801\uC6A9\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", true, false);
-            return true;
-        }
-    };
-}
-
 describe('applyTheme', () => {
-    let applyTheme;
-
     beforeEach(() => {
         global.$ = setupJQueryMock();
         global.addChatMessage = jest.fn();
-        applyTheme = createApplyTheme();
     });
 
     test('should apply local theme', () => {
@@ -152,36 +126,16 @@ describe('applyTheme', () => {
 });
 
 describe('replaceCommand - uses applyTheme', () => {
-    let replaceCommand, applyTheme;
-
     beforeEach(() => {
         global.$ = setupJQueryMock();
 
-        window.config = { allowExternalSource: false, allowEmoticon: true, replace: {} };
+        window.config = { allowExternalSource: false, allowEmoticon: true, replace: {}, ignoreNickname: 'nightbot,twipkr' };
         window.chat = { config: {}, isInited: true, count: 0, cur_count: 0 };
         window.verb = { emoticon: "\uC774\uBAA8\uD2F0\uCF58" };
         window.emoticon = { isActive: false };
         window.def_verb = { emoticon: "\uC774\uBAA8\uD2F0\uCF58" };
 
         global.addChatMessage = jest.fn();
-        applyTheme = createApplyTheme();
-
-        replaceCommand = function(match, command, commandarg, offset) {
-            var message = "";
-            switch (command) {
-                case "\uCC44\uD305\uCD08\uAE30\uD654":
-                    $(".chat_container").html("");
-                    break;
-                case "\uD14C\uB9C8":
-                    message = commandarg.replace("~\uD14C\uB9C8", "").trim();
-                    if(!message) return match;
-                    applyTheme(message, true);
-                    break;
-                default:
-                    return match;
-            }
-            return "COMMAND_DO_NOT_PRINT";
-        };
     });
 
     test('should apply local theme via command', () => {

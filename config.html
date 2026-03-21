@@ -504,6 +504,14 @@
 
     var BASE_URL = 'https://chatassistx.cc/';
 
+    // 개발 환경에서는 현재 도메인 기반으로 BASE_URL 변경
+    (function() {
+        var hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev')) {
+            BASE_URL = window.location.origin + '/';
+        }
+    })();
+
     // Parameter definitions matching index.html logic
     var PARAMS = [
         // Platform

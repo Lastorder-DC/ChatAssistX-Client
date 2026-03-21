@@ -6,8 +6,8 @@ const { createServer } = require('../index');
 const TEST_PORT = 18090;
 
 /**
- * WebSocket에 연결하고 메시지 큐를 설정한다.
- * 인프로세스 서버에서는 open 이전에 메시지가 도착할 수 있으므로 큐로 버퍼링한다.
+ * Connect to WebSocket and set up message queue.
+ * In-process servers may send messages before the open event, so we buffer them in a queue.
  */
 function connectWs(port, origin) {
     return new Promise((resolve, reject) => {
@@ -36,7 +36,7 @@ function connectWs(port, origin) {
 }
 
 /**
- * 다음 메시지를 기다린다. 이미 큐에 쌓인 메시지가 있으면 즉시 반환한다.
+ * Wait for the next message. Returns immediately if a message is already queued.
  */
 function waitForMessage(ws, timeout = 5000) {
     return new Promise((resolve, reject) => {
@@ -245,7 +245,7 @@ describe('WebSocket Server Integration Tests', () => {
                 const ws2 = await connectWs(TEST_PORT + 4, 'https://funzinnu.com');
                 await waitForMessage(ws2); // version
                 ws2.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
-                await waitForMessage(ws2); // connected (기존 채널 세션에 연결됨)
+                await waitForMessage(ws2); // connected (joined existing session)
 
                 // Wait for the original cleanup delay to pass
                 await new Promise(resolve => setTimeout(resolve, 3500));

@@ -878,11 +878,18 @@
     var hostname = window.location.hostname;
     var isDev = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));
     if (isDev) {
-        var badge = document.createElement('div');
-        badge.id = 'dev-mode-badge';
-        badge.textContent = 'DEV MODE';
-        badge.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 12px;font-size:12px;font-weight:bold;z-index:99999;';
-        document.body.appendChild(badge);
+        function appendDevBadge() {
+            var badge = document.createElement('div');
+            badge.id = 'dev-mode-badge';
+            badge.textContent = 'DEV MODE';
+            badge.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 12px;font-size:12px;font-weight:bold;z-index:99999;';
+            document.body.appendChild(badge);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', appendDevBadge);
+        } else {
+            appendDevBadge();
+        }
     }
 })();
 </script>

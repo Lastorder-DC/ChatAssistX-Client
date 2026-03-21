@@ -1,77 +1,67 @@
 const { WebSocket } = require('ws');
 const { spawn } = require('child_process');
 const path = require('path');
+const { createServer } = require('../index');
 
 const TEST_PORT = 18090;
-let serverProcess;
 
-function startServer() {
-    return new Promise((resolve, reject) => {
-        serverProcess = spawn('node', ['index.js'], {
-            cwd: path.join(__dirname, '..'),
-            env: { ...process.env, PORT: String(TEST_PORT) },
-            stdio: ['pipe', 'pipe', 'pipe']
-        });
-
-        let started = false;
-
-        serverProcess.stdout.on('data', (data) => {
-            const output = data.toString();
-            if (output.includes('started on port') && !started) {
-                started = true;
-                resolve();
-            }
-        });
-
-        serverProcess.stderr.on('data', (data) => {
-            // Log stderr for debugging but don't fail
-        });
-
-        serverProcess.on('error', (err) => {
-            if (!started) reject(err);
-        });
-
-        // Timeout if server doesn't start within 10 seconds
-        setTimeout(() => {
-            if (!started) reject(new Error('Server start timeout'));
-        }, 10000);
-    });
-}
-
-function stopServer() {
-    return new Promise((resolve) => {
-        if (serverProcess) {
-            serverProcess.on('exit', () => resolve());
-            serverProcess.kill('SIGTERM');
-            // Force kill after 5 seconds
-            setTimeout(() => {
-                try { serverProcess.kill('SIGKILL'); } catch (e) {}
-                resolve();
-            }, 5000);
-        } else {
-            resolve();
-        }
-    });
-}
-
-function connectWs(origin) {
+/**
+ * WebSocket에 연결하고 메시지 큐를 설정한다.
+ * 인프로세스 서버에서는 open 이전에 메시지가 도착할 수 있으므로 큐로 버퍼링한다.
+ */
+function connectWs(port, origin) {
     return new Promise((resolve, reject) => {
         const opts = origin ? { origin } : {};
-        const ws = new WebSocket(`ws://localhost:${TEST_PORT}`, opts);
-        ws.on('open', () => resolve(ws));
-        ws.on('error', (err) => reject(err));
-        // Timeout
-        setTimeout(() => reject(new Error('Connection timeout')), 5000);
+        const ws = new WebSocket(`ws://localhost:${port}`, opts);
+        ws._messageQueue = [];
+        ws._messageResolvers = [];
+        ws.on('message', (data) => {
+            const parsed = JSON.parse(data.toString());
+            if (ws._messageResolvers.length > 0) {
+                ws._messageResolvers.shift()(parsed);
+            } else {
+                ws._messageQueue.push(parsed);
+            }
+        });
+        const timer = setTimeout(() => reject(new Error('Connection timeout')), 5000);
+        ws.on('open', () => {
+            clearTimeout(timer);
+            resolve(ws);
+        });
+        ws.on('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+        });
     });
 }
 
+/**
+ * 다음 메시지를 기다린다. 이미 큐에 쌓인 메시지가 있으면 즉시 반환한다.
+ */
 function waitForMessage(ws, timeout = 5000) {
     return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Message timeout')), timeout);
-        ws.once('message', (data) => {
+        if (ws._messageQueue && ws._messageQueue.length > 0) {
+            resolve(ws._messageQueue.shift());
+            return;
+        }
+        const timer = setTimeout(() => {
+            const idx = ws._messageResolvers ? ws._messageResolvers.indexOf(onMessage) : -1;
+            if (idx >= 0) ws._messageResolvers.splice(idx, 1);
+            reject(new Error('Message timeout'));
+        }, timeout);
+        function onMessage(msg) {
             clearTimeout(timer);
-            resolve(JSON.parse(data.toString()));
-        });
+            resolve(msg);
+        }
+        if (ws._messageResolvers) {
+            ws._messageResolvers.push(onMessage);
+        } else {
+            // spawned process의 WebSocket (큐 없음) - 직접 리스너 사용
+            ws.once('message', (data) => {
+                clearTimeout(timer);
+                resolve(JSON.parse(data.toString()));
+            });
+        }
     });
 }
 
@@ -81,24 +71,36 @@ function closeWs(ws) {
             resolve();
             return;
         }
-        ws.on('close', () => resolve());
+        const timer = setTimeout(resolve, 1000);
+        ws.on('close', () => {
+            clearTimeout(timer);
+            resolve();
+        });
         ws.close();
-        setTimeout(resolve, 1000);
+    });
+}
+
+function waitForListening(server) {
+    return new Promise((resolve) => {
+        server.wss.on('listening', resolve);
     });
 }
 
 describe('WebSocket Server Integration Tests', () => {
+    let server;
+
     beforeAll(async () => {
-        await startServer();
+        server = createServer({ port: TEST_PORT });
+        await waitForListening(server);
     }, 15000);
 
     afterAll(async () => {
-        await stopServer();
+        await server.close();
     }, 10000);
 
     describe('Origin validation', () => {
         test('should accept connections from allowed origins', async () => {
-            const ws = await connectWs('https://chatassistx.vercel.app');
+            const ws = await connectWs(TEST_PORT, 'https://chatassistx.vercel.app');
             const msg = await waitForMessage(ws);
             expect(msg.type).toBe('version');
             expect(typeof msg.message).toBe('string');
@@ -106,20 +108,20 @@ describe('WebSocket Server Integration Tests', () => {
         });
 
         test('should accept connections from funzinnu.com subdomains', async () => {
-            const ws = await connectWs('https://sub.funzinnu.com');
+            const ws = await connectWs(TEST_PORT, 'https://sub.funzinnu.com');
             const msg = await waitForMessage(ws);
             expect(msg.type).toBe('version');
             await closeWs(ws);
         });
 
         test('should reject connections from disallowed origins', async () => {
-            await expect(connectWs('https://evil.com')).rejects.toThrow();
+            await expect(connectWs(TEST_PORT, 'https://evil.com')).rejects.toThrow();
         });
     });
 
     describe('Version message', () => {
         test('should send version message on connection', async () => {
-            const ws = await connectWs('https://funzinnu.com');
+            const ws = await connectWs(TEST_PORT, 'https://funzinnu.com');
             const msg = await waitForMessage(ws);
             expect(msg.type).toBe('version');
             expect(typeof msg.message).toBe('string');
@@ -129,7 +131,7 @@ describe('WebSocket Server Integration Tests', () => {
 
     describe('Connect message handling', () => {
         test('should return error for invalid JSON', async () => {
-            const ws = await connectWs('https://funzinnu.com');
+            const ws = await connectWs(TEST_PORT, 'https://funzinnu.com');
             await waitForMessage(ws); // consume version message
             ws.send('not json');
             const msg = await waitForMessage(ws);
@@ -138,7 +140,7 @@ describe('WebSocket Server Integration Tests', () => {
         });
 
         test('should return error when channel is missing in connect message', async () => {
-            const ws = await connectWs('https://funzinnu.com');
+            const ws = await connectWs(TEST_PORT, 'https://funzinnu.com');
             await waitForMessage(ws); // consume version message
             ws.send(JSON.stringify({ type: 'connect' }));
             const msg = await waitForMessage(ws);
@@ -149,7 +151,7 @@ describe('WebSocket Server Integration Tests', () => {
 
     describe('Ping/Pong heartbeat', () => {
         test('should respond with pong when client sends ping', async () => {
-            const ws = await connectWs('https://funzinnu.com');
+            const ws = await connectWs(TEST_PORT, 'https://funzinnu.com');
             await waitForMessage(ws); // consume version message
             ws.send(JSON.stringify({ type: 'ping' }));
             const msg = await waitForMessage(ws);
@@ -158,355 +160,109 @@ describe('WebSocket Server Integration Tests', () => {
         });
 
         test('should drop connection when no ping received within timeout', async () => {
-            // Start a separate server with short timeouts for testing
-            const pingPort = TEST_PORT + 2;
-            const proc = spawn('node', ['-e', `
-                const { WebSocketServer, WebSocket } = require('ws');
-                const { PROGRAM_VERSION, isAllowedOrigin } = require('./utils');
-                const PORT = ${pingPort};
-                const clientLastPing = new Map();
-                const PING_TIMEOUT = 2000; // 2 seconds for testing
-                const PING_CHECK_INTERVAL = 1000; // 1 second for testing
-                const wss = new WebSocketServer({
-                    port: PORT,
-                    verifyClient: (info) => {
-                        const origin = info.origin || info.req.headers.origin;
-                        return isAllowedOrigin(origin);
-                    }
-                });
-                console.log('started on port ' + PORT);
-                const pingMonitorInterval = setInterval(() => {
-                    const now = Date.now();
-                    for (const [client, lastPing] of clientLastPing) {
-                        if (now - lastPing > PING_TIMEOUT) {
-                            console.log('Client ping timeout');
-                            client.close(1000, 'Ping timeout');
-                            clientLastPing.delete(client);
-                        }
-                    }
-                }, PING_CHECK_INTERVAL);
-                wss.on('connection', (ws) => {
-                    clientLastPing.set(ws, Date.now());
-                    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
-                    ws.on('message', (data) => {
-                        const parsed = JSON.parse(data.toString());
-                        if (parsed.type === 'ping') {
-                            clientLastPing.set(ws, Date.now());
-                            ws.send(JSON.stringify({ type: 'pong' }));
-                        }
-                    });
-                    ws.on('close', () => {
-                        clientLastPing.delete(ws);
+            const pingServer = createServer({
+                port: TEST_PORT + 2,
+                pingTimeout: 2000,
+                pingCheckInterval: 1000
+            });
+            await waitForListening(pingServer);
+
+            try {
+                const ws = await connectWs(TEST_PORT + 2, 'https://funzinnu.com');
+                await waitForMessage(ws); // consume version message
+
+                // Don't send any ping - wait for connection to be dropped
+                const result = await new Promise((resolve) => {
+                    ws.on('close', (code, reason) => {
+                        resolve({ code, reason: reason.toString() });
                     });
                 });
-            `], {
-                cwd: path.join(__dirname, '..'),
-                env: { ...process.env },
-                stdio: ['pipe', 'pipe', 'pipe']
-            });
 
-            await new Promise((resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error('Ping test server start timeout')), 10000);
-                proc.stdout.on('data', (data) => {
-                    if (data.toString().includes('started on port')) {
-                        clearTimeout(timer);
-                        resolve();
-                    }
-                });
-            });
-
-            const ws = new WebSocket(`ws://localhost:${pingPort}`, { origin: 'https://funzinnu.com' });
-            await new Promise((resolve) => ws.on('open', resolve));
-            await waitForMessage(ws); // consume version message
-
-            // Don't send any ping - wait for connection to be dropped
-            const closePromise = new Promise((resolve) => {
-                ws.on('close', (code, reason) => {
-                    resolve({ code, reason: reason.toString() });
-                });
-            });
-
-            const result = await closePromise;
-            expect(result.code).toBe(1000);
-            expect(result.reason).toBe('Ping timeout');
-
-            // Clean up
-            proc.kill('SIGTERM');
-            await new Promise((resolve) => {
-                proc.on('exit', resolve);
-                setTimeout(resolve, 5000);
-            });
+                expect(result.code).toBe(1000);
+                expect(result.reason).toBe('Ping timeout');
+            } finally {
+                await pingServer.close();
+            }
         }, 30000);
     });
 
     describe('Session cleanup delay on disconnect', () => {
         test('should delay session cleanup when last client disconnects and clean up after timeout', async () => {
-            const port = TEST_PORT + 3;
-            const proc = spawn('node', ['-e', `
-                const { WebSocketServer, WebSocket } = require('ws');
-                const { PROGRAM_VERSION, isAllowedOrigin } = require('./utils');
-                const PORT = ${port};
-                const channelSessions = new Map();
-                const SESSION_CLEANUP_DELAY = 2000; // 2 seconds for testing
-
-                function broadcast(session, data) {
-                    const message = JSON.stringify(data);
-                    for (const client of session.clients) {
-                        if (client.readyState === WebSocket.OPEN) {
-                            client.send(message);
-                        }
-                    }
+            const sessionServer = createServer({
+                port: TEST_PORT + 3,
+                sessionCleanupDelay: 2000,
+                onStartSession: async (channel, session, broadcast) => {
+                    session.connecting = false;
+                    broadcast(session, { type: 'connected', message: channel });
                 }
-
-                function unsubscribeClient(ws, channel) {
-                    const session = channelSessions.get(channel);
-                    if (!session) return;
-                    session.clients.delete(ws);
-                    console.log('unsubscribe:' + channel + ':remaining:' + session.clients.size);
-                    if (session.clients.size === 0) {
-                        session.cleanupTimer = setTimeout(() => {
-                            if (session.clients.size === 0) {
-                                console.log('session_deleted:' + channel);
-                                channelSessions.delete(channel);
-                            }
-                        }, SESSION_CLEANUP_DELAY);
-                    }
-                }
-
-                const wss = new WebSocketServer({
-                    port: PORT,
-                    verifyClient: (info) => {
-                        const origin = info.origin || info.req.headers.origin;
-                        return isAllowedOrigin(origin);
-                    }
-                });
-                console.log('started on port ' + PORT);
-
-                wss.on('connection', (ws) => {
-                    let subscribedChannel = null;
-                    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
-                    ws.on('message', (data) => {
-                        const parsed = JSON.parse(data.toString());
-                        if (parsed.type === 'connect') {
-                            const channel = parsed.channel;
-                            if (subscribedChannel) {
-                                unsubscribeClient(ws, subscribedChannel);
-                            }
-                            subscribedChannel = channel;
-                            let session = channelSessions.get(channel);
-                            if (!session) {
-                                session = { livechat: null, clients: new Set(), connecting: false };
-                                channelSessions.set(channel, session);
-                            }
-                            session.clients.add(ws);
-                            ws.send(JSON.stringify({ type: 'connected', message: channel }));
-                        }
-                        if (parsed.type === 'check_session') {
-                            const exists = channelSessions.has(parsed.channel);
-                            ws.send(JSON.stringify({ type: 'session_status', exists }));
-                        }
-                    });
-                    ws.on('close', () => {
-                        if (subscribedChannel) {
-                            unsubscribeClient(ws, subscribedChannel);
-                            subscribedChannel = null;
-                        }
-                    });
-                });
-            `], {
-                cwd: path.join(__dirname, '..'),
-                env: { ...process.env },
-                stdio: ['pipe', 'pipe', 'pipe']
             });
+            await waitForListening(sessionServer);
 
-            let serverOutput = '';
-            proc.stdout.on('data', (data) => { serverOutput += data.toString(); });
+            try {
+                // Connect client and subscribe to a channel
+                const ws1 = await connectWs(TEST_PORT + 3, 'https://funzinnu.com');
+                await waitForMessage(ws1); // consume version message
+                ws1.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
+                await waitForMessage(ws1); // consume connected message
 
-            await new Promise((resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error('Server start timeout')), 10000);
-                proc.stdout.on('data', (data) => {
-                    if (data.toString().includes('started on port')) {
-                        clearTimeout(timer);
-                        resolve();
-                    }
-                });
-            });
+                // Disconnect client - session should NOT be deleted immediately
+                await closeWs(ws1);
+                // Wait a short time to confirm session is still alive
+                await new Promise(resolve => setTimeout(resolve, 500));
+                expect(sessionServer.channelSessions.has('@testch')).toBe(true);
 
-            // Connect client and subscribe to a channel
-            const ws1 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
-            await new Promise((resolve) => ws1.on('open', resolve));
-            await waitForMessage(ws1); // consume version message
-            ws1.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
-            await waitForMessage(ws1); // consume connected message
-
-            // Disconnect client - session should NOT be deleted immediately
-            await closeWs(ws1);
-            // Wait a short time to confirm session is still alive
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Use a new client to check session exists during the delay
-            const ws2 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
-            await new Promise((resolve) => ws2.on('open', resolve));
-            await waitForMessage(ws2); // consume version message
-            ws2.send(JSON.stringify({ type: 'check_session', channel: '@testch' }));
-            const statusDuringDelay = await waitForMessage(ws2);
-            expect(statusDuringDelay.type).toBe('session_status');
-            expect(statusDuringDelay.exists).toBe(true);
-
-            // Wait for cleanup delay to expire (2s + buffer)
-            await new Promise(resolve => setTimeout(resolve, 2500));
-
-            // Check session is now deleted
-            ws2.send(JSON.stringify({ type: 'check_session', channel: '@testch' }));
-            const statusAfterDelay = await waitForMessage(ws2);
-            expect(statusAfterDelay.type).toBe('session_status');
-            expect(statusAfterDelay.exists).toBe(false);
-
-            // Verify server logs show the expected flow
-            expect(serverOutput).toContain('unsubscribe:@testch:remaining:0');
-            expect(serverOutput).toContain('session_deleted:@testch');
-
-            await closeWs(ws2);
-            proc.kill('SIGTERM');
-            await new Promise((resolve) => {
-                proc.on('exit', resolve);
-                setTimeout(resolve, 5000);
-            });
+                // Wait for cleanup delay to expire (2s + buffer)
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                expect(sessionServer.channelSessions.has('@testch')).toBe(false);
+            } finally {
+                await sessionServer.close();
+            }
         }, 30000);
 
         test('should cancel cleanup timer when a new client reconnects during grace period', async () => {
-            const port = TEST_PORT + 4;
-            const proc = spawn('node', ['-e', `
-                const { WebSocketServer, WebSocket } = require('ws');
-                const { PROGRAM_VERSION, isAllowedOrigin } = require('./utils');
-                const PORT = ${port};
-                const channelSessions = new Map();
-                const SESSION_CLEANUP_DELAY = 3000; // 3 seconds for testing
-
-                function unsubscribeClient(ws, channel) {
-                    const session = channelSessions.get(channel);
-                    if (!session) return;
-                    session.clients.delete(ws);
-                    console.log('unsubscribe:' + channel + ':remaining:' + session.clients.size);
-                    if (session.clients.size === 0) {
-                        session.cleanupTimer = setTimeout(() => {
-                            if (session.clients.size === 0) {
-                                console.log('session_deleted:' + channel);
-                                channelSessions.delete(channel);
-                            }
-                        }, SESSION_CLEANUP_DELAY);
-                    }
+            const sessionServer = createServer({
+                port: TEST_PORT + 4,
+                sessionCleanupDelay: 3000,
+                onStartSession: async (channel, session, broadcast) => {
+                    session.connecting = false;
+                    broadcast(session, { type: 'connected', message: channel });
                 }
-
-                const wss = new WebSocketServer({
-                    port: PORT,
-                    verifyClient: (info) => {
-                        const origin = info.origin || info.req.headers.origin;
-                        return isAllowedOrigin(origin);
-                    }
-                });
-                console.log('started on port ' + PORT);
-
-                wss.on('connection', (ws) => {
-                    let subscribedChannel = null;
-                    ws.send(JSON.stringify({ type: 'version', message: PROGRAM_VERSION }));
-                    ws.on('message', (data) => {
-                        const parsed = JSON.parse(data.toString());
-                        if (parsed.type === 'connect') {
-                            const channel = parsed.channel;
-                            if (subscribedChannel) {
-                                unsubscribeClient(ws, subscribedChannel);
-                            }
-                            subscribedChannel = channel;
-                            let session = channelSessions.get(channel);
-                            if (session) {
-                                // Cancel pending cleanup timer on reconnect
-                                if (session.cleanupTimer) {
-                                    clearTimeout(session.cleanupTimer);
-                                    session.cleanupTimer = null;
-                                    console.log('cleanup_cancelled:' + channel);
-                                }
-                            } else {
-                                session = { livechat: null, clients: new Set(), connecting: false };
-                                channelSessions.set(channel, session);
-                            }
-                            session.clients.add(ws);
-                            ws.send(JSON.stringify({ type: 'connected', message: channel }));
-                        }
-                        if (parsed.type === 'check_session') {
-                            const exists = channelSessions.has(parsed.channel);
-                            ws.send(JSON.stringify({ type: 'session_status', exists }));
-                        }
-                    });
-                    ws.on('close', () => {
-                        if (subscribedChannel) {
-                            unsubscribeClient(ws, subscribedChannel);
-                            subscribedChannel = null;
-                        }
-                    });
-                });
-            `], {
-                cwd: path.join(__dirname, '..'),
-                env: { ...process.env },
-                stdio: ['pipe', 'pipe', 'pipe']
             });
+            await waitForListening(sessionServer);
 
-            let serverOutput = '';
-            proc.stdout.on('data', (data) => { serverOutput += data.toString(); });
+            try {
+                // Connect first client and subscribe
+                const ws1 = await connectWs(TEST_PORT + 4, 'https://funzinnu.com');
+                await waitForMessage(ws1); // version
+                ws1.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
+                await waitForMessage(ws1); // connected
 
-            await new Promise((resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error('Server start timeout')), 10000);
-                proc.stdout.on('data', (data) => {
-                    if (data.toString().includes('started on port')) {
-                        clearTimeout(timer);
-                        resolve();
-                    }
-                });
-            });
+                // Disconnect first client - starts cleanup timer
+                await closeWs(ws1);
+                await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Connect first client and subscribe
-            const ws1 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
-            await new Promise((resolve) => ws1.on('open', resolve));
-            await waitForMessage(ws1); // version
-            ws1.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
-            await waitForMessage(ws1); // connected
+                // Reconnect with a new client within the grace period
+                const ws2 = await connectWs(TEST_PORT + 4, 'https://funzinnu.com');
+                await waitForMessage(ws2); // version
+                ws2.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
+                await waitForMessage(ws2); // connected (기존 채널 세션에 연결됨)
 
-            // Disconnect first client - starts cleanup timer
-            await closeWs(ws1);
-            await new Promise(resolve => setTimeout(resolve, 500));
+                // Wait for the original cleanup delay to pass
+                await new Promise(resolve => setTimeout(resolve, 3500));
 
-            // Reconnect with a new client within the grace period
-            const ws2 = new WebSocket(`ws://localhost:${port}`, { origin: 'https://funzinnu.com' });
-            await new Promise((resolve) => ws2.on('open', resolve));
-            await waitForMessage(ws2); // version
-            ws2.send(JSON.stringify({ type: 'connect', channel: '@testch' }));
-            await waitForMessage(ws2); // connected
+                // Session should still exist because the timer was cancelled
+                expect(sessionServer.channelSessions.has('@testch')).toBe(true);
 
-            // Wait for the original cleanup delay to pass
-            await new Promise(resolve => setTimeout(resolve, 3500));
-
-            // Session should still exist because the timer was cancelled
-            ws2.send(JSON.stringify({ type: 'check_session', channel: '@testch' }));
-            const status = await waitForMessage(ws2);
-            expect(status.type).toBe('session_status');
-            expect(status.exists).toBe(true);
-
-            // Verify cleanup was cancelled
-            expect(serverOutput).toContain('cleanup_cancelled:@testch');
-            expect(serverOutput).not.toContain('session_deleted:@testch');
-
-            await closeWs(ws2);
-            proc.kill('SIGTERM');
-            await new Promise((resolve) => {
-                proc.on('exit', resolve);
-                setTimeout(resolve, 5000);
-            });
+                await closeWs(ws2);
+            } finally {
+                await sessionServer.close();
+            }
         }, 30000);
     });
 
     describe('Graceful shutdown', () => {
         test('should send disconnected message before closing on SIGTERM', async () => {
-            // Start a separate server for this test
+            // Start a separate server process for this test (SIGTERM requires separate process)
             const shutdownPort = TEST_PORT + 1;
             const proc = spawn('node', ['index.js'], {
                 cwd: path.join(__dirname, '..'),
@@ -525,21 +281,14 @@ describe('WebSocket Server Integration Tests', () => {
                 });
             });
 
-            // Connect a client and subscribe to a channel
+            // Connect a client
             const ws = new WebSocket(`ws://localhost:${shutdownPort}`, { origin: 'https://funzinnu.com' });
             await new Promise((resolve) => ws.on('open', resolve));
 
             // Consume version message
             await waitForMessage(ws);
 
-            // Send connect to subscribe (even though channel won't exist, it will enter the session map)
-            ws.send(JSON.stringify({ type: 'connect', channel: '@testchannel' }));
-
-            // Wait for server to process and send info/error messages about the channel
-            // Just wait a bit for the subscribe to be processed
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Collect all messages received after SIGTERM
+            // Collect all messages received after this point
             const messages = [];
             ws.on('message', (data) => {
                 messages.push(JSON.parse(data.toString()));
@@ -550,8 +299,11 @@ describe('WebSocket Server Integration Tests', () => {
 
             // Wait for connection to close
             await new Promise((resolve) => {
-                ws.on('close', resolve);
-                setTimeout(resolve, 5000);
+                const timer = setTimeout(resolve, 5000);
+                ws.on('close', () => {
+                    clearTimeout(timer);
+                    resolve();
+                });
             });
 
             // Check that a disconnected message was received
@@ -561,8 +313,11 @@ describe('WebSocket Server Integration Tests', () => {
 
             // Ensure server process exits
             await new Promise((resolve) => {
-                proc.on('exit', resolve);
-                setTimeout(resolve, 5000);
+                const timer = setTimeout(resolve, 5000);
+                proc.on('exit', () => {
+                    clearTimeout(timer);
+                    resolve();
+                });
             });
         }, 30000);
     });

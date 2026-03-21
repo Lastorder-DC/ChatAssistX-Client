@@ -84,3 +84,32 @@ window.config.anon_nickname = url.searchParams.get("anon_nickname");
 window.config.anon_random = url.searchParams.get("anon_random") == "false" ? false : url.searchParams.get("anon_random"); // 랜덤 숫자를 붙이려면 "number" 랜덤 문자열을 붙이려면 "string"
 window.config.random_length = !url.searchParams.get("random_length") ? 4 : parseInt(url.searchParams.get("random_length"), 10); // 랜덤 숫자/닉네임 길이 지정(위에서 number나 string 지정시)
 window.config.fix_random_id = url.searchParams.get("fix_random_id") == "true"; // 랜덤 닉네임 고정(같은 시청자는 같은 랜덤 문자 배정) 활성화시 true - 새로고침시 초기화됨
+
+// 개발 환경 감지 (localhost, 127.0.0.1, *.app.github.dev)
+(function() {
+    var hostname = window.location.hostname;
+    var isDev = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.app.github.dev'));
+    window.config.isDev = isDev;
+
+    // 개발 환경에서 ytServer가 지정되지 않은 경우 자동 설정
+    if (isDev && !window.config.ytServer) {
+        if (hostname === 'localhost') {
+            window.config.ytServer = 'ws://localhost:8090';
+        } else if (hostname === '127.0.0.1') {
+            window.config.ytServer = 'ws://127.0.0.1:8090';
+        } else if (hostname.endsWith('.app.github.dev')) {
+            window.config.ytServer = 'wss://' + hostname.replace(/-\d+\.app\.github\.dev$/, '-8090.app.github.dev');
+        }
+    }
+
+    // DEV MODE 뱃지 표시
+    if (isDev) {
+        document.addEventListener('DOMContentLoaded', function() {
+            var badge = document.createElement('div');
+            badge.id = 'dev-mode-badge';
+            badge.textContent = 'DEV MODE';
+            badge.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:4px 12px;font-size:12px;font-weight:bold;z-index:99999;';
+            document.body.appendChild(badge);
+        });
+    }
+})();

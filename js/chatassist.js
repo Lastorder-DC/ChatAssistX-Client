@@ -480,7 +480,6 @@ function applyFontOverride(fontKey) {
  */
 function replaceCommand(match, command, commandarg, offset) {
     var message = "";
-    console.log(command);
 
     switch (command) {
         case "채팅초기화":

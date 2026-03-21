@@ -2,23 +2,21 @@
  * @jest-environment jsdom
  */
 
-describe('_markPlatformConnected', () => {
-    let _markPlatformConnected;
+// chatassist.js를 글로벌 스코프에 로드 (모든 함수가 window에 정의됨)
+window.config = { allowExternalSource: false, allowEmoticon: true, replace: {}, ignoreNickname: 'nightbot,twipkr' };
+window.emoticon = { isActive: false, list: {} };
 
+const { loadChatassistGlobal } = require('./helpers/loadChatassist');
+loadChatassistGlobal();
+
+describe('_markPlatformConnected', () => {
     beforeEach(() => {
         window.chat = {
             isInited: false,
             _pendingPlatforms: new Set()
         };
 
-        // Replicate the function from chatassist.js
-        _markPlatformConnected = function(platform) {
-            if (!window.chat._pendingPlatforms.has(platform)) return;
-            window.chat._pendingPlatforms.delete(platform);
-            if (window.chat._pendingPlatforms.size === 0) {
-                window.chat.isInited = true;
-            }
-        };
+        window.addChatMessage = jest.fn();
     });
 
     test('should set isInited when single platform connects', () => {
@@ -108,75 +106,22 @@ describe('_markPlatformConnected', () => {
 });
 
 describe('connect_chat platform registration', () => {
-    let connect_chat;
-
     beforeEach(() => {
         window.chat = {
             isInited: false,
             _pendingPlatforms: new Set()
         };
 
-        window.config = {};
+        window.config = { ignoreNickname: 'nightbot,twipkr' };
 
-        // Mock all connect functions
+        // connect 함수들을 mock으로 대체 (글로벌 스코프이므로 내부 호출도 가로챔)
         window.connect_twitch = jest.fn();
         window.connect_kick = jest.fn();
         window.connect_yt = jest.fn();
         window.connect_naver = jest.fn();
         window.connect_cime = jest.fn();
 
-        // Mock addChatMessage
         window.addChatMessage = jest.fn();
-
-        // Replicate connect_chat logic from chatassist.js
-        connect_chat = function() {
-            window.chat._pendingPlatforms = new Set();
-
-            if(typeof window.config.channelname !== 'undefined' && !!window.config.channelname) {
-                window.chat._pendingPlatforms.add('twitch');
-            }
-
-            if(typeof window.config.kickid !== 'undefined' && !!window.config.kickid) {
-                window.chat._pendingPlatforms.add('kick');
-            }
-
-            if(typeof window.config.ytChannel !== 'undefined' && !!window.config.ytChannel) {
-                window.chat._pendingPlatforms.add('youtube');
-            }
-
-            if(typeof window.config.nvrChannel !== 'undefined' && !!window.config.nvrChannel) {
-                window.chat._pendingPlatforms.add('naver');
-            }
-
-            if(typeof window.config.cimeChannel !== 'undefined' && !!window.config.cimeChannel) {
-                window.chat._pendingPlatforms.add('cime');
-            }
-
-            if(window.chat._pendingPlatforms.size === 0) {
-                window.addChatMessage("info", "구성된 채널 없음", "연결할 채널이 하나 이상 구성되지 않았습니다.", true, false);
-                return;
-            }
-
-            if(window.chat._pendingPlatforms.has('twitch')) {
-                window.connect_twitch();
-            }
-
-            if(window.chat._pendingPlatforms.has('kick')) {
-                window.connect_kick();
-            }
-
-            if(window.chat._pendingPlatforms.has('youtube')) {
-                window.connect_yt();
-            }
-
-            if(window.chat._pendingPlatforms.has('naver')) {
-                window.connect_naver();
-            }
-
-            if(window.chat._pendingPlatforms.has('cime')) {
-                window.connect_cime();
-            }
-        };
     });
 
     test('should register youtube, naver, cime when all three are configured', () => {

@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="./css/font.css" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="./js/dev-common.js?ver=20260321"></script>
     <style>
         body {
             background: #0d1117;
@@ -504,6 +505,13 @@
 
     var BASE_URL = 'https://chatassistx.cc/';
 
+    // 개발 환경에서는 현재 도메인 기반으로 BASE_URL 변경
+    (function() {
+        if (isDevEnvironment(window.location.hostname)) {
+            BASE_URL = window.location.origin + '/';
+        }
+    })();
+
     // Parameter definitions matching index.html logic
     var PARAMS = [
         // Platform
@@ -869,6 +877,19 @@
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+})();
+</script>
+<script>
+// 개발 환경 감지 및 DEV MODE 뱃지 표시
+(function() {
+    var hostname = window.location.hostname;
+    if (isDevEnvironment(hostname)) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', appendDevBadge);
+        } else {
+            appendDevBadge();
+        }
     }
 })();
 </script>

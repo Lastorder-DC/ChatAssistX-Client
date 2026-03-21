@@ -1379,17 +1379,37 @@ function connect_naver() {
     }
 }
 
-$(document).ready(function() {
-    CompileChat();
-    LoadEmoticon();
+if (typeof $ !== 'undefined') {
+    $(document).ready(function() {
+        CompileChat();
+        LoadEmoticon();
 
-    // searchParams에서 설정된 테마 적용
-    if(window.config.theme) {
-        applyTheme(window.config.theme, false);
-    }
+        // searchParams에서 설정된 테마 적용
+        if(window.config.theme) {
+            applyTheme(window.config.theme, false);
+        }
 
-    // 폰트 오버라이드 적용
-    if(window.config.fontOverride) {
-        applyFontOverride(window.config.fontOverride);
-    }
-});
+        // 폰트 오버라이드 적용
+        if(window.config.fontOverride) {
+            applyFontOverride(window.config.fontOverride);
+        }
+    });
+}
+
+// Node.js / Jest 환경에서 테스트를 위한 exports
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        genID,
+        replaceStyle,
+        KICK_replaceEmoticon,
+        YT_replaceEmoticon,
+        applyTheme,
+        replaceCommand,
+        applyBadge,
+        anonymizeNickname,
+        _markPlatformConnected,
+        connect_chat,
+        connect_yt,
+        connect_cime
+    };
+}

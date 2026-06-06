@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.19.1
+ *                 V E R S I O N    1.19.2
  *       Last updated by Lastorder-DC on 2026-06-06.
  */
 // 변수 초기화
@@ -19,7 +19,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.19.1";
+window.chat.version = "1.19.2";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -765,7 +765,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
         if(message.indexOf("COMMAND_DO_NOT_PRINT") != -1) return;
     }
 
-    chat = {
+chat = {
         num: window.chat.cur_count,
         platform: platform,
         nickname: nickname,
@@ -775,6 +775,7 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
     $chatElement = sticky ? $(window.chat.stickytemplate(chat)) : $(window.chat.template(chat));
     $chatElement.appendTo($(".chat_container"));
     updateStyle();
+    
     if(window.chat.config.animation == "none") {
         $chatElement.show();
     } else if(window.chat.config.animation == "slide") {
@@ -794,47 +795,45 @@ function addChatMessage(platform, nickname, message, sticky, ext_args) {
     window.chat.count++;
     window.chat.cur_count++;
 
+    // 1. 애니메이션 및 타이머 제거 로직 설정
     if(sticky || window.chat.config.chatFade != 0) {
         var fadeTime = sticky ? 10000 : window.chat.config.chatFade * 1000;
+        
+        // 공통 콜백 함수 분리
+        var removeAction = function() {
+            $(this).remove();
+            window.chat.count--;
+            window.chat.sticky = false;
+        };
+
         if(window.chat.config.animation == "none") {
-            $chatElement.delay(fadeTime).hide(0, function() {
-                $(this).remove();
-                window.chat.count--;
-                window.chat.sticky = false;
-            });
+            $chatElement.delay(fadeTime).hide(0, removeAction);
         } else if(window.chat.config.animation == "slide") {
-            $chatElement.delay(fadeTime).slideUp(1000, function() {
-                $(this).remove();
-                window.chat.count--;
-                window.chat.sticky = false;
-            });
+            $chatElement.delay(fadeTime).slideUp(1000, removeAction);
         } else {
-            $chatElement.delay(fadeTime).fadeOut(1000, function() {
-                $(this).remove();
-                window.chat.count--;
-                window.chat.sticky = false;
-            });
+            $chatElement.delay(fadeTime).fadeOut(1000, removeAction);
         }
+    }
 
-        if(window.chat.count > window.chat.maxcount) {
-            window.chat.count--;
-            $remove_temp = $(".chat_container div.chat_div:first-child");
-            $remove_temp.remove();
-        }
+    // 2. [핵심 수정] 실제 DOM 개수를 파악하여 초과분 일괄 삭제
+    var $currentChats = $(".chat_container div.chat_div");
+    if($currentChats.length > window.chat.maxcount) {
+        // 최대 개수를 초과하는 잉여 요소의 개수를 계산
+        var excessCount = $currentChats.length - window.chat.maxcount;
+        
+        // 초과한 만큼 상단(오래된) 채팅부터 선택
+        var $excessElements = $currentChats.slice(0, excessCount);
+        
+        // 진행 중인 대기열(delay/animation)을 중단하고 즉시 삭제
+        $excessElements.stop(true, false).remove();
+        
+        // 변수 강제 동기화로 꼬임 방지
+        window.chat.count = window.chat.maxcount;
+    }
 
-        if(window.chat.cur_count > window.chat.maxcount) {
-            window.chat.cur_count = 0;
-        }
-    } else {
-        if(window.chat.count > window.chat.maxcount) {
-            window.chat.count--;
-            $remove_temp = $(".chat_container div.chat_div:first-child");
-            $remove_temp.remove();
-        }
-
-        if(window.chat.cur_count > window.chat.maxcount) {
-            window.chat.cur_count = 0;
-        }
+    // cur_count 초기화 로직
+    if(window.chat.cur_count > window.chat.maxcount) {
+        window.chat.cur_count = 0;
     }
 }
 

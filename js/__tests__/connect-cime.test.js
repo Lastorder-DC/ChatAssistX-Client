@@ -113,7 +113,7 @@ describe('ci.me WebSocket Client (connect_cime)', () => {
             connect_cime();
 
             expect(mockXHR.open).toHaveBeenCalledWith(
-                'POST', 'https://ci.me/api/app/channels/testchannel/chat-token', true
+                'POST', 'https://api.chatassistx.cc/cime/testchannel/chat-token', true
             );
             expect(mockXHR.send).toHaveBeenCalled();
         });

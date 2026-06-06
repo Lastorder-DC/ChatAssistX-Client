@@ -3,8 +3,8 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.18.1
- *       Last updated by Lastorder-DC on 2026-04-11.
+ *                 V E R S I O N    1.19.0
+ *       Last updated by Lastorder-DC on 2026-06-06.
  */
 // 변수 초기화
 window.chat = {};
@@ -19,7 +19,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.18.1";
+window.chat.version = "1.19.0";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -1078,7 +1078,7 @@ function connect_cime() {
         try {
             // 1. chat-token 요청
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', `https://ci.me/api/app/channels/${cimeChannel}/chat-token`, true);
+            xhr.open('POST', `https://api.chatassistx.cc/cime/${cimeChannel}/chat-token`, true);
 
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {

@@ -3,7 +3,7 @@
  *  / /   / __ \/ __ `/ __/ /| | / ___/ ___/ / ___/ __/   / 
  * / /___/ / / / /_/ / /_/ ___ |(__  |__  ) (__  ) /_/   |  
  * \____/_/ /_/\__,_/\__/_/  |_/____/____/_/____/\__/_/|_|  
- *                 V E R S I O N    1.19.0
+ *                 V E R S I O N    1.19.1
  *       Last updated by Lastorder-DC on 2026-06-06.
  */
 // 변수 초기화
@@ -19,7 +19,7 @@ window.cimesocket = {};
 window.cimesocket.isInited = false;
 
 // 버전 번호
-window.chat.version = "1.19.0";
+window.chat.version = "1.19.1";
 
 // 채팅 관련 설정 변수
 window.chat.template = null;
@@ -358,14 +358,23 @@ var CIME_EMOJI_GROUPS = [
  * @param {String} code - 이모지 코드 (예: be-039, vt-01, 4E6L-yumeka)
  * @returns {String} 이미지 URL
  */
-function CIME_getEmojiUrl(code) {
+function CIME_getEmojiUrl(raw_code) {
+    var code = raw_code;
+    var extension = null;
+    var suffixMatch = code.match(/-\d([pg])$/i);
+
+    if (suffixMatch) {
+        code = code.slice(0, -3);
+        extension = suffixMatch[1].toLowerCase() === "p" ? ".png" : ".gif";
+    }
+
     for (var i = 0; i < CIME_EMOJI_GROUPS.length; i++) {
         if (code.indexOf(CIME_EMOJI_GROUPS[i].prefix) === 0) {
             return "https://streaming.cf.ci.me/public/assets/images/emoji/" + CIME_EMOJI_GROUPS[i].group + "/" + code + ".webp";
         }
     }
     // 기본값: 구독 이모티콘 (channel-emojis)
-    return "https://streaming.cf.ci.me/channel-emojis/" + code + ".png";
+    return "https://streaming.cf.ci.me/channel-emojis/" + code + (extension || ".png");
 }
 
 /**
